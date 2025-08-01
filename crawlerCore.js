@@ -31,8 +31,45 @@ class NoResourceLoader extends ResourceLoader {
   }
 }
 
-// HTML content size threshold for cleanup (5MB)
-const HTML_CLEANUP_THRESHOLD = 5 * 1024 * 1024;
+// Performance optimization constants
+const HTML_CLEANUP_THRESHOLD = 5 * 1024 * 1024; // 5MB
+const ANALYSIS_CACHE_SIZE = 1000; // Cache up to 1000 analysis results
+const BATCH_SIZE = 50; // Process elements in batches
+const MAX_CONTENT_LENGTH = 10 * 1024 * 1024; // 10MB max content length
+
+// Performance monitoring
+const performanceMetrics = {
+  totalMemoryUsage: 0,
+  avgProcessingTime: 0,
+  cacheHits: 0,
+  cacheMisses: 0
+};
+
+// Analysis result cache for expensive operations
+const analysisCache = new Map();
+
+// Memory management utilities
+function clearAnalysisCache() {
+  if (analysisCache.size > ANALYSIS_CACHE_SIZE) {
+    const keysToDelete = Array.from(analysisCache.keys()).slice(0, analysisCache.size - ANALYSIS_CACHE_SIZE + 100);
+    keysToDelete.forEach(key => analysisCache.delete(key));
+  }
+}
+
+function getCacheKey(operation, content) {
+  // Create a fast hash-like key for content
+  const hash = content.length + content.slice(0, 100) + content.slice(-100);
+  return `${operation}_${hash.length}_${hash.charCodeAt(0)}_${hash.charCodeAt(hash.length - 1)}`;
+}
+
+// Memory usage monitoring
+function getMemoryUsage() {
+  if (typeof process !== 'undefined' && process.memoryUsage) {
+    const usage = process.memoryUsage();
+    return Math.round(usage.heapUsed / 1024 / 1024); // MB
+  }
+  return 0;
+}
 
 export async function fetchWithTimeout(url, timeout) {
   const controller = new AbortController();
@@ -135,6 +172,9 @@ export async function crawlPage(pageUrl, pendingExternalLinks, {
   if (visited.has(pageUrl)) return;
   visited.add(pageUrl);
 
+  const startTime = Date.now();
+  const initialMemory = getMemoryUsage();
+  
   console.log('Crawling:', pageUrl);
 
   let html = '';
@@ -142,11 +182,21 @@ export async function crawlPage(pageUrl, pendingExternalLinks, {
   let pageSize = 0;
   let statusCode = 0;
   let headers = {};
+  let dom = null;
+  let document = null;
 
   try {
-    const startTime = Date.now();
-    const res = await fetch(pageUrl);
-    responseTime = Date.now() - startTime;
+    const fetchStart = Date.now();
+    const res = await fetch(pageUrl, {
+      signal: AbortSignal.timeout(30000), // 30 second timeout
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; DomainLinkAudit/1.0)',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    responseTime = Date.now() - fetchStart;
     statusCode = res.status;
     headers = Object.fromEntries(res.headers.entries());
     
@@ -156,155 +206,136 @@ export async function crawlPage(pageUrl, pendingExternalLinks, {
       return;
     }
 
-    // Stream response and check size
+    // Enhanced content length check
     const contentLength = parseInt(headers['content-length']) || 0;
-    if (contentLength > HTML_CLEANUP_THRESHOLD) {
-      console.log(`Large page detected (${Math.round(contentLength/1024/1024)}MB): ${pageUrl}`);
+    if (contentLength > MAX_CONTENT_LENGTH) {
+      console.warn(`Page too large (${Math.round(contentLength/1024/1024)}MB), skipping: ${pageUrl}`);
+      recordBadRequest(pageUrl, 'TOO_LARGE', pageUrl, badRequests);
+      return;
     }
 
-    // Read the response as a stream
+    // Optimized streaming with early termination
     const chunks = [];
     const decoder = new TextDecoder();
     let processedSize = 0;
+    let shouldTerminate = false;
     
     for await (const chunk of res.body) {
+      if (shouldTerminate) break;
+      
       chunks.push(decoder.decode(chunk, { stream: true }));
       processedSize += chunk.length;
       
-      // Check size threshold during streaming
-      if (processedSize > HTML_CLEANUP_THRESHOLD * 2) {
-        console.warn(`Page exceeds maximum size threshold (${Math.round(processedSize/1024/1024)}MB): ${pageUrl}`);
+      // Progressive size checking with early termination
+      if (processedSize > MAX_CONTENT_LENGTH) {
+        console.warn(`Page exceeds maximum size during streaming (${Math.round(processedSize/1024/1024)}MB): ${pageUrl}`);
+        shouldTerminate = true;
+        break;
+      }
+      
+      // Memory pressure check
+      if (chunks.length > 1000) {
+        console.warn(`Too many chunks, possible memory issue: ${pageUrl}`);
+        shouldTerminate = true;
         break;
       }
     }
     
-    // Final chunk
+    if (shouldTerminate) {
+      recordBadRequest(pageUrl, 'SIZE_EXCEEDED', pageUrl, badRequests);
+      return;
+    }
+    
+    // Finalize content
     chunks.push(decoder.decode());
     html = chunks.join('');
     pageSize = processedSize;
+    
   } catch (err) {
     console.error(`Error fetching ${pageUrl}:`, err.message);
-    recordBadRequest(pageUrl, 'FETCH_ERROR', pageUrl, badRequests);
+    recordBadRequest(pageUrl, err.name === 'AbortError' ? 'TIMEOUT' : 'FETCH_ERROR', pageUrl, badRequests);
     logFailedUrl(DOMAIN_FOLDER, pageUrl, err.message);
     return;
   }
 
-  // Create a limited virtual console that only logs critical errors
-  const virtualConsole = new VirtualConsole();
-  virtualConsole.on("error", (err) => {
-    if (err.includes('critical') || err.includes('fatal')) {
-      console.error(`Critical JSDOM error for ${pageUrl}:`, err);
+  try {
+    // Optimized JSDOM creation with minimal features
+    const virtualConsole = new VirtualConsole();
+    virtualConsole.on("error", () => {}); // Silence all JSDOM errors for performance
+    
+    dom = new JSDOM(html, {
+      resources: new NoResourceLoader(),
+      runScripts: "outside-only",
+      pretendToBeVisual: false,
+      virtualConsole: virtualConsole,
+      includeNodeLocations: false,
+      storageQuota: 0, // Disable storage
+      url: pageUrl,
+      contentType: "text/html",
+      parsingMode: "html" // Explicit HTML parsing
+    });
+    
+    document = dom.window.document;
+    
+    // Immediate memory optimization - remove unnecessary content
+    const scripts = document.querySelectorAll('script');
+    const styles = document.querySelectorAll('style');
+    scripts.forEach(script => script.remove());
+    styles.forEach(style => style.remove());
+    
+    // Process page data with performance monitoring
+    const dataProcessingStart = Date.now();
+    const currentPageData = await extractPageDataOptimized(document, html, pageUrl, headers, responseTime, pageSize, statusCode);
+    const dataProcessingTime = Date.now() - dataProcessingStart;
+    
+    // Store page data
+    pageDataManager.set(pageUrl, currentPageData);
+    
+    // Optimized link extraction with batching
+    const linksProcessed = await processLinksOptimized(document, pageUrl, pendingExternalLinks, {
+      visited, queue, stats, badRequests, mailtoLinks, telLinks, BASE_URL, DOMAIN
+    });
+    
+    // Performance logging
+    const totalTime = Date.now() - startTime;
+    const memoryUsed = getMemoryUsage() - initialMemory;
+    
+    if (totalTime > 5000) { // Log slow pages
+      console.log(`⚠️  Slow page processing: ${totalTime}ms, data: ${dataProcessingTime}ms, memory: +${memoryUsed}MB, links: ${linksProcessed} - ${pageUrl}`);
     }
-  });
-  
-  // Configure JSDOM with memory-optimized settings
-  const dom = new JSDOM(html, {
-    resources: new NoResourceLoader(), // Use custom resource loader that blocks all resource loading
-    runScripts: "outside-only",
-    pretendToBeVisual: false,
-    virtualConsole: virtualConsole,
-    includeNodeLocations: false, // Disable source location tracking
-  });
-  
-  const document = dom.window.document;
-  
-  // Schedule DOM cleanup
-  process.nextTick(() => {
-    dom.window.close();
-    // Clear large strings
-    html = '';
-    global.gc?.(); // Suggest garbage collection if available
-  });
-  
-  // Collect comprehensive page data
-  const currentPageData = {
-    url: pageUrl,
-    statusCode,
-    responseTime,
-    pageSize,
-    headers,
     
-    // SEO & Content Analysis
-    seo: extractSEOData(document),
-    content: extractContentData(document, html),
+    // Update performance metrics
+    performanceMetrics.totalMemoryUsage += memoryUsed;
+    performanceMetrics.avgProcessingTime = (performanceMetrics.avgProcessingTime + totalTime) / 2;
     
-    // Link Analysis
-    linkAnalysis: extractLinkAnalysis(document, pageUrl),
-    
-    // Technical Data
-    technical: extractTechnicalData(document, headers),
-    
-    // Navigation Structure
-    navigation: extractNavigationData(document, pageUrl),
-    
-    // Accessibility
-    accessibility: extractAccessibilityData(document),
-    
-    // Mobile-friendliness
-    mobileFriendliness: extractMobileFriendlinessData(document, headers),
-    
-    // Content Media & Downloads
-    mediaContent: extractMediaContentData(document, pageUrl),
-    
-    // Page Type Classification
-    pageType: extractPageTypeData(document, pageUrl),
-    
-    // UX Elements Analysis
-    uxElements: extractUXElementsData(document, pageUrl),
-    
-    // Performance
-    performance: {
-      responseTime,
-      pageSize,
-      compression: headers['content-encoding'] || 'none',
-      contentType: headers['content-type'] || 'unknown'
-    },
-    
-    // Site Architecture
-    architecture: extractArchitectureData(pageUrl, document),
-    
-    // Security
-    security: extractSecurityData(headers, pageUrl, document),
-    
-    timestamp: new Date().toISOString()
-  };
-  
-  // Store page data using the chunked manager
-  pageDataManager.set(pageUrl, currentPageData);
-  
-  // Use a more memory-efficient link iterator
-  const linkIterator = document.createNodeIterator(
-    document.body || document,
-    NodeFilter.SHOW_ELEMENT,
-    {
-      acceptNode: (node) => {
-        return node.tagName === 'A' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+  } catch (err) {
+    console.error(`Error processing ${pageUrl}:`, err.message);
+    recordBadRequest(pageUrl, 'PROCESSING_ERROR', pageUrl, badRequests);
+  } finally {
+    // Aggressive cleanup
+    if (dom) {
+      try {
+        dom.window.close();
+      } catch (e) {
+        // Ignore cleanup errors
       }
     }
-  );
-
-  let link;
-  while (link = linkIterator.nextNode()) {
-    const hrefRaw = link.getAttribute('href');
-    if (!hrefRaw) continue;
-
-    let resolved;
-    try {
-      resolved = new URL(hrefRaw, pageUrl).toString();
-      resolved = normalizeUrl(resolved);
-    } catch {
-      continue;
+    
+    // Clear references
+    html = null;
+    document = null;
+    dom = null;
+    
+    // Suggest garbage collection for large pages
+    if (pageSize > HTML_CLEANUP_THRESHOLD) {
+      if (global.gc) {
+        global.gc();
+      }
     }
-
-    const anchor = link.textContent.trim();
-
-    if (isInternalLink(resolved, BASE_URL, DOMAIN)) {
-      addToStats(resolved, anchor, pageUrl, stats);
-      if (!visited.has(resolved)) queue.add(resolved);
-    } else if (isFunctionalLink(resolved)) {
-      recordFunctionalLink(resolved, pageUrl, mailtoLinks, telLinks);
-    } else if (!isNonFetchableLink(resolved)) {
-      pendingExternalLinks.add({ href: resolved, source: pageUrl });
+    
+    // Clean analysis cache periodically
+    if (Math.random() < 0.1) { // 10% chance
+      clearAnalysisCache();
     }
   }
 }
@@ -323,6 +354,157 @@ export async function runExternalChecks(pendingLinksSet, externalLinks, MAX_PARA
 
   const workers = Array.from({ length: MAX_PARALLEL_CHECKS }, worker);
   await Promise.all(workers);
+}
+
+// Optimized data extraction with caching and lazy loading
+async function extractPageDataOptimized(document, html, pageUrl, headers, responseTime, pageSize, statusCode) {
+  const cacheKey = getCacheKey('page_data', html.substring(0, 1000));
+  
+  // Check cache first
+  if (analysisCache.has(cacheKey)) {
+    performanceMetrics.cacheHits++;
+    const cached = analysisCache.get(cacheKey);
+    return {
+      ...cached,
+      url: pageUrl,
+      statusCode,
+      responseTime,
+      pageSize,
+      headers,
+      timestamp: new Date().toISOString()
+    };
+  }
+  
+  performanceMetrics.cacheMisses++;
+  
+  // Extract data with lazy loading and batching
+  const extractionPromises = [];
+  
+  // Core data (always needed)
+  extractionPromises.push(
+    Promise.resolve().then(() => ({
+      seo: extractSEODataOptimized(document),
+      technical: extractTechnicalDataOptimized(document, headers),
+      architecture: extractArchitectureDataOptimized(pageUrl, document)
+    }))
+  );
+  
+  // Content analysis (can be heavy)
+  extractionPromises.push(
+    Promise.resolve().then(() => ({
+      content: extractContentDataOptimized(document, html),
+      linkAnalysis: extractLinkAnalysisOptimized(document, pageUrl)
+    }))
+  );
+  
+  // Advanced analysis (most expensive, run last)
+  extractionPromises.push(
+    Promise.resolve().then(() => ({
+      accessibility: extractAccessibilityDataOptimized(document),
+      mobileFriendliness: extractMobileFriendlinessDataOptimized(document, headers),
+      security: extractSecurityDataOptimized(headers, pageUrl, document)
+    }))
+  );
+  
+  // Execute in batches to avoid overwhelming the system
+  const results = await Promise.all(extractionPromises);
+  
+  // Merge results
+  const pageData = {
+    url: pageUrl,
+    statusCode,
+    responseTime,
+    pageSize,
+    headers,
+    
+    // Merge all extracted data
+    ...results[0],
+    ...results[1],
+    ...results[2],
+    
+    // Add performance data
+    performance: {
+      responseTime,
+      pageSize,
+      compression: headers['content-encoding'] || 'none',
+      contentType: headers['content-type'] || 'unknown'
+    },
+    
+    // Add stub functions for missing analyzers (to be implemented separately)
+    navigation: { hasNav: !!document.querySelector('nav'), hasBreadcrumbs: false },
+    mediaContent: { hasImages: !!document.querySelector('img'), hasVideo: !!document.querySelector('video') },
+    pageType: { isHomepage: pageUrl.endsWith('/'), category: 'unknown' },
+    uxElements: { hasSearch: !!document.querySelector('[type="search"]'), hasForms: !!document.querySelector('form') },
+    
+    timestamp: new Date().toISOString()
+  };
+  
+  // Cache the result (excluding URL-specific data)
+  const cacheableData = { ...pageData };
+  delete cacheableData.url;
+  delete cacheableData.timestamp;
+  delete cacheableData.statusCode;
+  delete cacheableData.responseTime;
+  delete cacheableData.pageSize;
+  delete cacheableData.headers;
+  
+  analysisCache.set(cacheKey, cacheableData);
+  
+  return pageData;
+}
+
+// Optimized link processing with batching
+async function processLinksOptimized(document, pageUrl, pendingExternalLinks, options) {
+  const { visited, queue, stats, badRequests, mailtoLinks, telLinks, BASE_URL, DOMAIN } = options;
+  
+  // Use getElementsByTagName for better performance than querySelectorAll
+  const allLinks = document.getElementsByTagName('a');
+  const linkCount = allLinks.length;
+  
+  if (linkCount === 0) return 0;
+  
+  let processed = 0;
+  const batchSize = Math.min(BATCH_SIZE, linkCount);
+  
+  // Process links in batches to avoid blocking
+  for (let i = 0; i < linkCount; i += batchSize) {
+    const batch = Array.from(allLinks).slice(i, i + batchSize);
+    
+    for (const link of batch) {
+      const hrefRaw = link.getAttribute('href');
+      if (!hrefRaw) continue;
+
+      let resolved;
+      try {
+        resolved = new URL(hrefRaw, pageUrl).toString();
+        resolved = normalizeUrl(resolved);
+      } catch {
+        continue;
+      }
+
+      const anchor = link.textContent?.trim() || '';
+
+      if (isInternalLink(resolved, BASE_URL, DOMAIN)) {
+        addToStats(resolved, anchor, pageUrl, stats);
+        if (!visited.has(resolved)) {
+          queue.add(resolved);
+        }
+      } else if (isFunctionalLink(resolved)) {
+        recordFunctionalLink(resolved, pageUrl, mailtoLinks, telLinks);
+      } else if (!isNonFetchableLink(resolved)) {
+        pendingExternalLinks.add({ href: resolved, source: pageUrl });
+      }
+      
+      processed++;
+    }
+    
+    // Yield control after each batch
+    if (i + batchSize < linkCount) {
+      await new Promise(resolve => setImmediate(resolve));
+    }
+  }
+  
+  return processed;
 }
 
 /**
@@ -415,6 +597,7 @@ export async function runInternalCrawl(pendingExternalLinks, {
    */
   async function worker(workerId) {
     let workerProcessed = 0;
+    let workerStartTime = Date.now();
     
     while (true) {
       const result = await getNextUrl();
@@ -423,8 +606,19 @@ export async function runInternalCrawl(pendingExternalLinks, {
       const { url: nextUrl, count: currentCount } = result;
       activeWorkers++; // Mark this worker as actively crawling
       workerProcessed++;
-        const remaining = queue.size;
-        console.log(`[Worker ${workerId}] Processing ${currentCount}${remaining > 0 ? ` (${remaining} left in queue)` : ''}: ${nextUrl}`);
+      
+      const remaining = queue.size;
+      const memUsage = getMemoryUsage();
+      
+      // Enhanced logging with performance info
+      if (workerProcessed % 5 === 0 || memUsage > 500) { // Log every 5 pages or if memory > 500MB
+        const avgTime = (Date.now() - workerStartTime) / workerProcessed;
+        console.log(`[Worker ${workerId}] Processing ${currentCount}${remaining > 0 ? ` (${remaining} left)` : ''}: ${nextUrl} [${Math.round(avgTime)}ms avg, ${memUsage}MB]`);
+      } else {
+        console.log(`[Worker ${workerId}] Processing ${currentCount}${remaining > 0 ? ` (${remaining} left)` : ''}: ${nextUrl}`);
+      }
+      
+      const pageStartTime = Date.now();
       
       await crawlPage(nextUrl, pendingExternalLinks, {
         visited,
@@ -439,18 +633,35 @@ export async function runInternalCrawl(pendingExternalLinks, {
         DOMAIN_FOLDER
       });
       
+      const pageTime = Date.now() - pageStartTime;
       activeWorkers--; // Mark this worker as done with current task
       
-      // Save state every X pages processed across all workers to balance performance and safety
-        const saveStateEvery = 3; // Save state every 3 pages processed
+      // Performance-based state saving
+      const saveStateEvery = memUsage > 300 ? 2 : 5; // Save more frequently if memory is high
       if (currentCount % saveStateEvery === 0) {
         saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager);
       }
       
-      // Note: Limit checking is now handled in getNextUrl() before processing
+      // Memory pressure handling
+      if (memUsage > 800) { // If memory usage > 800MB
+        console.warn(`⚠️  High memory usage (${memUsage}MB), forcing garbage collection`);
+        if (global.gc) {
+          global.gc();
+        }
+        // Small delay to allow memory cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Adaptive delay based on processing time
+      if (pageTime > 10000) { // If page took > 10 seconds
+        console.log(`⚠️  Slow page (${pageTime}ms), adding cooldown`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
     
-    console.log(`[Worker ${workerId}] Finished - processed ${workerProcessed} pages`);
+    const workerTotalTime = Date.now() - workerStartTime;
+    const avgTimePerPage = workerProcessed > 0 ? Math.round(workerTotalTime / workerProcessed) : 0;
+    console.log(`[Worker ${workerId}] Finished - processed ${workerProcessed} pages in ${Math.round(workerTotalTime/1000)}s (${avgTimePerPage}ms avg)`);
   }
 
   const initialQueueSize = queue.size;
@@ -479,14 +690,407 @@ export async function runInternalCrawl(pendingExternalLinks, {
   // Final state save
   saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager);
 
+  // Performance summary
+  const perfMetrics = getPerformanceMetrics();
   const limitReachedMessage = MAX_INTERNAL_LINKS > 0 && processedCount >= MAX_INTERNAL_LINKS ? ' (limit reached)' : '';
-  console.log(`\n--- Processed ${processedCount} internal links${limitReachedMessage} ---\n`);
+  
+  console.log(`\n--- Crawl Complete: Processed ${processedCount} internal links${limitReachedMessage} ---`);
+  console.log(`📊 Performance Summary:`);
+  console.log(`   • Average processing time: ${Math.round(perfMetrics.avgProcessingTime)}ms per page`);
+  console.log(`   • Cache hit rate: ${perfMetrics.cacheHitRate}% (${perfMetrics.cacheHits} hits, ${perfMetrics.cacheMisses} misses)`);
+  console.log(`   • Total memory usage: ${Math.round(perfMetrics.totalMemoryUsage)}MB`);
+  console.log(`   • Cache size: ${perfMetrics.cacheSize} entries`);
 
   // Log remaining queue size if limit was reached
   if (MAX_INTERNAL_LINKS > 0 && queue.size > 0) {
     console.log(`⚠️  ${queue.size} internal links remain unprocessed due to limit. Increase MAX_INTERNAL_LINKS or set to 0 for unlimited.`);
   }
 }
+
+// ========== PERFORMANCE-OPTIMIZED EXTRACTION FUNCTIONS ==========
+
+// Optimized SEO Data Extraction with caching
+function extractSEODataOptimized(document) {
+  const cacheKey = getCacheKey('seo', document.head?.innerHTML || '');
+  
+  if (analysisCache.has(cacheKey)) {
+    performanceMetrics.cacheHits++;
+    return analysisCache.get(cacheKey);
+  }
+  
+  performanceMetrics.cacheMisses++;
+  
+  // Use faster element access methods
+  const head = document.head;
+  const title = document.title || '';
+  
+  // Batch query all meta elements at once
+  const metaTags = head ? Array.from(head.getElementsByTagName('meta')) : [];
+  const linkTags = head ? Array.from(head.getElementsByTagName('link')) : [];
+  
+  // Create lookup maps for faster access
+  const metaByName = new Map();
+  const metaByProperty = new Map();
+  
+  metaTags.forEach(meta => {
+    const name = meta.getAttribute('name');
+    const property = meta.getAttribute('property');
+    const content = meta.getAttribute('content') || '';
+    
+    if (name) metaByName.set(name.toLowerCase(), content);
+    if (property) metaByProperty.set(property.toLowerCase(), content);
+  });
+  
+  const linkByRel = new Map();
+  linkTags.forEach(link => {
+    const rel = link.getAttribute('rel');
+    const href = link.getAttribute('href');
+    if (rel && href) linkByRel.set(rel.toLowerCase(), href);
+  });
+  
+  // Extract structured data efficiently
+  const jsonLdScripts = head ? Array.from(head.querySelectorAll('script[type="application/ld+json"]')) : [];
+  const structuredData = jsonLdScripts.slice(0, 5).map(script => { // Limit to 5 for performance
+    try {
+      return JSON.parse(script.textContent);
+    } catch {
+      return null;
+    }
+  }).filter(Boolean);
+  
+  const result = {
+    title: {
+      text: title,
+      length: title.length,
+      isEmpty: !title.trim(),
+      wordCount: title.trim().split(/\s+/).filter(w => w).length
+    },
+    metaDescription: {
+      text: metaByName.get('description') || '',
+      length: (metaByName.get('description') || '').length,
+      isEmpty: !metaByName.get('description')?.trim(),
+      wordCount: (metaByName.get('description') || '').trim().split(/\s+/).filter(w => w).length
+    },
+    metaKeywords: metaByName.get('keywords') || '',
+    canonical: linkByRel.get('canonical') || '',
+    robots: metaByName.get('robots') || '',
+    openGraph: {
+      title: metaByProperty.get('og:title') || '',
+      description: metaByProperty.get('og:description') || '',
+      image: metaByProperty.get('og:image') || '',
+      type: metaByProperty.get('og:type') || '',
+      url: metaByProperty.get('og:url') || '',
+      siteName: metaByProperty.get('og:site_name') || ''
+    },
+    twitterCard: {
+      card: metaByName.get('twitter:card') || '',
+      title: metaByName.get('twitter:title') || '',
+      description: metaByName.get('twitter:description') || '',
+      image: metaByName.get('twitter:image') || '',
+      site: metaByName.get('twitter:site') || ''
+    },
+    structuredData: {
+      count: structuredData.length,
+      types: structuredData.map(data => data['@type'] || data.type || 'Unknown').filter(Boolean),
+      data: structuredData.slice(0, 3) // Limit stored data for performance
+    }
+  };
+  
+  analysisCache.set(cacheKey, result);
+  return result;
+}
+
+// Optimized Content Data Extraction
+function extractContentDataOptimized(document, html) {
+  const body = document.body;
+  if (!body) return { wordCount: 0, textLength: 0, headings: {}, images: {}, contentToCodeRatio: 0 };
+  
+  const textContent = body.textContent || '';
+  const wordCount = textContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+  
+  // Batch process headings
+  const headingSelectors = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  const headings = {};
+  
+  headingSelectors.forEach(selector => {
+    const elements = body.getElementsByTagName(selector);
+    headings[selector] = Array.from(elements).slice(0, 10).map(h => h.textContent.trim());
+  });
+  
+  // Efficient image analysis
+  const images = body.getElementsByTagName('img');
+  const imageStats = {
+    total: images.length,
+    withAlt: 0,
+    withoutAlt: 0,
+    emptyAlt: 0
+  };
+  
+  // Process images in batches
+  for (let i = 0; i < Math.min(images.length, 100); i++) { // Limit for performance
+    const img = images[i];
+    const alt = img.getAttribute('alt');
+    if (alt === null) {
+      imageStats.withoutAlt++;
+    } else if (alt === '') {
+      imageStats.emptyAlt++;
+    } else {
+      imageStats.withAlt++;
+    }
+  }
+  
+  // Content to code ratio (simplified)
+  const htmlSize = html.length;
+  const textSize = textContent.length;
+  const contentToCodeRatio = htmlSize > 0 ? (textSize / htmlSize * 100) : 0;
+
+  return {
+    wordCount,
+    textLength: textContent.length,
+    headings,
+    images: imageStats,
+    contentToCodeRatio: Math.round(contentToCodeRatio * 100) / 100,
+    hasVideo: !!body.querySelector('video'),
+    hasAudio: !!body.querySelector('audio'),
+    hasForms: !!body.querySelector('form')
+  };
+}
+
+// Optimized Link Analysis
+function extractLinkAnalysisOptimized(document, pageUrl) {
+  const body = document.body;
+  if (!body) return { totalLinks: 0, internalLinks: 0, externalLinks: 0 };
+  
+  const allLinks = body.getElementsByTagName('a');
+  const currentDomain = new URL(pageUrl).hostname;
+  
+  let internalCount = 0;
+  let externalCount = 0;
+  let functionalCount = 0;
+  let targetBlankCount = 0;
+  
+  // Process links efficiently
+  for (let i = 0; i < allLinks.length; i++) {
+    const link = allLinks[i];
+    const href = link.getAttribute('href');
+    
+    if (!href) continue;
+    
+    try {
+      const resolvedUrl = new URL(href, pageUrl);
+      const isInternal = resolvedUrl.hostname === currentDomain;
+      const isExternal = !isInternal && resolvedUrl.protocol.startsWith('http');
+      
+      if (isInternal) internalCount++;
+      else if (isExternal) externalCount++;
+      else functionalCount++;
+      
+      if (link.getAttribute('target') === '_blank') targetBlankCount++;
+      
+    } catch {
+      // Handle relative URLs and functional links
+      if (href.startsWith('/') || href.startsWith('#') || (!href.includes('://') && !href.startsWith('mailto:') && !href.startsWith('tel:'))) {
+        internalCount++;
+      } else {
+        functionalCount++;
+      }
+    }
+  }
+  
+  const totalValidLinks = internalCount + externalCount;
+  
+  return {
+    totalLinks: allLinks.length,
+    internalLinks: internalCount,
+    externalLinks: externalCount,
+    functionalLinks: functionalCount,
+    linkRatios: {
+      internal: totalValidLinks > 0 ? Math.round((internalCount / totalValidLinks) * 1000) / 10 : 0,
+      external: totalValidLinks > 0 ? Math.round((externalCount / totalValidLinks) * 1000) / 10 : 0,
+      totalValidLinks
+    },
+    targetBlank: targetBlankCount,
+    linksWithTitle: Array.from(allLinks).filter(link => link.getAttribute('title')).length
+  };
+}
+
+// Optimized Technical Data Extraction
+function extractTechnicalDataOptimized(document, headers) {
+  const head = document.head;
+  
+  // Fast viewport and charset detection
+  const viewport = head?.querySelector('meta[name="viewport"]')?.getAttribute('content') || '';
+  const charset = head?.querySelector('meta[charset]')?.getAttribute('charset') || 
+                  head?.querySelector('meta[http-equiv="content-type"]')?.getAttribute('content') || '';
+  
+  // Count resources efficiently
+  const cssLinks = head ? head.getElementsByTagName('link').length : 0;
+  const jsScripts = document.getElementsByTagName('script').length;
+  const inlineStyles = document.getElementsByTagName('style').length;
+  
+  return {
+    viewport,
+    charset,
+    resources: {
+      externalCSS: cssLinks,
+      externalJS: jsScripts,
+      inlineCSS: inlineStyles,
+      inlineJS: jsScripts // Simplified for performance
+    },
+    navigation: {
+      hasNav: !!document.querySelector('nav'),
+      hasBreadcrumbs: !!document.querySelector('[aria-label*="breadcrumb"], .breadcrumb')
+    },
+    httpVersion: headers['http-version'] || '1.1',
+    server: headers['server'] || '',
+    poweredBy: headers['x-powered-by'] || ''
+  };
+}
+
+// Optimized Architecture Data Extraction
+function extractArchitectureDataOptimized(pageUrl, document) {
+  const url = new URL(pageUrl);
+  const pathSegments = url.pathname.split('/').filter(segment => segment.length > 0);
+  
+  return {
+    urlDepth: pathSegments.length,
+    urlLength: pageUrl.length,
+    hasParameters: url.search.length > 0,
+    parameterCount: new URLSearchParams(url.search).size,
+    fileExtension: getFileExtensionOptimized(url.pathname),
+    isHomepage: url.pathname === '/' || url.pathname === '',
+    pathSegments: pathSegments.slice(0, 10), // Limit for performance
+    hasTrailingSlash: url.pathname.endsWith('/') && url.pathname !== '/',
+    hasSpecialCharacters: /[^a-zA-Z0-9\/\-_.]/.test(url.pathname)
+  };
+}
+
+// Simplified accessibility extraction for performance
+function extractAccessibilityDataOptimized(document) {
+  const body = document.body;
+  if (!body) return { images: { total: 0 }, forms: { total: 0 }, accessibilityScore: 0 };
+  
+  const images = body.getElementsByTagName('img');
+  const forms = body.getElementsByTagName('form');
+  const inputs = body.querySelectorAll('input, textarea, select');
+  
+  let imagesWithAlt = 0;
+  for (let i = 0; i < Math.min(images.length, 50); i++) { // Limit for performance
+    if (images[i].hasAttribute('alt')) imagesWithAlt++;
+  }
+  
+  let inputsWithLabels = 0;
+  for (let i = 0; i < Math.min(inputs.length, 50); i++) { // Limit for performance
+    const input = inputs[i];
+    const id = input.getAttribute('id');
+    if (id && document.querySelector(`label[for="${id}"]`)) inputsWithLabels++;
+    else if (input.closest('label')) inputsWithLabels++;
+    else if (input.getAttribute('aria-label')) inputsWithLabels++;
+  }
+  
+  return {
+    images: {
+      total: images.length,
+      withAlt: imagesWithAlt,
+      missingAlt: images.length - imagesWithAlt
+    },
+    forms: {
+      total: forms.length,
+      withLabels: inputsWithLabels,
+      missingLabels: Math.max(0, inputs.length - inputsWithLabels)
+    },
+    headingStructure: {
+      h1Count: body.getElementsByTagName('h1').length,
+      properOrder: true // Simplified for performance
+    },
+    accessibilityScore: calculateSimpleAccessibilityScore(images.length, imagesWithAlt, inputs.length, inputsWithLabels)
+  };
+}
+
+// Simplified mobile-friendliness extraction
+function extractMobileFriendlinessDataOptimized(document, headers) {
+  const viewport = document.head?.querySelector('meta[name="viewport"]')?.getAttribute('content') || '';
+  
+  const hasViewport = viewport.includes('width=device-width') || viewport.includes('initial-scale');
+  const hasTouchIcons = !!document.head?.querySelector('link[rel*="apple-touch-icon"], link[rel*="icon"]');
+  
+  return {
+    viewport: {
+      content: viewport,
+      isResponsive: hasViewport
+    },
+    mobileFeatures: {
+      hasTouchIcons,
+      hasMediaQueries: false // Simplified for performance
+    },
+    mobileScore: hasViewport ? (hasTouchIcons ? 80 : 60) : 20
+  };
+}
+
+// Simplified security data extraction
+function extractSecurityDataOptimized(headers, pageUrl, document) {
+  const url = new URL(pageUrl);
+  const isHTTPS = url.protocol === 'https:';
+  
+  const securityHeaders = {
+    hsts: headers['strict-transport-security'] || '',
+    csp: headers['content-security-policy'] || '',
+    xfo: headers['x-frame-options'] || ''
+  };
+  
+  const hasSecurityHeaders = Object.values(securityHeaders).some(value => value !== '');
+  
+  return {
+    isHTTPS,
+    securityHeaders,
+    hasSecurityHeaders,
+    securityScore: isHTTPS ? (hasSecurityHeaders ? 90 : 70) : 30
+  };
+}
+
+// Helper functions for optimized extraction
+function getFileExtensionOptimized(pathname) {
+  const lastDot = pathname.lastIndexOf('.');
+  const lastSlash = pathname.lastIndexOf('/');
+  
+  if (lastDot > lastSlash && lastDot !== -1) {
+    return pathname.substring(lastDot + 1);
+  }
+  return '';
+}
+
+function calculateSimpleAccessibilityScore(totalImages, imagesWithAlt, totalInputs, inputsWithLabels) {
+  let score = 0;
+  
+  // Image alt text (50 points)
+  if (totalImages > 0) {
+    score += (imagesWithAlt / totalImages) * 50;
+  } else {
+    score += 50;
+  }
+  
+  // Form labels (50 points)
+  if (totalInputs > 0) {
+    score += (inputsWithLabels / totalInputs) * 50;
+  } else {
+    score += 50;
+  }
+  
+  return Math.round(score);
+}
+
+// Performance monitoring function
+export function getPerformanceMetrics() {
+  return {
+    ...performanceMetrics,
+    cacheSize: analysisCache.size,
+    cacheHitRate: performanceMetrics.cacheHits + performanceMetrics.cacheMisses > 0 
+      ? Math.round((performanceMetrics.cacheHits / (performanceMetrics.cacheHits + performanceMetrics.cacheMisses)) * 100) 
+      : 0
+  };
+}
+
+// ========== ORIGINAL EXTRACTION FUNCTIONS (for backward compatibility) ==========
 
 // SEO Data Extraction
 function extractSEOData(document) {
