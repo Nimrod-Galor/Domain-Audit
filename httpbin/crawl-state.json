@@ -1,0 +1,47 @@
+{
+  "visited": [
+    "https://httpbin.org",
+    "https://httpbin.org/forms/post"
+  ],
+  "queue": [],
+  "stats": {
+    "https://httpbin.org/forms/post": {
+      "count": 1,
+      "anchors": [
+        "HTML form"
+      ],
+      "sources": [
+        "https://httpbin.org"
+      ]
+    }
+  },
+  "badRequests": {},
+  "externalLinks": {
+    "https://kennethreitz.org": {
+      "status": 200,
+      "sources": [
+        "https://httpbin.org"
+      ]
+    },
+    "https://github.com/requests/httpbin": {
+      "status": 200,
+      "sources": [
+        "https://httpbin.org"
+      ]
+    },
+    "https://github.com/rochacbruno/flasgger": {
+      "status": 200,
+      "sources": [
+        "https://httpbin.org"
+      ]
+    }
+  },
+  "mailtoLinks": {
+    "mailto:me@kennethreitz.org": {
+      "sources": [
+        "https://httpbin.org"
+      ]
+    }
+  },
+  "telLinks": {}
+}

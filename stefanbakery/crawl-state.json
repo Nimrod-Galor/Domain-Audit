@@ -1,0 +1,514 @@
+{
+  "visited": [
+    "https://www.stefanbakery.com",
+    "https://www.stefanbakery.com/bakery",
+    "https://www.stefanbakery.com/gelato",
+    "https://www.stefanbakery.com/fest",
+    "https://www.stefanbakery.com/about",
+    "https://www.stefanbakery.com/menu",
+    "https://www.stefanbakery.com/media",
+    "https://www.stefanbakery.com/contact",
+    "https://www.stefanbakery.com/AccessabilityDeclaration"
+  ],
+  "queue": [],
+  "stats": {
+    "https://www.stefanbakery.com/bakery": {
+      "count": 19,
+      "anchors": [
+        "בייקרי אוסטרי",
+        "קרא עוד על בייקרי אוסטריהמשך קריאה",
+        "אודות שטפן בייקרי"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/gelato": {
+      "count": 10,
+      "anchors": [
+        "גלידת שף",
+        "קרא עוד על גלידת שףהמשך קריאה"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/fest": {
+      "count": 10,
+      "anchors": [
+        "אירועים",
+        "לפרטים נוספיםקראו עוד על אירועים"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/about": {
+      "count": 19,
+      "anchors": [
+        "שטפן מאכר",
+        "קרא עוד על שטפן מאכרהמשך קריאה",
+        "אודות שטפן מאכר"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/menu": {
+      "count": 10,
+      "anchors": [
+        "תפריט",
+        "לתפריט שלנו"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/media": {
+      "count": 9,
+      "anchors": [
+        "כתבו עלינו"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/contact": {
+      "count": 9,
+      "anchors": [
+        "יצירת קשר"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com": {
+      "count": 18,
+      "anchors": [
+        "",
+        "שטפן בייקרי"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.stefanbakery.com/AccessabilityDeclaration": {
+      "count": 9,
+      "anchors": [
+        ".st0 {\n        fill: #3B4149;\n    }\n\n\n\n    \n        \n        \n\n    \n       \n\n\n\n\n\n                                        הצהרת נגישות"
+      ],
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    }
+  },
+  "badRequests": {},
+  "externalLinks": {
+    "https://wolt.com/en/isr/tel-aviv/restaurant/stefan-gelat": {
+      "status": 404,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://tabitisrael.co.il/tabit-order?siteName=stefangelato&step=enter": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.instagram.com/stefan_austrian_bakery": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://m.facebook.com/stefanaustrianbakery": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378729.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://www.tabitorder.com/?siteName=stefangelato#/start": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378728.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378727.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378725.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378724.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378723.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378722.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378726.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378720.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://media.getmood.io/warehouse/dynamic/378721.jpg": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com"
+      ]
+    },
+    "https://www.waze.com/en/live-map/directions/%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95?place=6924.21": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "http://rspecial.co.il": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://food.walla.co.il/item/3653061": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://13tv.co.il/item/yummies/food-news/ywt46-904002980": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://food.walla.co.il/item/3445338": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.yediot.co.il/articles/0,7340,L-5517979,00.html": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.haaretz.co.il/food/food-news/2019-04-04/ty-article-magazine/.premium/0000017f-f3fe-d223-a97f-ffff68420000": {
+      "status": 405,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.mako.co.il/food-restaurants/restaurant-news/Article-037a114c67c4e81026.htm": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://13tv.co.il/item/yummies/food-articles/u8ogm-1032957": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://food.walla.co.il/item/3229982": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.israelhayom.co.il/food/food-news/article/13043899": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://lizlol.co.il/ice-cream-knoedel-11159": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.mako.co.il/food-masterchef/season9-articles/Article-84d5693348f7671026.htm": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.secrettelaviv.com/magazine/blog/toptens/%D7%9E%D7%90%D7%A4%D7%99%D7%95%D7%AA-%D7%94%D7%9B%D7%99-%D7%A9%D7%95%D7%95%D7%AA-%D7%91%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.haaretz.co.il/literature/tarbut-sifrot/2024-07-15/ty-article/.premium/00000190-b67a-d7b7-add8-fffbe6f80000": {
+      "status": 405,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://passportnews.co.il/article/192336": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://timeout.co.il/%D7%94%D7%A2%D7%99%D7%A8-%D7%A9%D7%9C-%D7%A9%D7%98%D7%A4%D7%9F-%D7%9E%D7%90%D7%9B%D7%A8": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-%D7%A2%D7%95%D7%92%D7%AA-%D7%92%D7%9C%D7%99%D7%93%D7%94": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-2": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/media"
+      ]
+    },
+    "https://www.nagich.co.il": {
+      "status": 403,
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.nagich.co.il/html5/sbs.py?_id=8684&did=5905&G=8684": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://www.facebook.com/help/273947702950567": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://help.instagram.com/1178723545597542": {
+      "status": 200,
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://support.google.com/youtube/answer/189278?hl=en": {
+      "status": 404,
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "https://help.twitter.com/en/using-twitter/picture-descriptions": {
+      "status": 403,
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    }
+  },
+  "mailtoLinks": {
+    "mailto:Stefanaustrianbakery@gmail.com": {
+      "sources": [
+        "https://www.stefanbakery.com/contact"
+      ]
+    },
+    "mailto:Alon.keren1@gmail.com": {
+      "sources": [
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    }
+  },
+  "telLinks": {
+    "tel:03-6799788": {
+      "sources": [
+        "https://www.stefanbakery.com",
+        "https://www.stefanbakery.com/bakery",
+        "https://www.stefanbakery.com/gelato",
+        "https://www.stefanbakery.com/fest",
+        "https://www.stefanbakery.com/about",
+        "https://www.stefanbakery.com/menu",
+        "https://www.stefanbakery.com/media",
+        "https://www.stefanbakery.com/contact",
+        "https://www.stefanbakery.com/AccessabilityDeclaration"
+      ]
+    },
+    "tel:036799788": {
+      "sources": [
+        "https://www.stefanbakery.com/fest"
+      ]
+    }
+  }
+}

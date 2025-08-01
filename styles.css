@@ -1,0 +1,218 @@
+/* Domain Link Audit Report Styles */
+
+/* Base styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+h1 {
+  color: #333;
+}
+
+h2 {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+/* Table styles */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #eee;
+}
+
+/* Status indicators */
+.status-ok {
+  color: green;
+  font-weight: bold;
+}
+
+.status-broken {
+  color: red;
+  font-weight: bold;
+}
+
+.status-timeout {
+  color: orange;
+  font-weight: bold;
+}
+
+/* Link styles */
+a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Summary section styles */
+.summary-container {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-title {
+  margin-top: 0;
+  color: #495057;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.summary-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.summary-card {
+  text-align: center;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.summary-card-internal {
+  border-left: 4px solid #007bff;
+}
+
+.summary-card-external {
+  border-left: 4px solid #6f42c1;
+}
+
+.summary-card-error-red {
+  border-left: 4px solid #dc3545;
+}
+
+.summary-card-error-green {
+  border-left: 4px solid #28a745;
+}
+
+.summary-card-email {
+  border-left: 4px solid #17a2b8;
+}
+
+.summary-card-phone {
+  border-left: 4px solid #fd7e14;
+}
+
+.summary-number {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.summary-number-internal {
+  color: #007bff;
+}
+
+.summary-number-external {
+  color: #6f42c1;
+}
+
+.summary-number-error-red {
+  color: #dc3545;
+}
+
+.summary-number-error-green {
+  color: #28a745;
+}
+
+.summary-number-email {
+  color: #17a2b8;
+}
+
+.summary-number-phone {
+  color: #fd7e14;
+}
+
+.summary-label {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* Accordion styles */
+.accordion-toggle {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  user-select: none;
+}
+
+.accordion-toggle:hover {
+  background: #e9ecef;
+}
+
+.accordion-toggle::before {
+  content: '▶ ';
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.accordion-toggle.open {
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 0;
+}
+
+.accordion-toggle.open::before {
+  content: '▼ ';
+}
+
+.accordion-content {
+  display: none;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+}
+
+.accordion-content.show {
+  display: block;
+}
+
+.source-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.source-list li {
+  margin-bottom: 5px;
+  word-break: break-all;
+}
+
+/* Footer styles */
+.report-footer {
+  color: #888;
+  font-size: 13px;
+  margin-bottom: 10px;
+}

@@ -1,0 +1,104 @@
+Looking at your crawler, there are many valuable data points that could be collected during the crawl process. Here are some additional data categories that would provide deeper insights:
+
+## 📊 **SEO & Content Analysis**
+
+**Page Metadata:**
+- `<title>` tags (length, uniqueness, keyword analysis)
+- Meta descriptions (length, presence, duplicates)
+- Meta keywords, canonical URLs, robots directives
+- OpenGraph and Twitter Card data
+- Schema.org structured data
+
+**Content Quality:**
+- Word count per page
+- Heading structure (H1-H6 hierarchy)
+- Alt text coverage for images
+- Content-to-code ratio
+- Reading level/complexity scores
+
+## 🔗 **Advanced Link Analysis**
+
+**Link Attributes:**
+- `rel` attributes (nofollow, sponsored, ugc)
+- `target` attributes (_blank, _self)
+- Link titles and aria-labels
+- Internal vs external link ratios per page
+
+**Link Context:**
+- Link position in content (header, footer, sidebar, main content)
+- Surrounding text context
+- Link density per page section
+
+## ⚡ **Performance & Technical Data**
+
+**Page Performance:**
+- Response times for each page
+- Page size (HTML, total with resources)
+- HTTP headers analysis
+- Compression status (gzip, brotli)
+
+**Technical Health:**
+- HTTP status codes distribution
+- Redirect chains and loops
+- SSL certificate status
+- Mobile-friendliness indicators
+
+## 🛠 **Site Architecture Insights**
+
+**URL Structure:**
+- URL depth/levels from homepage
+- URL length analysis
+- Parameter usage patterns
+- URL structure consistency
+
+**Navigation Patterns:**
+- Breadcrumb presence and structure
+- Main navigation links
+- Footer link patterns
+- Pagination structures
+
+## 📱 **Content Type Analysis**
+
+**Media Content:**
+- Images without alt text
+- Video/audio content detection
+- File download links (PDFs, docs)
+- Social media embeds
+
+**Page Types:**
+- Landing pages, product pages, blog posts
+- Contact forms and conversion pages
+- Search result pages
+- 404 and error page detection
+
+## 🔒 **Security & Compliance**
+
+**Security Headers:**
+- HTTPS usage patterns
+- Security headers presence
+- Mixed content issues
+- Cookie policy compliance
+
+## 📈 **User Experience Indicators**
+
+**Accessibility:**
+- Missing alt attributes
+- Color contrast issues (basic detection)
+- Form label associations
+- ARIA attribute usage
+
+**UX Elements:**
+- Call-to-action buttons
+- Contact information presence
+- Search functionality
+- Newsletter signups
+
+Would you like me to implement any of these data collection features? I can show you how to add specific ones that would be most valuable for your use case. For example:
+
+1. **Page titles and meta descriptions** - Great for SEO audits
+2. **Response times and page sizes** - Performance optimization
+3. **Link attributes (rel, target)** - Advanced link analysis
+4. **Heading structure** - Content hierarchy analysis
+5. **Image alt text coverage** - Accessibility compliance
+
+Which areas interest you most?
