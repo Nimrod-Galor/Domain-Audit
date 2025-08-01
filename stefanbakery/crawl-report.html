@@ -2,104 +2,66 @@
     <html>
     <head>
       <title>Crawl Report for www.stefanbakery.com</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #eee; }
-        .status-ok { color: green; font-weight: bold; }
-        .status-broken { color: red; font-weight: bold; }
-        .status-timeout { color: orange; font-weight: bold; }
-        a { color: #0066cc; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        
-        /* Accordion styles */
-        .accordion-toggle {
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          padding: 8px 12px;
-          cursor: pointer;
-          border-radius: 4px;
-          margin-bottom: 5px;
-          user-select: none;
-        }
-        .accordion-toggle:hover {
-          background: #e9ecef;
-        }
-        .accordion-toggle::before {
-          content: '▶ ';
-          font-size: 12px;
-          margin-right: 5px;
-        }
-        .accordion-toggle.open::before {
-          content: '▼ ';
-        }
-        .accordion-content {
-          display: none;
-          padding: 8px;
-          background: #ffffff;
-          border: 1px solid #dee2e6;
-          border-top: none;
-          border-radius: 0 0 4px 4px;
-          margin-top: -1px;
-        }
-        .accordion-content.show {
-          display: block;
-        }
-        .source-list {
-          margin: 0;
-          padding-left: 20px;
-        }
-        .source-list li {
-          margin-bottom: 5px;
-          word-break: break-all;
-        }
-      </style>
+      <link rel="stylesheet" type="text/css" href="../styles.css">
     </head>
     <body>
       <h1>Crawl Report for www.stefanbakery.com</h1>
       
       
-    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-      <h2 style="margin-top: 0; color: #495057;">📊 Link Summary</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px; border-left: 4px solid #007bff;">
-          <div style="font-size: 28px; font-weight: bold; color: #007bff;">9</div>
-          <div style="color: #6c757d; font-size: 14px;">Internal Links</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px; border-left: 4px solid #6f42c1;">
-          <div style="font-size: 28px; font-weight: bold; color: #6f42c1;">41</div>
-          <div style="color: #6c757d; font-size: 14px;">External Links</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px; border-left: 4px solid #dc3545;">
-          <div style="font-size: 28px; font-weight: bold; color: #dc3545;">6</div>
-          <div style="color: #6c757d; font-size: 14px;">Error Links</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px; border-left: 4px solid #17a2b8;">
-          <div style="font-size: 28px; font-weight: bold; color: #17a2b8;">2</div>
-          <div style="color: #6c757d; font-size: 14px;">Email Links</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px; border-left: 4px solid #fd7e14;">
-          <div style="font-size: 28px; font-weight: bold; color: #fd7e14;">2</div>
-          <div style="color: #6c757d; font-size: 14px;">Phone Links</div>
-        </div>
+    <div class="summary-container">
+      <h2 class="summary-title">📊 Link Summary</h2>
+      <div class="summary-grid">
+        <a href="#internal-links" class="summary-card-link">
+          <div class="summary-card summary-card-internal">
+            <div class="summary-number summary-number-internal">9</div>
+            <div class="summary-label">Internal Links</div>
+          </div>
+        </a>
+        <a href="#external-links" class="summary-card-link">
+          <div class="summary-card summary-card-external">
+            <div class="summary-number summary-number-external">41</div>
+            <div class="summary-label">External Links</div>
+          </div>
+        </a>
+        <a href="#error-links" class="summary-card-link">
+          <div class="summary-card summary-card-error-red">
+            <div class="summary-number summary-number-error-red">7</div>
+            <div class="summary-label">Error Links</div>
+          </div>
+        </a>
+        <a href="#email-links" class="summary-card-link">
+          <div class="summary-card summary-card-email">
+            <div class="summary-number summary-number-email">2</div>
+            <div class="summary-label">Email Links</div>
+          </div>
+        </a>
+        <a href="#phone-links" class="summary-card-link">
+          <div class="summary-card summary-card-phone">
+            <div class="summary-number summary-number-phone">2</div>
+            <div class="summary-label">Phone Links</div>
+          </div>
+        </a>
       </div>
     </div>
   
 
-      <h2>Internal Link Statistics</h2>
+      <h2 id="internal-links">Internal Link Statistics</h2>
       <table>
     <thead><tr><th>URL</th><th>Occurrences</th><th>Anchors</th><th>Found In</th></tr></thead>
     <tbody>
       <tr>
         <td><a href="https://www.stefanbakery.com/bakery" target="_blank" rel="noopener">https://www.stefanbakery.com/bakery</a></td>
         <td>19</td>
-        <td>בייקרי אוסטרי | קרא עוד על בייקרי אוסטריהמשך קריאה | אודות שטפן בייקרי</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-0')">Show 3 anchors</div>
+         <div class="accordion-content" data-row="row-0">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>בייקרי אוסטרי</li><li>קרא עוד על בייקרי אוסטריהמשך קריאה</li><li>אודות שטפן בייקרי</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-0')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-0">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -107,11 +69,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/gelato" target="_blank" rel="noopener">https://www.stefanbakery.com/gelato</a></td>
         <td>10</td>
-        <td>גלידת שף | קרא עוד על גלידת שףהמשך קריאה</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-1')">Show 2 anchors</div>
+         <div class="accordion-content" data-row="row-1">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>גלידת שף</li><li>קרא עוד על גלידת שףהמשך קריאה</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-1')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-1">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -119,11 +86,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/fest" target="_blank" rel="noopener">https://www.stefanbakery.com/fest</a></td>
         <td>10</td>
-        <td>אירועים | לפרטים נוספיםקראו עוד על אירועים</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-2')">Show 2 anchors</div>
+         <div class="accordion-content" data-row="row-2">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>אירועים</li><li>לפרטים נוספיםקראו עוד על אירועים</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-2')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-2">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -131,11 +103,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/about" target="_blank" rel="noopener">https://www.stefanbakery.com/about</a></td>
         <td>19</td>
-        <td>שטפן מאכר | קרא עוד על שטפן מאכרהמשך קריאה | אודות שטפן מאכר</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-3')">Show 3 anchors</div>
+         <div class="accordion-content" data-row="row-3">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>שטפן מאכר</li><li>קרא עוד על שטפן מאכרהמשך קריאה</li><li>אודות שטפן מאכר</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-3')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-3">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -143,11 +120,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/menu" target="_blank" rel="noopener">https://www.stefanbakery.com/menu</a></td>
         <td>10</td>
-        <td>תפריט | לתפריט שלנו</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-4')">Show 2 anchors</div>
+         <div class="accordion-content" data-row="row-4">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>תפריט</li><li>לתפריט שלנו</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-4')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-4">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -155,11 +137,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/media" target="_blank" rel="noopener">https://www.stefanbakery.com/media</a></td>
         <td>9</td>
-        <td>כתבו עלינו</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-5')">Show 1 anchors</div>
+         <div class="accordion-content" data-row="row-5">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>כתבו עלינו</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-5')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-5">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -167,11 +154,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/contact" target="_blank" rel="noopener">https://www.stefanbakery.com/contact</a></td>
         <td>9</td>
-        <td>יצירת קשר</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-6')">Show 1 anchors</div>
+         <div class="accordion-content" data-row="row-6">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li>יצירת קשר</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-6')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-6">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -179,11 +171,16 @@
       <tr>
         <td><a href="https://www.stefanbakery.com" target="_blank" rel="noopener">https://www.stefanbakery.com</a></td>
         <td>18</td>
-        <td> | שטפן בייקרי</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-7')">Show 2 anchors</div>
+         <div class="accordion-content" data-row="row-7">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><em>empty</em></li><li>שטפן בייקרי</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-7')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-7">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -191,7 +188,10 @@
       <tr>
         <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank" rel="noopener">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
         <td>9</td>
-        <td>.st0 {
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-8')">Show 1 anchors</div>
+         <div class="accordion-content" data-row="row-8">
+           <ul class="source-list">
+             <li>.st0 {
         fill: #3B4149;
     }
 
@@ -208,45 +208,47 @@
 
 
 
-                                        הצהרת נגישות</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
+                                        הצהרת נגישות</li>
+           </ul>
+         </div></td>
+        <td><div class="accordion-toggle" onclick="toggleRowAccordions('row-8')">Show 9 sources</div>
+         <div class="accordion-content" data-row="row-8">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
     </tbody>
   </table>
 
-      <h2>Bad Internal Requests</h2>
+      <h2 id="error-links">Bad Internal Requests</h2>
       <table>
     <thead><tr><th>URL</th><th>Status</th><th>Linked From</th></tr></thead>
     <tbody></tbody>
   </table>
 
-      <h2>External Link Status</h2>
+      <h2 id="external-links">External Link Status</h2>
       <table>
     <thead><tr><th>URL</th><th>Status</th><th>Linked From</th></tr></thead>
     <tbody>
-      <tr>
-        <td><a href="https://wolt.com/en/isr/tel-aviv/restaurant/stefan-gelat" target="_blank" rel="noopener">https://wolt.com/en/isr/tel-aviv/restaurant/stefan-gelat</a></td>
-        <td class="status-broken">404</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
-           <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
-           </ul>
-         </div></td>
-      </tr>
-    
       <tr>
         <td><a href="https://tabitisrael.co.il/tabit-order?siteName=stefangelato&step=enter" target="_blank" rel="noopener">https://tabitisrael.co.il/tabit-order?siteName=stefangelato&step=enter</a></td>
         <td class="status-ok">200</td>
         <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
          <div class="accordion-content">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
+           </ul>
+         </div></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://wolt.com/en/isr/tel-aviv/restaurant/stefan-gelat" target="_blank" rel="noopener">https://wolt.com/en/isr/tel-aviv/restaurant/stefan-gelat</a></td>
+        <td class="status-broken">404</td>
+        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
+         <div class="accordion-content">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -257,26 +259,9 @@
         <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
          <div class="accordion-content">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://m.facebook.com/stefanaustrianbakery" target="_blank" rel="noopener">https://m.facebook.com/stefanaustrianbakery</a></td>
-        <td class="status-ok">200</td>
-        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
-         <div class="accordion-content">
-           <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
-           </ul>
-         </div></td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://media.getmood.io/warehouse/dynamic/378729.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378729.jpg</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
       </tr>
     
       <tr>
@@ -285,72 +270,89 @@
         <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
          <div class="accordion-content">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
     
       <tr>
+        <td><a href="https://media.getmood.io/warehouse/dynamic/378729.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378729.jpg</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
+      </tr>
+    
+      <tr>
         <td><a href="https://media.getmood.io/warehouse/dynamic/378728.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378728.jpg</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
       </tr>
     
       <tr>
         <td><a href="https://media.getmood.io/warehouse/dynamic/378727.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378727.jpg</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://media.getmood.io/warehouse/dynamic/378725.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378725.jpg</a></td>
+        <td><a href="https://m.facebook.com/stefanaustrianbakery" target="_blank" rel="noopener">https://m.facebook.com/stefanaustrianbakery</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://media.getmood.io/warehouse/dynamic/378724.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378724.jpg</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://media.getmood.io/warehouse/dynamic/378723.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378723.jpg</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://media.getmood.io/warehouse/dynamic/378722.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378722.jpg</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
+        <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
+         <div class="accordion-content">
+           <ul class="source-list">
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
+           </ul>
+         </div></td>
       </tr>
     
       <tr>
         <td><a href="https://media.getmood.io/warehouse/dynamic/378726.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378726.jpg</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://media.getmood.io/warehouse/dynamic/378720.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378720.jpg</a></td>
+        <td><a href="https://media.getmood.io/warehouse/dynamic/378725.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378725.jpg</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://media.getmood.io/warehouse/dynamic/378723.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378723.jpg</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://media.getmood.io/warehouse/dynamic/378724.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378724.jpg</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
       </tr>
     
       <tr>
         <td><a href="https://media.getmood.io/warehouse/dynamic/378721.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378721.jpg</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://www.waze.com/en/live-map/directions/%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95?place=6924.21" target="_blank" rel="noopener">https://www.waze.com/en/live-map/directions/%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95?place=6924.21</a></td>
+        <td><a href="https://media.getmood.io/warehouse/dynamic/378722.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378722.jpg</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://media.getmood.io/warehouse/dynamic/378720.jpg" target="_blank" rel="noopener">https://media.getmood.io/warehouse/dynamic/378720.jpg</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.waze.com/en/live-map/directions/%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95?place=6924.21" target="_blank" rel="noopener">https://www.waze.com/en/live-map/directions/תל-אביב-יפו?place=6924.21</a></td>
         <td class="status-ok">200</td>
         <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
          <div class="accordion-content">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
@@ -361,181 +363,181 @@
         <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
          <div class="accordion-content">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
     
       <tr>
-        <td><a href="https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1" target="_blank" rel="noopener">https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1</a></td>
+        <td><a href="https://food.walla.co.il/item/3653061" target="_blank" rel="noopener">https://food.walla.co.il/item/3653061</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://food.walla.co.il/item/3653061" target="_blank" rel="noopener">https://food.walla.co.il/item/3653061</a></td>
+        <td><a href="https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1" target="_blank" rel="noopener">https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://13tv.co.il/item/yummies/food-news/ywt46-904002980" target="_blank" rel="noopener">https://13tv.co.il/item/yummies/food-news/ywt46-904002980</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://food.walla.co.il/item/3445338" target="_blank" rel="noopener">https://food.walla.co.il/item/3445338</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://www.yediot.co.il/articles/0,7340,L-5517979,00.html" target="_blank" rel="noopener">https://www.yediot.co.il/articles/0,7340,L-5517979,00.html</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.haaretz.co.il/food/food-news/2019-04-04/ty-article-magazine/.premium/0000017f-f3fe-d223-a97f-ffff68420000" target="_blank" rel="noopener">https://www.haaretz.co.il/food/food-news/2019-04-04/ty-article-magazine/.premium/0000017f-f3fe-d223-a97f-ffff68420000</a></td>
         <td class="status-broken">405</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.mako.co.il/food-restaurants/restaurant-news/Article-037a114c67c4e81026.htm" target="_blank" rel="noopener">https://www.mako.co.il/food-restaurants/restaurant-news/Article-037a114c67c4e81026.htm</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://food.walla.co.il/item/3445338" target="_blank" rel="noopener">https://food.walla.co.il/item/3445338</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.yediot.co.il/articles/0,7340,L-5517979,00.html" target="_blank" rel="noopener">https://www.yediot.co.il/articles/0,7340,L-5517979,00.html</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://13tv.co.il/item/yummies/food-articles/u8ogm-1032957" target="_blank" rel="noopener">https://13tv.co.il/item/yummies/food-articles/u8ogm-1032957</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://food.walla.co.il/item/3229982" target="_blank" rel="noopener">https://food.walla.co.il/item/3229982</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.israelhayom.co.il/food/food-news/article/13043899" target="_blank" rel="noopener">https://www.israelhayom.co.il/food/food-news/article/13043899</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://lizlol.co.il/ice-cream-knoedel-11159" target="_blank" rel="noopener">https://lizlol.co.il/ice-cream-knoedel-11159</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.mako.co.il/food-masterchef/season9-articles/Article-84d5693348f7671026.htm" target="_blank" rel="noopener">https://www.mako.co.il/food-masterchef/season9-articles/Article-84d5693348f7671026.htm</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://www.secrettelaviv.com/magazine/blog/toptens/%D7%9E%D7%90%D7%A4%D7%99%D7%95%D7%AA-%D7%94%D7%9B%D7%99-%D7%A9%D7%95%D7%95%D7%AA-%D7%91%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91" target="_blank" rel="noopener">https://www.secrettelaviv.com/magazine/blog/toptens/%D7%9E%D7%90%D7%A4%D7%99%D7%95%D7%AA-%D7%94%D7%9B%D7%99-%D7%A9%D7%95%D7%95%D7%AA-%D7%91%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91</a></td>
+        <td><a href="https://www.secrettelaviv.com/magazine/blog/toptens/%D7%9E%D7%90%D7%A4%D7%99%D7%95%D7%AA-%D7%94%D7%9B%D7%99-%D7%A9%D7%95%D7%95%D7%AA-%D7%91%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91" target="_blank" rel="noopener">https://www.secrettelaviv.com/magazine/blog/toptens/מאפיות-הכי-שוות-בתל-אביב</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://www.haaretz.co.il/literature/tarbut-sifrot/2024-07-15/ty-article/.premium/00000190-b67a-d7b7-add8-fffbe6f80000" target="_blank" rel="noopener">https://www.haaretz.co.il/literature/tarbut-sifrot/2024-07-15/ty-article/.premium/00000190-b67a-d7b7-add8-fffbe6f80000</a></td>
-        <td class="status-broken">405</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://passportnews.co.il/article/192336" target="_blank" rel="noopener">https://passportnews.co.il/article/192336</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://timeout.co.il/%D7%94%D7%A2%D7%99%D7%A8-%D7%A9%D7%9C-%D7%A9%D7%98%D7%A4%D7%9F-%D7%9E%D7%90%D7%9B%D7%A8" target="_blank" rel="noopener">https://timeout.co.il/%D7%94%D7%A2%D7%99%D7%A8-%D7%A9%D7%9C-%D7%A9%D7%98%D7%A4%D7%9F-%D7%9E%D7%90%D7%9B%D7%A8</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.haaretz.co.il/literature/tarbut-sifrot/2024-07-15/ty-article/.premium/00000190-b67a-d7b7-add8-fffbe6f80000" target="_blank" rel="noopener">https://www.haaretz.co.il/literature/tarbut-sifrot/2024-07-15/ty-article/.premium/00000190-b67a-d7b7-add8-fffbe6f80000</a></td>
+        <td class="status-broken">405</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-%D7%A2%D7%95%D7%92%D7%AA-%D7%92%D7%9C%D7%99%D7%93%D7%94" target="_blank" rel="noopener">https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-%D7%A2%D7%95%D7%92%D7%AA-%D7%92%D7%9C%D7%99%D7%93%D7%94</a></td>
+        <td><a href="https://timeout.co.il/%D7%94%D7%A2%D7%99%D7%A8-%D7%A9%D7%9C-%D7%A9%D7%98%D7%A4%D7%9F-%D7%9E%D7%90%D7%9B%D7%A8" target="_blank" rel="noopener">https://timeout.co.il/העיר-של-שטפן-מאכר</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
-        <td><a href="https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-2" target="_blank" rel="noopener">https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-2</a></td>
+        <td><a href="https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-%D7%A2%D7%95%D7%92%D7%AA-%D7%92%D7%9C%D7%99%D7%93%D7%94" target="_blank" rel="noopener">https://timeout.co.il/שטפן-עוגת-גלידה</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/media</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://timeout.co.il/%D7%A9%D7%98%D7%A4%D7%9F-2" target="_blank" rel="noopener">https://timeout.co.il/שטפן-2</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.nagich.co.il" target="_blank" rel="noopener">https://www.nagich.co.il</a></td>
         <td class="status-broken">403</td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.nagich.co.il/html5/sbs.py?_id=8684&did=5905&G=8684" target="_blank" rel="noopener">https://www.nagich.co.il/html5/sbs.py?_id=8684&did=5905&G=8684</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
+        <td class="status-broken">403</td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
       </tr>
     
       <tr>
         <td><a href="https://www.facebook.com/help/273947702950567" target="_blank" rel="noopener">https://www.facebook.com/help/273947702950567</a></td>
         <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
-      </tr>
-    
-      <tr>
-        <td><a href="https://help.instagram.com/1178723545597542" target="_blank" rel="noopener">https://help.instagram.com/1178723545597542</a></td>
-        <td class="status-ok">200</td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
       </tr>
     
       <tr>
         <td><a href="https://support.google.com/youtube/answer/189278?hl=en" target="_blank" rel="noopener">https://support.google.com/youtube/answer/189278?hl=en</a></td>
         <td class="status-broken">404</td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
       </tr>
     
       <tr>
         <td><a href="https://help.twitter.com/en/using-twitter/picture-descriptions" target="_blank" rel="noopener">https://help.twitter.com/en/using-twitter/picture-descriptions</a></td>
         <td class="status-broken">403</td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://help.instagram.com/1178723545597542" target="_blank" rel="noopener">https://help.instagram.com/1178723545597542</a></td>
+        <td class="status-ok">200</td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
       </tr>
     </tbody>
   </table>
 
       <h2>External Link Summary</h2>
       
-    <p>✅ OK: 35</p>
-    <p>❌ Broken: 6</p>
+    <p>✅ OK: 34</p>
+    <p>❌ Broken: 7</p>
     <p>⏱ Timeout: 0</p>
   
       
-      <h2>Email Links (mailto:)</h2>
+      <h2 id="email-links">Email Links (mailto:)</h2>
       <table>
     <thead><tr><th>Email Link</th><th>Found In</th></tr></thead>
     <tbody>
       <tr>
-        <td><a href="mailto:Stefanaustrianbakery@gmail.com" target="_blank" rel="noopener">mailto:Stefanaustrianbakery@gmail.com</a></td>
-        <td>https://www.stefanbakery.com/contact</td>
+        <td><a href="mailto:Alon.keren1@gmail.com" target="_blank" rel="noopener">mailto:Alon.keren1@gmail.com</a></td>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
       </tr>
     
       <tr>
-        <td><a href="mailto:Alon.keren1@gmail.com" target="_blank" rel="noopener">mailto:Alon.keren1@gmail.com</a></td>
-        <td>https://www.stefanbakery.com/AccessabilityDeclaration</td>
+        <td><a href="mailto:Stefanaustrianbakery@gmail.com" target="_blank" rel="noopener">mailto:Stefanaustrianbakery@gmail.com</a></td>
+        <td><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></td>
       </tr>
     </tbody>
   </table>
       
-      <h2>Phone Links (tel:)</h2>
+      <h2 id="phone-links">Phone Links (tel:)</h2>
       <table>
     <thead><tr><th>Phone Link</th><th>Found In</th></tr></thead>
     <tbody>
@@ -544,20 +546,20 @@
         <td><div class="accordion-toggle" onclick="toggleAccordion(this)">Show 9 sources</div>
          <div class="accordion-content">
            <ul class="source-list">
-             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li>
+             <li><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></li><li><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></li><li><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></li><li><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></li><li><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></li><li><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></li><li><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></li><li><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></li><li><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></li>
            </ul>
          </div></td>
       </tr>
     
       <tr>
         <td><a href="tel:036799788" target="_blank" rel="noopener">tel:036799788</a></td>
-        <td>https://www.stefanbakery.com/fest</td>
+        <td><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></td>
       </tr>
     </tbody>
   </table>
       
-      <div style="color:#888; font-size:13px; margin-bottom:10px;">
-        Report generated: <b>31/07/2025, 22:47:14</b> | Duration: <b>18s</b>
+      <div class="report-footer">
+        Report generated: <b>01/08/2025, 17:24:02</b> | Duration: <b>27s</b>
       </div>
       
       <script>
@@ -572,6 +574,36 @@
             content.classList.add('show');
             element.classList.add('open');
           }
+        }
+        
+        function toggleRowAccordions(rowId) {
+          const accordionContents = document.querySelectorAll('[data-row="' + rowId + '"]');
+          const accordionToggles = [];
+          
+          // Find all toggle buttons for this row
+          accordionContents.forEach(content => {
+            const toggle = content.previousElementSibling;
+            if (toggle && toggle.classList.contains('accordion-toggle')) {
+              accordionToggles.push(toggle);
+            }
+          });
+          
+          // Check if any are currently open
+          const isAnyOpen = Array.from(accordionContents).some(content => 
+            content.classList.contains('show')
+          );
+          
+          // Toggle all accordions in this row to the same state
+          accordionContents.forEach((content, index) => {
+            const toggle = accordionToggles[index];
+            if (isAnyOpen) {
+              content.classList.remove('show');
+              toggle.classList.remove('open');
+            } else {
+              content.classList.add('show');
+              toggle.classList.add('open');
+            }
+          });
         }
       </script>
     </body>

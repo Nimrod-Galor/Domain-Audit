@@ -91,15 +91,26 @@ export function recordBadRequest(href, status, source, badRequests) {
   badRequests[href].sources.add(source);
 }
 
-export function recordExternalLink(href, status, source, externalLinks) {
+export function recordExternalLink(href, status, source, externalLinks, additionalData = {}) {
   if (!externalLinks[href]) {
     externalLinks[href] = {
       status,
-      sources: new Set()
+      sources: new Set(),
+      headers: additionalData.headers || {},
+      redirectChain: additionalData.redirectChain || null,
+      timestamp: new Date().toISOString()
     };
   }
   externalLinks[href].status = status;
   externalLinks[href].sources.add(source);
+  
+  // Update additional data if provided
+  if (additionalData.headers) {
+    externalLinks[href].headers = additionalData.headers;
+  }
+  if (additionalData.redirectChain) {
+    externalLinks[href].redirectChain = additionalData.redirectChain;
+  }
 }
 
 export function logFailedUrl(DOMAIN_FOLDER, url, reason) {

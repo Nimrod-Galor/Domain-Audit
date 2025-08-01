@@ -258,7 +258,7 @@ export function saveHtmlReport({
     <html>
     <head>
       <title>Crawl Report for ${DOMAIN}</title>
-      <link rel="stylesheet" type="text/css" href="styles.css">
+      <link rel="stylesheet" type="text/css" href="../styles.css">
     </head>
     <body>
       <h1>Crawl Report for ${DOMAIN}</h1>

@@ -23,7 +23,7 @@ export function restoreMap(targetMap, savedMap) {
   }
 }
 
-export function saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks) {
+export function saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager) {
   if (!fs.existsSync(DOMAIN_FOLDER)) {
     fs.mkdirSync(DOMAIN_FOLDER, { recursive: true });
   }
@@ -34,12 +34,14 @@ export function saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badR
     badRequests: serializeMap(badRequests),
     externalLinks: serializeMap(externalLinks),
     mailtoLinks: serializeMap(mailtoLinks),
-    telLinks: serializeMap(telLinks)
+    telLinks: serializeMap(telLinks),
+    // pageData is now handled separately by ChunkedPageDataManager
+    pageDataSize: pageDataManager.size
   };
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-export function loadState(STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks) {
+export function loadState(STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager) {
   if (!fs.existsSync(STATE_FILE)) return false;
   const raw = fs.readFileSync(STATE_FILE, 'utf-8');
   const state = JSON.parse(raw);
@@ -60,10 +62,11 @@ export function loadState(STATE_FILE, visited, queue, stats, badRequests, extern
     restoreMap(telLinks, state.telLinks);
   }
   
+  // pageData is now handled by ChunkedPageDataManager
   return true;
 }
 
-export function printStats(stats, badRequests, externalLinks, mailtoLinks, telLinks) {
+export function printStats(stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager) {
   console.log('\n--- Internal Link Statistics ---\n');
   for (const [href, data] of Object.entries(stats)) {
     console.log(`URL: ${href}`);
@@ -108,5 +111,48 @@ export function printStats(stats, badRequests, externalLinks, mailtoLinks, telLi
   for (const [href, data] of Object.entries(telLinks)) {
     console.log(`PHONE: ${href}`);
     console.log(`  Found in: ${Array.from(data.sources).join(', ')}\n`);
+  }
+
+  // Display comprehensive page data summary
+  if (pageDataManager.size > 0) {
+    console.log('\n--- Page Data Summary ---\n');
+    
+    let totalResponseTime = 0;
+    let totalPageSize = 0;
+    let pagesWithTitle = 0;
+    let pagesWithMetaDesc = 0;
+    let totalImages = 0;
+    let imagesWithoutAlt = 0;
+    let totalWordCount = 0;
+    let httpsPages = 0;
+    
+    for (const [url, data] of pageDataManager.entries()) {
+      totalResponseTime += data.responseTime || 0;
+      totalPageSize += data.pageSize || 0;
+      totalWordCount += data.content?.wordCount || 0;
+      
+      if (data.seo?.title?.text) pagesWithTitle++;
+      if (data.seo?.metaDescription?.text) pagesWithMetaDesc++;
+      if (data.content?.images) {
+        totalImages += data.content.images.total || 0;
+        imagesWithoutAlt += data.content.images.withoutAlt || 0;
+      }
+      if (data.security?.isHTTPS) httpsPages++;
+    }
+    
+    const pageCount = pageDataManager.size;
+    const avgResponseTime = pageCount > 0 ? Math.round(totalResponseTime / pageCount) : 0;
+    const avgPageSize = pageCount > 0 ? Math.round(totalPageSize / pageCount) : 0;
+    const avgWordCount = pageCount > 0 ? Math.round(totalWordCount / pageCount) : 0;
+    
+    console.log(`📊 Analyzed ${pageCount} pages:`);
+    console.log(`⚡ Average response time: ${avgResponseTime}ms`);
+    console.log(`📏 Average page size: ${(avgPageSize / 1024).toFixed(1)}KB`);
+    console.log(`📝 Average word count: ${avgWordCount} words`);
+    console.log(`🔍 Pages with titles: ${pagesWithTitle}/${pageCount} (${(pagesWithTitle/pageCount*100).toFixed(1)}%)`);
+    console.log(`📋 Pages with meta descriptions: ${pagesWithMetaDesc}/${pageCount} (${(pagesWithMetaDesc/pageCount*100).toFixed(1)}%)`);
+    console.log(`🖼️  Images without alt text: ${imagesWithoutAlt}/${totalImages} (${totalImages > 0 ? (imagesWithoutAlt/totalImages*100).toFixed(1) : 0}%)`);
+    console.log(`🔒 HTTPS pages: ${httpsPages}/${pageCount} (${(httpsPages/pageCount*100).toFixed(1)}%)`);
+    console.log('\n💾 Detailed page data saved to state file for analysis');
   }
 }

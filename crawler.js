@@ -5,6 +5,7 @@ import { extractMainDomain } from './utils.js';
 import { saveState, loadState, printStats } from './state.js';
 import { saveHtmlReport } from './report.js';
 import { runInternalCrawl, runExternalChecks } from './crawlerCore.js';
+import { ChunkedPageDataManager } from './pageDataManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,10 +13,10 @@ const __dirname = path.dirname(__filename);
 export async function runCrawl(rawDomain, maxInternalLinksArg) {
   // Configuration constants
   const MAX_RETRIES = 3;
-  const MAX_PARALLEL_CHECKS = 5;
-  const MAX_PARALLEL_CRAWL = 3;
+  const MAX_PARALLEL_CHECKS = 5; // external links check concurrency
+  const MAX_PARALLEL_CRAWL = 2; // internal links crawl concurrency
   const TIMEOUT_MS = 5000;
-  let MAX_INTERNAL_LINKS = 100;
+  let MAX_INTERNAL_LINKS = 50; // Default max internal links (reasonable for most audits)
   
   // Override max internal links if provided
   if (maxInternalLinksArg !== undefined && !isNaN(maxInternalLinksArg) && maxInternalLinksArg >= 0) {
@@ -42,11 +43,12 @@ export async function runCrawl(rawDomain, maxInternalLinksArg) {
   const externalLinks = {};
   const mailtoLinks = {};
   const telLinks = {};
+  const pageDataManager = new ChunkedPageDataManager(DOMAIN_FOLDER); // Memory-efficient page data storage
 
   const crawlStartTime = Date.now();
 
   async function crawl(startUrl) {
-    if (!loadState(STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks)) {
+    if (!loadState(STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager)) {
       queue.add(startUrl);
     } else {
       console.log('✅ Loaded previous crawl state, resuming...');
@@ -63,6 +65,7 @@ export async function runCrawl(rawDomain, maxInternalLinksArg) {
       externalLinks,
       mailtoLinks,
       telLinks,
+      pageDataManager,
       BASE_URL,
       DOMAIN,
       DOMAIN_FOLDER,
@@ -73,9 +76,9 @@ export async function runCrawl(rawDomain, maxInternalLinksArg) {
 
     console.log('\n--- Checking External Links (Parallel)...\n');
     await runExternalChecks(pendingExternalLinks, externalLinks, MAX_PARALLEL_CHECKS, MAX_RETRIES, TIMEOUT_MS);
-    saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks);
+    saveState(DOMAIN_FOLDER, STATE_FILE, visited, queue, stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager);
 
-    printStats(stats, badRequests, externalLinks, mailtoLinks, telLinks);
+    printStats(stats, badRequests, externalLinks, mailtoLinks, telLinks, pageDataManager);
     
     const crawlEndTime = Date.now();
     const durationSec = Math.round((crawlEndTime - crawlStartTime) / 1000);
