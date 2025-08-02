@@ -1,5 +1,26 @@
 {
+  "name": "domain-link-audit",
+  "version": "2.0.0",
+  "description": "Advanced domain link audit tool with AI intelligence and comprehensive analysis",
+  "main": "lib/crawler.js",
+  "bin": {
+    "domain-audit": "bin/domain-audit.js",
+    "data-analyzer": "bin/data-analyzer.js"
+  },
   "type": "module",
+  "scripts": {
+    "start": "node bin/domain-audit.js",
+    "analyze": "node bin/data-analyzer.js"
+  },
+  "keywords": [
+    "seo",
+    "link-audit",
+    "web-crawling",
+    "ai-analysis",
+    "performance"
+  ],
+  "author": "Domain Link Audit Team",
+  "license": "MIT",
   "dependencies": {
     "jsdom": "^26.1.0",
     "node-fetch": "^3.3.2"

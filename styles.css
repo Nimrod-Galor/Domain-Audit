@@ -44,8 +44,26 @@ th {
   font-weight: bold;
 }
 
+.status-manual-check {
+  color: #ff8c00;
+  font-weight: bold;
+}
+
 .status-timeout {
   color: orange;
+  font-weight: bold;
+}
+
+.manual-check-note {
+  font-size: 0.85em;
+  color: #ff8c00;
+  font-style: italic;
+  display: block;
+  margin-top: 2px;
+}
+
+.manual-check-summary {
+  color: #ff8c00;
   font-weight: bold;
 }
 

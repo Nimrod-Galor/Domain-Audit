@@ -1,0 +1,3548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analysis Report - www.stefanbakery.com</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .analysis-section {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .analysis-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .stat-percentage {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+        
+        .performance-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .performance-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .performance-item h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .performance-url {
+            font-size: 0.85rem;
+            color: #666;
+            word-break: break-all;
+            margin-bottom: 0.25rem;
+        }
+        
+        .performance-value {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .issues-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .issue-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9rem;
+            color: #dc3545;
+        }
+        
+        .issue-item:last-child {
+            border-bottom: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .seo-issues, .accessibility-issues, .security-issues, .mixed-content-issues, .cookie-issues {
+            margin-top: 1.5rem;
+        }
+        
+        .seo-issues h4, .accessibility-issues h4, .security-issues h4, .mixed-content-issues h4, .cookie-issues h4 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .mixed-content-analysis, .cookie-compliance-analysis {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .mixed-content-analysis h4, .cookie-compliance-analysis h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .stat-item.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .stat-item.warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        
+        .stat-item.danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .stat-note {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        
+        .risk-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 0.5rem;
+        }
+        
+        .risk-high {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .risk-medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .risk-low {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .compliance-score {
+            font-size: 0.9rem;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .issue-item.high {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .issue-item.medium {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .issue-item.low {
+            border-left: 4px solid #6c757d;
+        }
+        
+        /* Enhanced Accessibility Styles */
+        .accessibility-overview {
+            margin-bottom: 2rem;
+        }
+        
+        .overview-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .overview-card.good {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .overview-card.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .overview-card.error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .score-large {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .score-description {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .stat-percentage.good {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .stat-percentage.warning {
+            color: #ffc107;
+            font-weight: 600;
+        }
+        
+        .stat-percentage.error {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .contrast-issue {
+            border-left: 4px solid #dc3545;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .contrast-issue.high {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .contrast-issue.medium {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .contrast-issue.low {
+            border-left-color: #6c757d;
+            background: #f8f9fa;
+        }
+        
+        .issue-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .element-tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .contrast-ratio {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .severity-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .severity-badge.high {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .severity-badge.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .severity-badge.low {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .issue-text {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .color-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .color-sample {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            font-weight: bold;
+            min-width: 2rem;
+            text-align: center;
+        }
+        
+        .requirements {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .issue-url {
+            font-size: 0.8rem;
+            color: #868e96;
+            word-break: break-all;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .form-issue, .heading-issue, .aria-issue {
+            border-left: 4px solid #ffc107;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #fffbf0;
+            border-radius: 4px;
+        }
+        
+        .heading-level {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+        }
+        
+        .contrast-issues, .form-issues, .heading-issues, .aria-issues, .general-issues {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .contrast-issues h4 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .form-issues h4, .heading-issues h4, .aria-issues h4 {
+            color: #ffc107;
+            margin-bottom: 1rem;
+        }
+        
+        .general-issues h4 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        /* UX Elements Analysis Styles */
+        .ux-overview {
+            margin-bottom: 2rem;
+        }
+        
+        .ux-details {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .cta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .cta-item {
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .cta-item.high-priority {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .cta-item.medium-priority {
+            border-left-color: #ffc107;
+            background: #fffdf5;
+        }
+        
+        .cta-item.low-priority {
+            border-left-color: #6c757d;
+            background: #f8f9fa;
+        }
+        
+        .cta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .cta-text {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1rem;
+        }
+        
+        .priority-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .priority-badge.priority-high {
+            background: #28a745;
+            color: white;
+        }
+        
+        .priority-badge.priority-medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .priority-badge.priority-low {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .cta-meta {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .position-tag, .above-fold-tag, .below-fold-tag {
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .position-tag {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .above-fold-tag {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .below-fold-tag {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .cta-url {
+            font-size: 0.8rem;
+            color: #6c757d;
+            word-break: break-all;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .ux-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .breakdown-section {
+            padding: 1.5rem;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .breakdown-section h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .contact-stats, .search-stats, .newsletter-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .contact-method, .search-feature, .newsletter-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .method-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+        
+        .method-name, .feature-name, .metric-name {
+            font-weight: 500;
+            color: #495057;
+            flex: 1;
+        }
+        
+        .method-count, .feature-count, .metric-count {
+            font-weight: 600;
+            color: #667eea;
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .best-practices {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .best-practices h4 {
+            color: #155724;
+        }
+        
+        .best-practice {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .ux-problems {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .ux-problems h4 {
+            color: #856404;
+        }
+        
+        .ux-issue {
+            border-left-color: #ffc107;
+            background: #fffdf5;
+        }
+        
+        .keyword-analysis, .structured-data-analysis {
+            margin-top: 1.5rem;
+        }
+        
+        .keyword-analysis h4, .structured-data-analysis h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .keywords-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .keyword-tag {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .structured-data-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .structured-data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .structured-data-item:last-child {
+            border-bottom: none;
+        }
+        
+        .data-type {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .data-count {
+            font-size: 0.9rem;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+        
+        .readability-distribution, .readability-issues {
+            margin-top: 1.5rem;
+        }
+        
+        .readability-distribution h4, .readability-issues h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .distribution-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .distribution-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .distribution-item:last-child {
+            border-bottom: none;
+        }
+        
+        .level-name {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .level-count {
+            font-size: 0.9rem;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+        
+        .no-data-message {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .page-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .page-details-table th,
+        .page-details-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .page-details-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .page-details-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .page-details-table a {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .page-details-table a:hover {
+            text-decoration: underline;
+        }
+        
+        .link-details-section {
+            margin-top: 2rem;
+        }
+        
+        .link-details-section h4 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5rem;
+        }
+        
+        .links-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .link-item {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .link-item.error {
+            border-left-color: #dc3545;
+        }
+        
+        .link-item.warning {
+            border-left-color: #ffc107;
+        }
+        
+        .link-item.success {
+            border-left-color: #28a745;
+        }
+        
+        .link-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .link-url {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .link-url a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            word-break: break-all;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .link-url a:hover {
+            text-decoration: underline;
+        }
+        
+        .broken-url, .timeout-url {
+            color: #dc3545;
+            font-weight: 500;
+            word-break: break-all;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .timeout-url {
+            color: #856404;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .link-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .link-count {
+            font-weight: 600;
+            color: #495057;
+            margin-right: 1rem;
+        }
+        
+        .link-anchors, .link-sources {
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
+        
+        .link-anchors {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .link-sources {
+            color: #6c757d;
+        }
+        
+        .show-more {
+            text-align: center;
+            padding: 1rem;
+            color: #6c757d;
+            font-style: italic;
+            background: white;
+            border-radius: 6px;
+            margin-top: 0.75rem;
+        }
+        
+        .compression-issues {
+            margin-top: 1.5rem;
+        }
+        
+        .compression-issues h4 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .header-issues {
+            margin-top: 1.5rem;
+        }
+        
+        .header-issues h4 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .content-types-analysis, .servers-analysis, .powered-by-analysis {
+            margin-top: 1.5rem;
+        }
+        
+        .content-types-analysis h4, .servers-analysis h4, .powered-by-analysis h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .powered-by-analysis h4 {
+            color: #dc3545;
+        }
+        
+        .content-types-list, .servers-list, .powered-by-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .content-type-item, .server-item, .powered-by-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        /* Status code analysis styles */
+        .status-success { 
+            color: #28a745; 
+            font-weight: bold; 
+        }
+        .status-redirect { 
+            color: #ffc107; 
+            font-weight: bold; 
+        }
+        .status-client-error { 
+            color: #dc3545; 
+            font-weight: bold; 
+        }
+        .status-server-error { 
+            color: #6f42c1; 
+            font-weight: bold; 
+        }
+        .status-other { 
+            color: #6c757d; 
+            font-weight: bold; 
+        }
+        
+        /* Redirect chain analysis styles */
+        .chain-detail {
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-width: 400px;
+            word-break: break-all;
+        }
+        
+        /* Mobile analysis styles */
+        .sub-metrics {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .sub-metrics h4 {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .metrics-row {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .metrics-row span {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* URL Architecture analysis styles */
+        .complexity-chart {
+            margin: 1rem 0;
+        }
+        
+        .complexity-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 1rem;
+        }
+        
+        .complexity-label {
+            min-width: 100px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .complexity-meter {
+            flex: 1;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .complexity-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .complexity-simple { background: #28a745; }
+        .complexity-moderate { background: #ffc107; }
+        .complexity-complex { background: #fd7e14; }
+        .complexity-very-complex { background: #dc3545; }
+        
+        .complexity-count {
+            min-width: 30px;
+            text-align: right;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .content-type-item:last-child, .server-item:last-child, .powered-by-item:last-child {
+            border-bottom: none;
+        }
+        
+        .content-type, .server-name, .powered-by-name {
+            font-weight: 600;
+            color: #495057;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .content-count, .server-count, .powered-by-count {
+            font-size: 0.9rem;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+        
+        /* Navigation Analysis Styles */
+        .navigation-overview {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .nav-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+        
+        .nav-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-stat {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 0.25rem;
+        }
+        
+        .nav-coverage {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .nav-detail {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .navigation-details {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .nav-detail-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .nav-detail-card h4 {
+            margin: 0 0 1rem 0;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        
+        .nav-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .metric-value.success {
+            color: #28a745;
+        }
+        
+        .metric-value.warning {
+            color: #ffc107;
+        }
+        
+        .navigation-issues {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        .navigation-issues h4 {
+            margin: 0 0 0.75rem 0;
+            color: #856404;
+        }
+        
+        /* Media Content Analysis Styles */
+        .media-overview {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+        
+        .media-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .media-item:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+        
+        .media-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .media-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .media-stat {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 0.25rem;
+        }
+        
+        .media-detail {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .media-details {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .media-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .media-detail-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .media-detail-card h4 {
+            margin: 0 0 1rem 0;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        
+        .media-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .extension-tags, .platform-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .extension-tag, .platform-tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .platform-tag {
+            background: #007bff;
+            color: white;
+        }
+        
+        .metric-value.error {
+            color: #dc3545;
+        }
+        
+        .media-issues {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        .media-issues h4 {
+            margin: 0 0 0.75rem 0;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .performance-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .nav-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Page Type Analysis Styles */
+        .type-distribution {
+            margin: 1rem 0;
+        }
+        
+        .type-bar {
+            margin-bottom: 0.8rem;
+        }
+        
+        .type-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .type-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .type-stats {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .confidence-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .confidence-high {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .confidence-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .confidence-low {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .type-meter {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .type-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            transition: width 0.3s ease;
+        }
+        
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .indicator-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .indicator-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            text-transform: capitalize;
+        }
+        
+        .indicator-count {
+            font-size: 1.2rem;
+            color: #007bff;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .indicator-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            justify-content: center;
+        }
+        
+        .type-tag {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .type-examples {
+            margin: 1rem 0;
+        }
+        
+        .type-example-group {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .type-example-group h5 {
+            color: #333;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .example-item {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .example-url {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .example-url a {
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .example-url a:hover {
+            text-decoration: underline;
+        }
+        
+        .confidence-score {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .example-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        
+        .indicator-chip {
+            background-color: #007bff;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Data Analysis Report</h1>
+            <p><strong>Domain:</strong> www.stefanbakery.com | <strong>Generated:</strong> 02/08/2025 | <strong>Source:</strong> crawl-state.json</p>
+        </div>
+        
+        
+    <div class="analysis-section">
+      <h3>🔗 Link Analysis Summary</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">9</div>
+          <div class="stat-label">Internal Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">41</div>
+          <div class="stat-label">External Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Broken Internal Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">36</div>
+          <div class="stat-label">Working External Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">5</div>
+          <div class="stat-label">Broken External Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Timeout External Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Email Links</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Phone Links</div>
+        </div>
+      </div>
+      
+      
+      <div class="link-details-section">
+        <h4>📄 Internal Links (9)</h4>
+        <div class="links-list">
+          
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 17 times</span>
+        <div class="link-anchors">Anchors: קרא עוד על בייקרי אוסטריהמשך קריאה, בייקרי אוסטרי, אודות שטפן בייקרי</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com, https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 9 times</span>
+        <div class="link-anchors">Anchors: קרא עוד על גלידת שףהמשך קריאה, גלידת שף</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com, https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 9 times</span>
+        <div class="link-anchors">Anchors: לפרטים נוספיםקראו עוד על אירועים, אירועים</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com, https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 17 times</span>
+        <div class="link-anchors">Anchors: קרא עוד על שטפן מאכרהמשך קריאה, שטפן מאכר, אודות שטפן מאכר</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com, https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 9 times</span>
+        <div class="link-anchors">Anchors: תפריט, לתפריט שלנו</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 8 times</span>
+        <div class="link-anchors">Anchors: כתבו עלינו</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 8 times</span>
+        <div class="link-anchors">Anchors: יצירת קשר</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 16 times</span>
+        <div class="link-anchors">Anchors: , שטפן בייקרי</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+      </div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a>
+      </div>
+      <div class="link-details">
+        <span class="link-count">Found 8 times</span>
+        <div class="link-anchors">Anchors: הצהרת נגישות</div>
+        <div class="link-sources">Sources: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+      </div>
+    </div>
+  
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      <div class="link-details-section">
+        <h4>✅ Working External Links (36)</h4>
+        <div class="links-list">
+          
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://tabitisrael.co.il/tabit-order?siteName=stefangelato&step=enter" target="_blank">https://tabitisrael.co.il/tabit-order?siteName=stefangelato&step=enter</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com, https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378726.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378726.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378727.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378727.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378728.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378728.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378729.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378729.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378725.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378725.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378721.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378721.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378724.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378724.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378723.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378723.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378722.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378722.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://media.getmood.io/warehouse/dynamic/378720.jpg" target="_blank">https://media.getmood.io/warehouse/dynamic/378720.jpg</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://www.instagram.com/stefan_austrian_bakery" target="_blank">https://www.instagram.com/stefan_austrian_bakery</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://m.facebook.com/stefanaustrianbakery" target="_blank">https://m.facebook.com/stefanaustrianbakery</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://www.tabitorder.com/?siteName=stefangelato#/start" target="_blank">https://www.tabitorder.com/?siteName=stefangelato#/start</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://www.waze.com/en/live-map/directions/%D7%AA%D7%9C-%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95?place=6924.21" target="_blank">https://www.waze.com/en/live-map/directions/תל-אביב-יפו?place=6924.21</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="http://rspecial.co.il" target="_blank">http://rspecial.co.il</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1" target="_blank">https://www.israelhayom.co.il/magazine/shishabat/article/3415028?amp=1</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/media</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://13tv.co.il/item/yummies/food-news/ywt46-904002980" target="_blank">https://13tv.co.il/item/yummies/food-news/ywt46-904002980</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/media</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://food.walla.co.il/item/3653061" target="_blank">https://food.walla.co.il/item/3653061</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/media</div>
+    </div>
+  
+    <div class="link-item success">
+      <div class="link-url">
+        <a href="https://food.walla.co.il/item/3445338" target="_blank">https://food.walla.co.il/item/3445338</a>
+        <span class="status-badge success">Status: 200</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/media</div>
+    </div>
+  
+          <div class="show-more">... and 16 more working external links</div>
+        </div>
+      </div>
+      
+      
+      
+      <div class="link-details-section">
+        <h4>💔 Broken External Links (5)</h4>
+        <div class="links-list">
+          
+    <div class="link-item error">
+      <div class="link-url">
+        <span class="broken-url">https://wolt.com/en/isr/tel-aviv/restaurant/stefan-gelat</span>
+        <span class="status-badge error">Status: 404</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item error">
+      <div class="link-url">
+        <span class="broken-url">https://www.nagich.co.il</span>
+        <span class="status-badge error">Status: 403</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/AccessabilityDeclaration</div>
+    </div>
+  
+    <div class="link-item error">
+      <div class="link-url">
+        <span class="broken-url">https://www.nagich.co.il/html5/sbs.py?_id=8684&did=5905&G=8684</span>
+        <span class="status-badge error">Status: 403</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/AccessabilityDeclaration</div>
+    </div>
+  
+    <div class="link-item error">
+      <div class="link-url">
+        <span class="broken-url">https://help.twitter.com/en/using-twitter/picture-descriptions</span>
+        <span class="status-badge error">Status: 403</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/AccessabilityDeclaration</div>
+    </div>
+  
+    <div class="link-item error">
+      <div class="link-url">
+        <span class="broken-url">https://support.google.com/youtube/answer/189278?hl=en</span>
+        <span class="status-badge error">Status: 429</span>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/AccessabilityDeclaration</div>
+    </div>
+  
+          
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      <div class="link-details-section">
+        <h4>📧 Email Links (2)</h4>
+        <div class="links-list">
+          
+    <div class="link-item">
+      <div class="link-url">
+        <a href="mailto:Stefanaustrianbakery@gmail.com">Stefanaustrianbakery@gmail.com</a>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/contact</div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="mailto:Alon.keren1@gmail.com">Alon.keren1@gmail.com</a>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/AccessabilityDeclaration</div>
+    </div>
+  
+        </div>
+      </div>
+      
+      
+      
+      <div class="link-details-section">
+        <h4>📞 Phone Links (2)</h4>
+        <div class="links-list">
+          
+    <div class="link-item">
+      <div class="link-url">
+        <a href="tel:03-6799788">03-6799788</a>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/bakery, https://www.stefanbakery.com/gelato, https://www.stefanbakery.com/fest</div>
+    </div>
+  
+    <div class="link-item">
+      <div class="link-url">
+        <a href="tel:036799788">036799788</a>
+      </div>
+      <div class="link-sources">Found in: https://www.stefanbakery.com/fest</div>
+    </div>
+  
+        </div>
+      </div>
+      
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🚀 Performance Analysis</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">386ms</div>
+          <div class="stat-label">Average Response Time</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">77.6 KB</div>
+          <div class="stat-label">Average Page Size</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">698.7 KB</div>
+          <div class="stat-label">Total Data Transferred</div>
+        </div>
+      </div>
+      
+      <div class="performance-details">
+        <div class="performance-item">
+          <h4>⚡ Fastest Page</h4>
+          <div class="performance-url">https://www.stefanbakery.com/contact</div>
+          <div class="performance-value">338ms</div>
+        </div>
+        
+        <div class="performance-item">
+          <h4>🐌 Slowest Page</h4>
+          <div class="performance-url">https://www.stefanbakery.com</div>
+          <div class="performance-value">639ms</div>
+        </div>
+        
+        <div class="performance-item">
+          <h4>📦 Smallest Page</h4>
+          <div class="performance-url">https://www.stefanbakery.com/about</div>
+          <div class="performance-value">60 KB</div>
+        </div>
+        
+        <div class="performance-item">
+          <h4>📊 Largest Page</h4>
+          <div class="performance-url">https://www.stefanbakery.com/menu</div>
+          <div class="performance-value">113.5 KB</div>
+        </div>
+      </div>
+    </div>
+  
+        
+        
+    <div class="analysis-section">
+      <h3>🗜️ Compression Analysis</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">100.0%</div>
+          <div class="stat-label">Pages Using Compression</div>
+          <div class="stat-percentage">9/9 pages</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">9</div>
+          <div class="stat-label">Gzip Compressed</div>
+          <div class="stat-percentage">100.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Brotli Compressed</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Uncompressed Pages</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+      </div>
+      
+      <div class="success-message">✅ No compression issues found!</div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>📋 HTTP Headers Analysis</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">9/9</div>
+          <div class="stat-label">Cache-Control Headers</div>
+          <div class="stat-percentage">100.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">ETag Headers</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">Last-Modified Headers</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">Expires Headers</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Content Types Found</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Server Types</div>
+        </div>
+      </div>
+      
+      
+      <div class="content-types-analysis">
+        <h4>📄 Content Types Distribution</h4>
+        <div class="content-types-list">
+          
+            <div class="content-type-item">
+              <span class="content-type">text/html</span>
+              <span class="content-count">9 pages (100.0%)</span>
+            </div>
+          
+        </div>
+      </div>
+      
+      
+      
+      <div class="servers-analysis">
+        <h4>🖥️ Server Software Distribution</h4>
+        <div class="servers-list">
+          
+            <div class="server-item">
+              <span class="server-name">Microsoft-IIS/10.0</span>
+              <span class="server-count">9 pages (100.0%)</span>
+            </div>
+          
+        </div>
+      </div>
+      
+      
+      
+      
+      <div class="success-message">✅ No header issues found!</div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>📊 HTTP Status Code Distribution</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Responses</div>
+          <div class="metric-value">50</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Success (2xx)</div>
+          <div class="metric-value">45</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Redirects (3xx)</div>
+          <div class="metric-value">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Client Errors (4xx)</div>
+          <div class="metric-value">5</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Server Errors (5xx)</div>
+          <div class="metric-value">0</div>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Status Code</th>
+              <th>Count</th>
+              <th>Percentage</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr>
+          <td>200</td>
+          <td>45</td>
+          <td>90.0%</td>
+          <td><span class="status-success">success</span></td>
+        </tr>
+      
+            
+            
+        <tr>
+          <td>403</td>
+          <td>3</td>
+          <td>6.0%</td>
+          <td><span class="status-client-error">client-error</span></td>
+        </tr>
+      
+        <tr>
+          <td>404</td>
+          <td>1</td>
+          <td>2.0%</td>
+          <td><span class="status-client-error">client-error</span></td>
+        </tr>
+      
+        <tr>
+          <td>429</td>
+          <td>1</td>
+          <td>2.0%</td>
+          <td><span class="status-client-error">client-error</span></td>
+        </tr>
+      
+            
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🔄 Redirect Chain Analysis</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Redirects</div>
+          <div class="metric-value">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Redirect Loops</div>
+          <div class="metric-value ">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Max Chain Length</div>
+          <div class="metric-value">0</div>
+        </div>
+      </div>
+      
+      
+      
+      
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🔍 SEO Analysis</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">9/9</div>
+          <div class="stat-label">Pages with Titles</div>
+          <div class="stat-percentage">100.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">9/9</div>
+          <div class="stat-label">Pages with Meta Descriptions</div>
+          <div class="stat-percentage">100.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">Pages with H1</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">9/9</div>
+          <div class="stat-label">Pages with Canonical</div>
+          <div class="stat-percentage">100.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">9/9</div>
+          <div class="stat-label">Pages with Open Graph</div>
+          <div class="stat-percentage">100.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">330</div>
+          <div class="stat-label">Average Word Count</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">40</div>
+          <div class="stat-label">Average Title Length</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">233</div>
+          <div class="stat-label">Average Meta Desc Length</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Duplicate Titles</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Duplicate Meta Descriptions</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Structured Data Types</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Unique Keywords Found</div>
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      
+      <div class="seo-issues">
+        <h4>⚠️ SEO Issues (20 found)</h4>
+        <div class="issues-list">
+          <div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com</div><div class="issue-item">Missing H1: https://www.stefanbakery.com</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/about</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/about</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/bakery</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/bakery</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/contact</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/contact</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/fest</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/fest</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/gelato</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/gelato</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/menu</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/menu</div><div class="issue-item">Long meta description (233 chars): https://www.stefanbakery.com/media</div><div class="issue-item">Missing H1: https://www.stefanbakery.com/media</div><div class="issue-item">Duplicate title "שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף" found on 9 pages: https://www.stefanbakery.com, https://www.stefanbakery.com/AccessabilityDeclaration, https://www.stefanbakery.com/about (+6 more)</div><div class="issue-item">Duplicate meta description found on 9 pages: https://www.stefanbakery.com, https://www.stefanbakery.com/AccessabilityDeclaration, https://www.stefanbakery.com/about (+6 more)</div>
+          
+        </div>
+      </div>
+      
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🆕 Enhanced SEO Analysis</h3>
+      <div class="grid-2">
+        <div class="stat-card">
+          <h4>🤖 Robots Meta Tags</h4>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-value">9</span>
+              <span class="stat-label">Pages with robots tags</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Noindex pages</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Nofollow pages</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">With directives</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>🌐 Language & Internationalization</h4>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-value">9</span>
+              <span class="stat-label">Pages with lang attribute</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">1</span>
+              <span class="stat-label">Unique languages</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Pages with hreflang</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">100%</span>
+              <span class="stat-label">Lang coverage</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>🎯 Favicon Analysis</h4>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-value">9</span>
+              <span class="stat-label">Pages with favicon</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">18</span>
+              <span class="stat-label">Total favicon files</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">9</span>
+              <span class="stat-label">Apple touch icons</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">100%</span>
+              <span class="stat-label">Favicon coverage</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>🔑 Meta Keywords (Legacy)</h4>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Pages with keywords</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Total keywords</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Avg per page</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0%</span>
+              <span class="stat-label">Usage rate</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🆕 Enhanced Link Rel Attributes</h3>
+      <div class="grid-2">
+        <div class="stat-card">
+          <h4>🔍 SEO-Critical Rel Attributes</h4>
+          <div class="stat-grid">
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="nofollow"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="sponsored"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="ugc"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Total SEO rels</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>🔒 Security Rel Attributes</h4>
+          <div class="stat-grid">
+            
+            <div class="stat-item">
+              <span class="stat-value">18</span>
+              <span class="stat-label">rel="noopener"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="noreferrer"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">18</span>
+              <span class="stat-label">Total security rels</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>📖 Semantic Rel Attributes</h4>
+          <div class="stat-grid">
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="external"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="help"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="license"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Total semantic rels</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>🧭 Navigation Rel Attributes</h4>
+          <div class="stat-grid">
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="next"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="prev"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="bookmark"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">rel="tag"</span>
+            </div>
+            
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Total nav rels</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+        
+      <div class="analysis-section">
+        <h3>📖 Readability Analysis</h3>
+        <div class="no-data-message">No readability data available</div>
+      </div>
+    
+        
+    <div class="analysis-section">
+      <h3>📝 Content Quality Analysis</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">0.0</div>
+          <div class="stat-label">Avg Flesch Reading Ease</div>
+          <div class="stat-percentage">❌ Very difficult</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0.0%</div>
+          <div class="stat-label">Pages with Good Readability</div>
+          <div class="stat-percentage">0/9 pages</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0.0%</div>
+          <div class="stat-label">Avg Keyword Density</div>
+          <div class="stat-percentage">✅ Optimal</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0.0%</div>
+          <div class="stat-label">Avg Content-to-Code Ratio</div>
+          <div class="stat-percentage">❌ Poor</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0.0%</div>
+          <div class="stat-label">Pages with Good Content Ratio</div>
+          <div class="stat-percentage">0/9 pages</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0.0%</div>
+          <div class="stat-label">Avg Content Uniqueness</div>
+          <div class="stat-percentage">❌ Low uniqueness</div>
+        </div>
+      </div>
+      
+      
+      <div class="content-issues">
+        <h4>⚠️ Content Quality Issues (18 found)</h4>
+        <div class="issues-list">
+          <div class="issue-item">Poor readability (0.0): https://www.stefanbakery.com</div><div class="issue-item">Low content ratio (0.0%): https://www.stefanbakery.com</div><div class="issue-item">Poor readability (0.0): https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Low content ratio (0.0%): https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Poor readability (0.0): https://www.stefanbakery.com/about</div><div class="issue-item">Low content ratio (0.0%): https://www.stefanbakery.com/about</div><div class="issue-item">Poor readability (0.0): https://www.stefanbakery.com/bakery</div><div class="issue-item">Low content ratio (0.0%): https://www.stefanbakery.com/bakery</div><div class="issue-item">Poor readability (0.0): https://www.stefanbakery.com/contact</div><div class="issue-item">Low content ratio (0.0%): https://www.stefanbakery.com/contact</div>
+          <div class="issue-item">... and 8 more issues</div>
+        </div>
+      </div>
+      
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>♿ Comprehensive Accessibility Analysis</h3>
+      
+      <div class="accessibility-overview">
+        <div class="overview-card error">
+          <h4>Overall Accessibility Score</h4>
+          <div class="score-large">39.0/100</div>
+          <div class="score-description">
+            ❌ Poor accessibility compliance
+          </div>
+        </div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">198/207</div>
+          <div class="stat-label">Images with Alt Text</div>
+          <div class="stat-percentage good">95.7%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0/0</div>
+          <div class="stat-label">WCAG AA Contrast</div>
+          <div class="stat-percentage good">100%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0/0</div>
+          <div class="stat-label">WCAG AAA Contrast</div>
+          <div class="stat-percentage good">100%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0/0</div>
+          <div class="stat-label">Form Inputs with Labels</div>
+          <div class="stat-percentage good">100%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">Pages with Lang Attribute</div>
+          <div class="stat-percentage error">0.0%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">ARIA Elements Found</div>
+          <div class="stat-percentage">None</div>
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <div class="accessibility-issues general-issues">
+        <h4>⚠️ General Accessibility Issues (27 found)</h4>
+        <div class="issues-list">
+          <div class="issue-item">1 images without alt text: https://www.stefanbakery.com</div><div class="issue-item">4 images with empty alt text: https://www.stefanbakery.com</div><div class="issue-item">Missing lang attribute: https://www.stefanbakery.com</div><div class="issue-item">1 images without alt text: https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">4 images with empty alt text: https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Missing lang attribute: https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">1 images without alt text: https://www.stefanbakery.com/about</div><div class="issue-item">4 images with empty alt text: https://www.stefanbakery.com/about</div><div class="issue-item">Missing lang attribute: https://www.stefanbakery.com/about</div><div class="issue-item">1 images without alt text: https://www.stefanbakery.com/bakery</div>
+          <div class="issue-item">... and 17 more issues</div>
+        </div>
+      </div>
+      
+      
+      
+    </div>
+  
+        
+        
+    <div class="analysis-section">
+      <h3>🎯 UX Elements Analysis</h3>
+      
+      <div class="ux-overview">
+        <div class="overview-card error">
+          <h4>Call-to-Action Effectiveness</h4>
+          <div class="score-large">0.0</div>
+          <div class="score-description">Average CTAs per page</div>
+        </div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Total CTAs Found</div>
+          <div class="stat-percentage">0.0 per page</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Pages with Contact Info</div>
+          <div class="stat-percentage error">0.0%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Pages with Search</div>
+          <div class="stat-percentage error">0.0%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Newsletter Signups</div>
+          <div class="stat-percentage error">0.0%</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Contact Methods Available</div>
+          <div class="stat-percentage">Phone: 0 | Email: 0 | Forms: 0</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Advanced Search Features</div>
+          <div class="stat-percentage">Filters: 0 | Suggestions: 0</div>
+        </div>
+      </div>
+      
+      
+      
+      <div class="ux-breakdown">
+        <div class="breakdown-section">
+          <h4>📞 Contact Information Breakdown</h4>
+          <div class="contact-stats">
+            <div class="contact-method">
+              <span class="method-icon">📱</span>
+              <span class="method-name">Phone Numbers</span>
+              <span class="method-count">0 pages</span>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon">📧</span>
+              <span class="method-name">Email Addresses</span>
+              <span class="method-count">0 pages</span>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon">📝</span>
+              <span class="method-name">Contact Forms</span>
+              <span class="method-count">0 pages</span>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon">🌐</span>
+              <span class="method-name">Social Media</span>
+              <span class="method-count">0 pages</span>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon">📍</span>
+              <span class="method-name">Physical Address</span>
+              <span class="method-count">0 pages</span>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon">💬</span>
+              <span class="method-name">Live Chat</span>
+              <span class="method-count">0 pages</span>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon">🗺️</span>
+              <span class="method-name">Maps</span>
+              <span class="method-count">0 pages</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="breakdown-section">
+          <h4>🔍 Search Functionality Breakdown</h4>
+          <div class="search-stats">
+            <div class="search-feature">
+              <span class="feature-name">Basic Search</span>
+              <span class="feature-count">0 pages</span>
+            </div>
+            <div class="search-feature">
+              <span class="feature-name">Advanced Search</span>
+              <span class="feature-count">0 pages</span>
+            </div>
+            <div class="search-feature">
+              <span class="feature-name">Search Filters</span>
+              <span class="feature-count">0 pages</span>
+            </div>
+            <div class="search-feature">
+              <span class="feature-name">Search Suggestions</span>
+              <span class="feature-count">0 pages</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="breakdown-section">
+          <h4>📬 Newsletter Signup Breakdown</h4>
+          <div class="newsletter-stats">
+            <div class="newsletter-metric">
+              <span class="metric-name">Signup Forms</span>
+              <span class="metric-count">0 total</span>
+            </div>
+            <div class="newsletter-metric">
+              <span class="metric-name">Signup Elements</span>
+              <span class="metric-count">0 total</span>
+            </div>
+            <div class="newsletter-metric">
+              <span class="metric-name">Incentives Offered</span>
+              <span class="metric-count">0 found</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      <div class="success-message">✅ No major UX issues found!</div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>📱 Mobile-Friendliness Analysis</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Average Mobile Score</div>
+          <div class="metric-value error">50.0/100</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Responsive Viewport</div>
+          <div class="metric-value">9/9 (100.0%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Media Queries</div>
+          <div class="metric-value">0/9</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Touch Icons</div>
+          <div class="metric-value">9/9</div>
+        </div>
+      </div>
+      
+      <div class="sub-metrics">
+        <h4>Mobile Features</h4>
+        <div class="metrics-row">
+          <span>Responsive Images: 0/9</span>
+          <span>Flexbox CSS: 0/9</span>
+        </div>
+      </div>
+      
+      
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🏗️ URL Architecture Analysis</h3>
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Average URL Depth</div>
+          <div class="metric-value error">NaN levels</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Average URL Length</div>
+          <div class="metric-value error">NaN chars</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Max Depth</div>
+          <div class="metric-value error">NaN levels</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">URLs with Parameters</div>
+          <div class="metric-value">0/9</div>
+        </div>
+      </div>
+      
+      <div class="sub-metrics">
+        <h4>URL Structure Patterns</h4>
+        <div class="metrics-row">
+          <span>RESTful URLs: 0/9 (0.0%)</span>
+          <span>Special Characters: 0/9</span>
+          <span>Trailing Slashes: 0/9</span>
+        </div>
+      </div>
+      
+      <div class="sub-metrics">
+        <h4>URL Complexity Distribution</h4>
+        <div class="complexity-chart">
+          
+            <div class="complexity-bar">
+              <span class="complexity-label">Simple</span>
+              <div class="complexity-meter">
+                <div class="complexity-fill complexity-simple" 
+                     style="width: 0%"></div>
+              </div>
+              <span class="complexity-count">0</span>
+            </div>
+          
+            <div class="complexity-bar">
+              <span class="complexity-label">Moderate</span>
+              <div class="complexity-meter">
+                <div class="complexity-fill complexity-moderate" 
+                     style="width: 0%"></div>
+              </div>
+              <span class="complexity-count">0</span>
+            </div>
+          
+            <div class="complexity-bar">
+              <span class="complexity-label">Complex</span>
+              <div class="complexity-meter">
+                <div class="complexity-fill complexity-complex" 
+                     style="width: 0%"></div>
+              </div>
+              <span class="complexity-count">0</span>
+            </div>
+          
+            <div class="complexity-bar">
+              <span class="complexity-label">Very Complex</span>
+              <div class="complexity-meter">
+                <div class="complexity-fill complexity-very-complex" 
+                     style="width: 0%"></div>
+              </div>
+              <span class="complexity-count">0</span>
+            </div>
+          
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      <div class="sub-metrics">
+        <h4>URL Length Distribution</h4>
+        <div class="metrics-row">
+          <span>Shortest: NaN chars</span>
+          <span>Longest: NaN chars</span>
+          <span>Range: NaN chars</span>
+        </div>
+      </div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h2>🧭 Navigation Structure Analysis</h2>
+      
+      <div class="navigation-overview">
+        <div class="nav-grid">
+          <div class="nav-item">
+            <div class="nav-icon">🍞</div>
+            <div class="nav-title">Breadcrumbs</div>
+            <div class="nav-stat">0/0</div>
+            <div class="nav-coverage">0% coverage</div>
+            <div class="nav-detail">Avg depth: 0</div>
+          </div>
+          
+          <div class="nav-item">
+            <div class="nav-icon">📱</div>
+            <div class="nav-title">Main Navigation</div>
+            <div class="nav-stat">0/0</div>
+            <div class="nav-coverage">0% coverage</div>
+            <div class="nav-detail">Avg links: 0</div>
+          </div>
+          
+          <div class="nav-item">
+            <div class="nav-icon">👣</div>
+            <div class="nav-title">Footer Navigation</div>
+            <div class="nav-stat">0/0</div>
+            <div class="nav-coverage">0% coverage</div>
+            <div class="nav-detail">Avg links: 0</div>
+          </div>
+          
+          <div class="nav-item">
+            <div class="nav-icon">📄</div>
+            <div class="nav-title">Pagination</div>
+            <div class="nav-stat">0/0</div>
+            <div class="nav-coverage">0% coverage</div>
+            <div class="nav-detail">0 numbered</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="navigation-details">
+        <div class="nav-detail-grid">
+          <div class="nav-detail-card">
+            <h4>Breadcrumb Analysis</h4>
+            <div class="nav-metrics">
+              <div class="metric">
+                <span class="metric-label">Pages with breadcrumbs:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Accessible breadcrumbs:</span>
+                <span class="metric-value success">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Average depth:</span>
+                <span class="metric-value">0 levels</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="nav-detail-card">
+            <h4>Main Navigation Analysis</h4>
+            <div class="nav-metrics">
+              <div class="metric">
+                <span class="metric-label">Pages with main nav:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Hierarchical structure:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">With ARIA labels:</span>
+                <span class="metric-value success">0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="nav-detail-card">
+            <h4>Footer Navigation Analysis</h4>
+            <div class="nav-metrics">
+              <div class="metric">
+                <span class="metric-label">Pages with footer nav:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Columnar layout:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">With social links:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">With legal links:</span>
+                <span class="metric-value">0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="nav-detail-card">
+            <h4>Pagination Analysis</h4>
+            <div class="nav-metrics">
+              <div class="metric">
+                <span class="metric-label">Pages with pagination:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Numbered pagination:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Infinite scroll:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Accessible:</span>
+                <span class="metric-value success">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="success-message">✅ No navigation issues found!</div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h2>🎬 Media Content & Downloads Analysis</h2>
+      
+      <div class="media-overview">
+        <div class="media-grid">
+          <div class="media-item">
+            <div class="media-icon">🖼️</div>
+            <div class="media-title">Images</div>
+            <div class="media-stat">0</div>
+            <div class="media-detail">100% with alt text</div>
+            <div class="media-detail">0% responsive</div>
+          </div>
+          
+          <div class="media-item">
+            <div class="media-icon">🎥</div>
+            <div class="media-title">Videos</div>
+            <div class="media-stat">0</div>
+            <div class="media-detail">100% with captions</div>
+            <div class="media-detail">0 with controls</div>
+          </div>
+          
+          <div class="media-item">
+            <div class="media-icon">🎵</div>
+            <div class="media-title">Audio Files</div>
+            <div class="media-stat">0</div>
+            <div class="media-detail">100% with transcripts</div>
+            <div class="media-detail">0 with controls</div>
+          </div>
+          
+          <div class="media-item">
+            <div class="media-icon">📥</div>
+            <div class="media-title">Downloads</div>
+            <div class="media-stat">0</div>
+            <div class="media-detail">0 categories</div>
+            <div class="media-detail">0 file types</div>
+          </div>
+          
+          <div class="media-item">
+            <div class="media-icon">📱</div>
+            <div class="media-title">Social Embeds</div>
+            <div class="media-stat">0</div>
+            <div class="media-detail">0 platforms</div>
+            <div class="media-detail">0 accessible</div>
+          </div>
+          
+          <div class="media-item">
+            <div class="media-icon">🌐</div>
+            <div class="media-title">3rd Party</div>
+            <div class="media-stat">0</div>
+            <div class="media-detail">0 analytics</div>
+            <div class="media-detail">0 ads</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="media-details">
+        <div class="media-detail-grid">
+          <div class="media-detail-card">
+            <h4>Image Analysis</h4>
+            <div class="media-metrics">
+              <div class="metric">
+                <span class="metric-label">Total images:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">With alt text:</span>
+                <span class="metric-value success">0 (100%)</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Responsive images:</span>
+                <span class="metric-value">0 (0%)</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Modern formats:</span>
+                <span class="metric-value">0 (0%)</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Lazy loaded:</span>
+                <span class="metric-value">0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="media-detail-card">
+            <h4>Video & Audio Analysis</h4>
+            <div class="media-metrics">
+              <div class="metric">
+                <span class="metric-label">Videos total:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Videos with captions:</span>
+                <span class="metric-value success">0 (100%)</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Audio files total:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Audio with transcripts:</span>
+                <span class="metric-value success">0 (100%)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="media-detail-card">
+            <h4>Download Links</h4>
+            <div class="media-metrics">
+              <div class="metric">
+                <span class="metric-label">Total downloads:</span>
+                <span class="metric-value">0</span>
+              </div>
+              
+            </div>
+            
+          </div>
+          
+          <div class="media-detail-card">
+            <h4>Social Media & Embeds</h4>
+            <div class="media-metrics">
+              <div class="metric">
+                <span class="metric-label">Total embeds:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Platforms detected:</span>
+                <span class="metric-value">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Accessible embeds:</span>
+                <span class="metric-value warning">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">3rd party domains:</span>
+                <span class="metric-value">0</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      
+      <div class="success-message">✅ No media accessibility issues found!</div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>📄 Page Type Classification</h3>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Distinct Page Types</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">9</div>
+          <div class="stat-label">Total Pages Analyzed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0%</div>
+          <div class="stat-label">Average Classification Confidence</div>
+        </div>
+      </div>
+      
+      <div class="sub-section">
+        <h4>📊 Page Type Distribution</h4>
+        <div class="type-distribution">
+          
+              <div class="type-bar">
+                <div class="type-info">
+                  <span class="type-label">General</span>
+                  <span class="type-stats">9 pages (100.0%)</span>
+                  <span class="confidence-badge confidence-low">0% confidence</span>
+                </div>
+                <div class="type-meter">
+                  <div class="type-fill" style="width: 100.0%"></div>
+                </div>
+              </div>
+            
+        </div>
+      </div>
+      
+      
+      
+      <div class="sub-section">
+        <h4>📋 Page Type Examples</h4>
+        <div class="type-examples">
+          
+            <div class="type-example-group">
+              <h5>General Pages</h5>
+              
+                <div class="example-item">
+                  <div class="example-url">
+                    <a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a>
+                    <span class="confidence-score">0%</span>
+                  </div>
+                  
+                </div>
+              
+                <div class="example-item">
+                  <div class="example-url">
+                    <a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a>
+                    <span class="confidence-score">0%</span>
+                  </div>
+                  
+                </div>
+              
+                <div class="example-item">
+                  <div class="example-url">
+                    <a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a>
+                    <span class="confidence-score">0%</span>
+                  </div>
+                  
+                </div>
+              
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🔒 Security Analysis</h3>
+      
+      <!-- Core Security Stats -->
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">HTTPS Pages</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">Pages with Security Headers</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">HSTS Headers</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0/9</div>
+          <div class="stat-label">CSP Headers</div>
+          <div class="stat-percentage">0.0%</div>
+        </div>
+      </div>
+      
+      <!-- Mixed Content Analysis -->
+      <div class="mixed-content-analysis">
+        <h4>🔀 Mixed Content Analysis</h4>
+        <div class="stats-grid">
+          <div class="stat-item success">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Clean Pages</div>
+            <div class="stat-percentage">0%</div>
+          </div>
+          <div class="stat-item ">
+            <div class="stat-value">0</div>
+            <div class="stat-label">High Risk</div>
+            <div class="stat-note">Active mixed content</div>
+          </div>
+          <div class="stat-item ">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Medium Risk</div>
+            <div class="stat-note">Passive mixed content</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Low Risk</div>
+            <div class="stat-note">HTTP links</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Cookie Compliance Analysis -->
+      <div class="cookie-compliance-analysis">
+        <h4>🍪 Cookie Policy Compliance</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Pages with Cookies</div>
+            <div class="stat-percentage">0.0%</div>
+          </div>
+          <div class="stat-item ">
+            <div class="stat-value">0/0</div>
+            <div class="stat-label">Secure Cookies</div>
+            <div class="stat-percentage">0%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Cookie Policies</div>
+            <div class="stat-percentage">0.0%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Consent Mechanisms</div>
+            <div class="stat-percentage">0.0%</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Security Issues -->
+      
+      <div class="security-issues">
+        <h4>⚠️ General Security Issues (18 found)</h4>
+        <div class="issues-list">
+          <div class="issue-item">Non-HTTPS page: https://www.stefanbakery.com</div><div class="issue-item">Missing security headers: https://www.stefanbakery.com</div><div class="issue-item">Non-HTTPS page: https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Missing security headers: https://www.stefanbakery.com/AccessabilityDeclaration</div><div class="issue-item">Non-HTTPS page: https://www.stefanbakery.com/about</div><div class="issue-item">Missing security headers: https://www.stefanbakery.com/about</div><div class="issue-item">Non-HTTPS page: https://www.stefanbakery.com/bakery</div><div class="issue-item">Missing security headers: https://www.stefanbakery.com/bakery</div><div class="issue-item">Non-HTTPS page: https://www.stefanbakery.com/contact</div><div class="issue-item">Missing security headers: https://www.stefanbakery.com/contact</div>
+          <div class="issue-item">... and 8 more issues</div>
+        </div>
+      </div>
+      
+      
+      <!-- Mixed Content Issues -->
+      
+      
+      <!-- Cookie Compliance Issues -->
+      
+      
+      
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>🆕 Enhanced Security & Technology Analysis</h3>
+      <div class="grid-2">
+        <div class="stat-card">
+          <h4>🛠️ Technology Stack Detection</h4>
+          <div class="tech-list">
+            <div class="no-data">No specific technologies detected</div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Unique technologies</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Server types</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <h4>🔐 Advanced Security Headers</h4>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">CSP headers</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">HSTS headers</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">X-Frame-Options</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">X-Content-Type</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">3</span>
+              <span class="stat-label">Avg headers/page</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0%</span>
+              <span class="stat-label">Security coverage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .tech-list {
+          margin-bottom: 15px;
+        }
+        .tech-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          margin: 4px 0;
+          background: #f8f9fa;
+          border-radius: 6px;
+          border-left: 3px solid #007bff;
+        }
+        .tech-name {
+          font-weight: 600;
+          color: #2c3e50;
+        }
+        .tech-count {
+          font-size: 0.9em;
+          color: #6c757d;
+          background: #e9ecef;
+          padding: 2px 8px;
+          border-radius: 12px;
+        }
+        .no-data {
+          text-align: center;
+          color: #6c757d;
+          font-style: italic;
+          padding: 20px;
+        }
+      </style>
+    </div>
+  
+        
+    <div class="analysis-section">
+      <h3>📋 Page Details</h3>
+      <div class="table-container">
+        <table class="page-details-table">
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Response Time</th>
+              <th>Size</th>
+              <th>Words</th>
+              <th>HTTPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+      <tr>
+        <td><a href="https://www.stefanbakery.com" target="_blank">https://www.stefanbakery.com</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>639ms</td>
+        <td>85 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/AccessabilityDeclaration" target="_blank">https://www.stefanbakery.com/AccessabilityDeclaration</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>352ms</td>
+        <td>64.3 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/about" target="_blank">https://www.stefanbakery.com/about</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>351ms</td>
+        <td>60 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/bakery" target="_blank">https://www.stefanbakery.com/bakery</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>340ms</td>
+        <td>80.1 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/contact" target="_blank">https://www.stefanbakery.com/contact</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>338ms</td>
+        <td>67.6 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/fest" target="_blank">https://www.stefanbakery.com/fest</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>369ms</td>
+        <td>79.8 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/gelato" target="_blank">https://www.stefanbakery.com/gelato</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>398ms</td>
+        <td>72.8 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/menu" target="_blank">https://www.stefanbakery.com/menu</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>340ms</td>
+        <td>113.5 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+      <tr>
+        <td><a href="https://www.stefanbakery.com/media" target="_blank">https://www.stefanbakery.com/media</a></td>
+        <td>שטפן אוסטריאן | בייקרי אוסטרי | גלידת דף</td>
+        <td>200</td>
+        <td>344ms</td>
+        <td>75.4 KB</td>
+        <td>330</td>
+        <td>🔓</td>
+      </tr>
+    
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+    </div>
+</body>
+</html>
