@@ -1,0 +1,184 @@
+<%- include('../partials/header', { title: 'Website Audit - SiteScope', user: user }) %>
+
+<!-- Audit Form Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold">Website Audit</h1>
+                    <p class="lead text-muted">
+                        Enter your website URL to get a comprehensive analysis of your site's performance, 
+                        SEO, and user experience.
+                    </p>
+                </div>
+
+                <!-- Audit Form -->
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <form action="/audit/analyze" method="POST" id="auditForm">
+                            <div class="mb-4">
+                                <label for="url" class="form-label h5">Website URL</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-globe"></i>
+                                    </span>
+                                    <input 
+                                        type="url" 
+                                        class="form-control" 
+                                        id="url" 
+                                        name="url" 
+                                        placeholder="https://example.com"
+                                        required
+                                        value="<%= url || '' %>"
+                                    >
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Make sure to include the full URL with https://
+                                </div>
+                            </div>
+
+                            <!-- Audit Options -->
+                            <div class="mb-4">
+                                <label class="form-label h6">Audit Options</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="options" value="performance" id="performance" checked>
+                                            <label class="form-check-label" for="performance">
+                                                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                                                Performance Analysis
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="options" value="seo" id="seo" checked>
+                                            <label class="form-check-label" for="seo">
+                                                <i class="fas fa-search me-2 text-success"></i>
+                                                SEO Analysis
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="options" value="accessibility" id="accessibility" checked>
+                                            <label class="form-check-label" for="accessibility">
+                                                <i class="fas fa-universal-access me-2 text-info"></i>
+                                                Accessibility Check
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="options" value="security" id="security" checked>
+                                            <label class="form-check-label" for="security">
+                                                <i class="fas fa-shield-alt me-2 text-warning"></i>
+                                                Security Scan
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Options (collapsed by default) -->
+                            <div class="mb-4">
+                                <button 
+                                    class="btn btn-link p-0 text-decoration-none" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#advancedOptions"
+                                >
+                                    <i class="fas fa-cog me-2"></i>Advanced Options
+                                    <i class="fas fa-chevron-down ms-1"></i>
+                                </button>
+                                
+                                <div class="collapse mt-3" id="advancedOptions">
+                                    <div class="card card-body bg-light">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="device" class="form-label">Device Type</label>
+                                                <select class="form-select" name="device" id="device">
+                                                    <option value="desktop">Desktop</option>
+                                                    <option value="mobile">Mobile</option>
+                                                    <option value="both" selected>Both</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="depth" class="form-label">Crawl Depth</label>
+                                                <select class="form-select" name="depth" id="depth">
+                                                    <option value="1" selected>Homepage Only</option>
+                                                    <option value="2">2 Levels Deep</option>
+                                                    <option value="3">3 Levels Deep</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-search me-2"></i>
+                                    Start Audit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Info Cards -->
+                <div class="row g-4 mt-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-clock fa-lg"></i>
+                            </div>
+                            <h6>Fast Results</h6>
+                            <small class="text-muted">Get your audit results in under 60 seconds</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-shield-alt fa-lg"></i>
+                            </div>
+                            <h6>Secure & Private</h6>
+                            <small class="text-muted">Your data is processed securely and not stored</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-download fa-lg"></i>
+                            </div>
+                            <h6>Download Reports</h6>
+                            <small class="text-muted">Export your results as PDF or JSON</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript for form enhancement -->
+<script>
+document.getElementById('auditForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+    submitBtn.disabled = true;
+});
+
+// URL validation
+document.getElementById('url').addEventListener('blur', function() {
+    const url = this.value;
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        this.value = 'https://' + url;
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

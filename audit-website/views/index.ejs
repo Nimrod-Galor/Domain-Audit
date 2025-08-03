@@ -1,0 +1,149 @@
+<%- include('partials/header', { title: title, user: user }) %>
+
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Audit Your Website Like a Pro
+                </h1>
+                <p class="lead mb-4">
+                    Get comprehensive insights into your website's performance, SEO, and user experience. 
+                    Fast, affordable, and developer-friendly.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="/audit" class="btn btn-light btn-lg">
+                        <i class="fas fa-search me-2"></i>Start Free Audit
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="text-center">
+                    <i class="fas fa-chart-line fa-10x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Why Choose SiteScope?</h2>
+            <p class="lead text-muted">Everything you need to optimize your website</p>
+        </div>
+        
+        <div class="row g-4">
+            <% features.forEach(feature => { %>
+                <div class="col-md-6 col-lg-3">
+                    <div class="text-center">
+                        <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="<%= feature.icon %> fa-2x"></i>
+                        </div>
+                        <h4><%= feature.title %></h4>
+                        <p class="text-muted"><%= feature.description %></p>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Audit Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-4">
+                    <h3>Try It Now - Free!</h3>
+                    <p class="text-muted">Enter your website URL to get started</p>
+                </div>
+                
+                <form action="/audit/analyze" method="POST" class="d-flex gap-2">
+                    <input type="url" name="url" class="form-control form-control-lg" 
+                           placeholder="https://yourwebsite.com" required>
+                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-search me-2"></i>Audit
+                    </button>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        No registration required • Get results in seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Simple, Transparent Pricing</h2>
+            <p class="lead text-muted">Start free, upgrade when you need more</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <% pricing.forEach(plan => { %>
+                <div class="col-md-4">
+                    <div class="card h-100 <%= plan.highlight ? 'border-primary' : '' %>">
+                        <% if (plan.highlight) { %>
+                            <div class="card-header bg-primary text-white text-center">
+                                <i class="fas fa-star me-2"></i>Most Popular
+                            </div>
+                        <% } %>
+                        <div class="card-body text-center">
+                            <h3 class="card-title"><%= plan.name %></h3>
+                            <div class="display-4 fw-bold text-primary mb-3">
+                                <%= plan.price %>
+                                <% if (plan.price !== '$0') { %>
+                                    <small class="text-muted fs-6">/month</small>
+                                <% } %>
+                            </div>
+                            <ul class="list-unstyled">
+                                <% plan.features.forEach(feature => { %>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i><%= feature %>
+                                    </li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                        <div class="card-footer">
+                            <% if (plan.name === 'Free') { %>
+                                <a href="/audit" class="btn btn-outline-primary w-100">Get Started</a>
+                            <% } else { %>
+                                <a href="/auth/register" class="btn btn-primary w-100">Choose Plan</a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Optimize Your Website?</h2>
+        <p class="lead mb-4">Join thousands of developers and businesses who trust SiteScope</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="/audit" class="btn btn-light btn-lg">
+                <i class="fas fa-rocket me-2"></i>Start Free Audit
+            </a>
+            <a href="/auth/register" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Sign Up Free
+            </a>
+        </div>
+    </div>
+</section>
+
+<%- include('partials/footer') %>

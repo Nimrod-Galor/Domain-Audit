@@ -1,0 +1,129 @@
+<%- include('partials/header', { title: 'Error - SiteScope', user: user }) %>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 text-center">
+                <!-- Error Icon -->
+                <div class="mb-4">
+                    <% if (status === 404) { %>
+                        <i class="fas fa-search fa-5x text-muted mb-3"></i>
+                        <h1 class="display-4 fw-bold">404</h1>
+                        <h2 class="h4 mb-3">Page Not Found</h2>
+                        <p class="lead text-muted mb-4">
+                            Sorry, the page you're looking for doesn't exist or has been moved.
+                        </p>
+                    <% } else if (status === 500) { %>
+                        <i class="fas fa-exclamation-triangle fa-5x text-warning mb-3"></i>
+                        <h1 class="display-4 fw-bold">500</h1>
+                        <h2 class="h4 mb-3">Server Error</h2>
+                        <p class="lead text-muted mb-4">
+                            Something went wrong on our end. We're working to fix it.
+                        </p>
+                    <% } else if (status === 403) { %>
+                        <i class="fas fa-lock fa-5x text-danger mb-3"></i>
+                        <h1 class="display-4 fw-bold">403</h1>
+                        <h2 class="h4 mb-3">Access Forbidden</h2>
+                        <p class="lead text-muted mb-4">
+                            You don't have permission to access this resource.
+                        </p>
+                    <% } else { %>
+                        <i class="fas fa-exclamation-circle fa-5x text-danger mb-3"></i>
+                        <h1 class="display-4 fw-bold"><%= status || 'Error' %></h1>
+                        <h2 class="h4 mb-3">Something Went Wrong</h2>
+                        <p class="lead text-muted mb-4">
+                            <%= message || 'An unexpected error occurred. Please try again.' %>
+                        </p>
+                    <% } %>
+                </div>
+
+                <!-- Error Details (Development Mode) -->
+                <% if (typeof stack !== 'undefined' && stack && process.env.NODE_ENV === 'development') { %>
+                    <div class="card text-start mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">Error Details (Development Mode)</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Message:</h6>
+                            <p class="text-danger"><%= message %></p>
+                            <h6>Stack Trace:</h6>
+                            <pre class="bg-light p-3 small"><%= stack %></pre>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Go Home
+                    </a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Go Back
+                    </button>
+                    <% if (status === 404) { %>
+                        <a href="/audit" class="btn btn-success">
+                            <i class="fas fa-search me-2"></i>Start Audit
+                        </a>
+                    <% } %>
+                </div>
+
+                <!-- Help Section -->
+                <div class="mt-5">
+                    <h5>Need Help?</h5>
+                    <p class="text-muted">
+                        If you continue to experience issues, please contact our support team.
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="mailto:support@sitescope.com" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-2"></i>Contact Support
+                        </a>
+                        <a href="/help" class="btn btn-outline-info">
+                            <i class="fas fa-question-circle me-2"></i>Help Center
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Popular Pages -->
+                <% if (status === 404) { %>
+                    <div class="mt-5">
+                        <h6>Popular Pages</h6>
+                        <div class="list-group list-group-flush">
+                            <a href="/" class="list-group-item list-group-item-action">
+                                <i class="fas fa-home me-2"></i>Homepage
+                            </a>
+                            <a href="/audit" class="list-group-item list-group-item-action">
+                                <i class="fas fa-search me-2"></i>Website Audit Tool
+                            </a>
+                            <a href="/auth/login" class="list-group-item list-group-item-action">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </a>
+                            <a href="/auth/register" class="list-group-item list-group-item-action">
+                                <i class="fas fa-user-plus me-2"></i>Sign Up
+                            </a>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Auto-report errors (optional) -->
+<script>
+// Optional: Auto-report 500 errors to analytics
+<% if (status === 500 && typeof message !== 'undefined') { %>
+    // You can add error reporting here
+    console.error('Server Error:', '<%= message %>');
+<% } %>
+
+// Refresh page suggestion for 500 errors
+<% if (status === 500) { %>
+    setTimeout(() => {
+        if (confirm('Would you like to try refreshing the page?')) {
+            location.reload();
+        }
+    }, 10000);
+<% } %>
+</script>
+
+<%- include('partials/footer') %>

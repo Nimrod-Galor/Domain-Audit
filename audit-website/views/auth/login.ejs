@@ -1,0 +1,107 @@
+<%- include('../partials/header', { title: 'Login - SiteScope', user: user }) %>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h1 class="h3 fw-bold">Welcome Back</h1>
+                            <p class="text-muted">Sign in to your SiteScope account</p>
+                        </div>
+
+                        <% if (typeof error !== 'undefined' && error) { %>
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <%= error %>
+                            </div>
+                        <% } %>
+
+                        <form action="/auth/login" method="POST">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    class="form-control" 
+                                    id="email" 
+                                    name="email" 
+                                    required
+                                    value="<%= typeof email !== 'undefined' ? email : '' %>"
+                                >
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input 
+                                    type="password" 
+                                    class="form-control" 
+                                    id="password" 
+                                    name="password" 
+                                    required
+                                >
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                <label class="form-check-label" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                </button>
+                            </div>
+                        </form>
+
+                        <hr>
+
+                        <div class="text-center">
+                            <p class="mb-2">
+                                <a href="/auth/forgot-password" class="text-decoration-none">
+                                    Forgot your password?
+                                </a>
+                            </p>
+                            <p class="text-muted">
+                                Don't have an account? 
+                                <a href="/auth/register" class="text-decoration-none">Sign up here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benefits Section -->
+                <div class="text-center mt-4">
+                    <h5 class="mb-3">Why sign in?</h5>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="text-center">
+                                <i class="fas fa-history fa-2x text-primary mb-2"></i>
+                                <h6>Audit History</h6>
+                                <small class="text-muted">Track all your audits</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center">
+                                <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                                <h6>Progress Tracking</h6>
+                                <small class="text-muted">See improvements over time</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center">
+                                <i class="fas fa-bell fa-2x text-info mb-2"></i>
+                                <h6>Alerts</h6>
+                                <small class="text-muted">Get notified of issues</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<%- include('../partials/footer') %>

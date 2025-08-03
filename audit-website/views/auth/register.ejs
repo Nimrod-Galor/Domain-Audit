@@ -1,0 +1,259 @@
+<%- include('../partials/header', { title: 'Sign Up - SiteScope', user: user }) %>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+                <div class="card shadow">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h1 class="h3 fw-bold">Create Your Account</h1>
+                            <p class="text-muted">Join SiteScope and start optimizing your websites</p>
+                        </div>
+
+                        <% if (typeof error !== 'undefined' && error) { %>
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <%= error %>
+                            </div>
+                        <% } %>
+
+                        <form action="/auth/register" method="POST" id="registerForm">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label">First Name</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="firstName" 
+                                        name="firstName" 
+                                        required
+                                        value="<%= typeof firstName !== 'undefined' ? firstName : '' %>"
+                                    >
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lastName" class="form-label">Last Name</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="lastName" 
+                                        name="lastName" 
+                                        required
+                                        value="<%= typeof lastName !== 'undefined' ? lastName : '' %>"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    class="form-control" 
+                                    id="email" 
+                                    name="email" 
+                                    required
+                                    value="<%= typeof email !== 'undefined' ? email : '' %>"
+                                >
+                                <div class="form-text">We'll never share your email with anyone else.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="company" class="form-label">Company (Optional)</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="company" 
+                                    name="company"
+                                    value="<%= typeof company !== 'undefined' ? company : '' %>"
+                                >
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input 
+                                        type="password" 
+                                        class="form-control" 
+                                        id="password" 
+                                        name="password" 
+                                        required
+                                        minlength="8"
+                                    >
+                                    <div class="form-text">Minimum 8 characters</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                    <input 
+                                        type="password" 
+                                        class="form-control" 
+                                        id="confirmPassword" 
+                                        name="confirmPassword" 
+                                        required
+                                        minlength="8"
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- Plan Selection -->
+                            <div class="mb-4">
+                                <label class="form-label">Choose Your Plan</label>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <input type="radio" class="btn-check" name="plan" id="free" value="free" checked>
+                                                <label class="btn btn-outline-primary w-100" for="free">
+                                                    <strong>Free</strong><br>
+                                                    <small>5 audits/month</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <input type="radio" class="btn-check" name="plan" id="pro" value="pro">
+                                                <label class="btn btn-outline-success w-100" for="pro">
+                                                    <strong>Pro</strong><br>
+                                                    <small>$19/month</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <input type="radio" class="btn-check" name="plan" id="business" value="business">
+                                                <label class="btn btn-outline-warning w-100" for="business">
+                                                    <strong>Business</strong><br>
+                                                    <small>$49/month</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terms and Conditions -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        I agree to the <a href="/terms" target="_blank">Terms of Service</a> 
+                                        and <a href="/privacy" target="_blank">Privacy Policy</a>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter">
+                                    <label class="form-check-label" for="newsletter">
+                                        Send me tips and updates about website optimization
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-user-plus me-2"></i>Create Account
+                                </button>
+                            </div>
+                        </form>
+
+                        <hr>
+
+                        <div class="text-center">
+                            <p class="text-muted">
+                                Already have an account? 
+                                <a href="/auth/login" class="text-decoration-none">Sign in here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Preview -->
+                <div class="mt-5">
+                    <h5 class="text-center mb-4">What you get with SiteScope</h5>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-rocket fa-lg"></i>
+                                </div>
+                                <h6>Performance Insights</h6>
+                                <p class="text-muted small">Detailed analysis of your website's speed and optimization opportunities</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-search fa-lg"></i>
+                                </div>
+                                <h6>SEO Optimization</h6>
+                                <p class="text-muted small">Comprehensive SEO audit with actionable recommendations</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-chart-line fa-lg"></i>
+                                </div>
+                                <h6>Progress Tracking</h6>
+                                <p class="text-muted small">Monitor improvements over time with detailed history</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Form Validation JavaScript -->
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match. Please try again.');
+        return false;
+    }
+    
+    // Disable submit button to prevent double submission
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+    submitBtn.disabled = true;
+});
+
+// Password strength indicator
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.querySelector('.password-strength');
+    
+    // You can add password strength validation here
+    // For now, just basic length check
+    if (password.length >= 8) {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+    }
+});
+
+// Real-time password confirmation
+document.getElementById('confirmPassword').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (confirmPassword === password && password.length >= 8) {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

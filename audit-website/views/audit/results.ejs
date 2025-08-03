@@ -1,0 +1,409 @@
+<%- include('../partials/header', { title: 'Audit Results - SiteScope', user: user }) %>
+
+<!-- Results Header -->
+<section class="bg-light py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-2">Audit Results</h1>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-globe me-2"></i><%= results.url %>
+                    <span class="ms-3">
+                        <i class="fas fa-clock me-1"></i>
+                        Analyzed on <%= new Date(results.timestamp).toLocaleDateString() %>
+                    </span>
+                </p>
+            </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-2"></i>Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/audit/export/pdf?id=<%= results.id %>">
+                            <i class="fas fa-file-pdf me-2"></i>PDF Report
+                        </a></li>
+                        <li><a class="dropdown-item" href="/audit/export/json?id=<%= results.id %>">
+                            <i class="fas fa-file-code me-2"></i>JSON Data
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Overall Score -->
+<section class="py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h2 class="card-title">Overall Score</h2>
+                        <div class="display-1 fw-bold mb-3" style="color: <%= results.overallScore >= 80 ? '#28a745' : results.overallScore >= 60 ? '#ffc107' : '#dc3545' %>">
+                            <%= results.overallScore %>/100
+                        </div>
+                        <p class="lead text-muted">
+                            <%= results.overallScore >= 80 ? 'Excellent' : results.overallScore >= 60 ? 'Good' : 'Needs Improvement' %>
+                        </p>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar" 
+                                 style="width: <%= results.overallScore %>%; background-color: <%= results.overallScore >= 80 ? '#28a745' : results.overallScore >= 60 ? '#ffc107' : '#dc3545' %>">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Quick Stats</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>Page Size:</strong> <%= results.pageSize || 'N/A' %>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Load Time:</strong> <%= results.loadTime || 'N/A' %>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Issues Found:</strong> 
+                                <span class="badge bg-danger"><%= results.totalIssues || 0 %></span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Recommendations:</strong> 
+                                <span class="badge bg-info"><%= results.totalRecommendations || 0 %></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Category Scores -->
+<section class="py-4">
+    <div class="container">
+        <h2 class="mb-4">Category Breakdown</h2>
+        <div class="row g-4">
+            <% if (results.seo) { %>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-search fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title">SEO</h5>
+                        <div class="h2 fw-bold mb-2" style="color: <%= results.seo.score >= 80 ? '#28a745' : results.seo.score >= 60 ? '#ffc107' : '#dc3545' %>">
+                            <%= results.seo.score %>/100
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: <%= results.seo.score %>%"></div>
+                        </div>
+                        <small class="text-muted">
+                            <%= results.seo.issues?.length || 0 %> issues found
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (results.performance) { %>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-tachometer-alt fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Performance</h5>
+                        <div class="h2 fw-bold mb-2" style="color: <%= results.performance.score >= 80 ? '#28a745' : results.performance.score >= 60 ? '#ffc107' : '#dc3545' %>">
+                            <%= results.performance.score %>/100
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: <%= results.performance.score %>%"></div>
+                        </div>
+                        <small class="text-muted">
+                            <%= results.performance.issues?.length || 0 %> issues found
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (results.accessibility) { %>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-universal-access fa-3x text-info"></i>
+                        </div>
+                        <h5 class="card-title">Accessibility</h5>
+                        <div class="h2 fw-bold mb-2" style="color: <%= results.accessibility.score >= 80 ? '#28a745' : results.accessibility.score >= 60 ? '#ffc107' : '#dc3545' %>">
+                            <%= results.accessibility.score %>/100
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: <%= results.accessibility.score %>%"></div>
+                        </div>
+                        <small class="text-muted">
+                            <%= results.accessibility.issues?.length || 0 %> issues found
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (results.security) { %>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-shield-alt fa-3x text-warning"></i>
+                        </div>
+                        <h5 class="card-title">Security</h5>
+                        <div class="h2 fw-bold mb-2" style="color: <%= results.security.score >= 80 ? '#28a745' : results.security.score >= 60 ? '#ffc107' : '#dc3545' %>">
+                            <%= results.security.score %>/100
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: <%= results.security.score %>%"></div>
+                        </div>
+                        <small class="text-muted">
+                            <%= results.security.issues?.length || 0 %> issues found
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Detailed Results -->
+<section class="py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Issues and Recommendations -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#issues-tab">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Issues (<%= results.totalIssues || 0 %>)
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#recommendations-tab">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    Recommendations (<%= results.totalRecommendations || 0 %>)
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#details-tab">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Technical Details
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <!-- Issues Tab -->
+                            <div class="tab-pane show active" id="issues-tab">
+                                <% if (results.allIssues && results.allIssues.length > 0) { %>
+                                    <% results.allIssues.forEach((issue, index) => { %>
+                                        <div class="alert alert-<%= issue.severity === 'high' ? 'danger' : issue.severity === 'medium' ? 'warning' : 'info' %> mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-3">
+                                                    <i class="fas fa-<%= issue.severity === 'high' ? 'times-circle' : issue.severity === 'medium' ? 'exclamation-triangle' : 'info-circle' %>"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="alert-heading"><%= issue.title %></h6>
+                                                    <p class="mb-2"><%= issue.description %></p>
+                                                    <% if (issue.element) { %>
+                                                        <small class="text-muted">
+                                                            <strong>Element:</strong> <code><%= issue.element %></code>
+                                                        </small>
+                                                    <% } %>
+                                                </div>
+                                                <div class="ms-3">
+                                                    <span class="badge bg-<%= issue.severity === 'high' ? 'danger' : issue.severity === 'medium' ? 'warning' : 'info' %>">
+                                                        <%= issue.severity %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                        <h5>No Issues Found!</h5>
+                                        <p class="text-muted">Your website is looking great!</p>
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <!-- Recommendations Tab -->
+                            <div class="tab-pane" id="recommendations-tab">
+                                <% if (results.allRecommendations && results.allRecommendations.length > 0) { %>
+                                    <% results.allRecommendations.forEach((rec, index) => { %>
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-start">
+                                                    <div class="me-3">
+                                                        <i class="fas fa-lightbulb text-warning"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title"><%= rec.title %></h6>
+                                                        <p class="card-text"><%= rec.description %></p>
+                                                        <% if (rec.impact) { %>
+                                                            <small class="text-muted">
+                                                                <strong>Impact:</strong> <%= rec.impact %>
+                                                            </small>
+                                                        <% } %>
+                                                    </div>
+                                                    <div class="ms-3">
+                                                        <span class="badge bg-<%= rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'info' %>">
+                                                            <%= rec.priority %> priority
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-thumbs-up fa-3x text-success mb-3"></i>
+                                        <h5>Great Job!</h5>
+                                        <p class="text-muted">Your website is well optimized. No specific recommendations at this time.</p>
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <!-- Technical Details Tab -->
+                            <div class="tab-pane" id="details-tab">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <h6>Page Information</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Title:</strong> <%= results.pageTitle || 'N/A' %></li>
+                                            <li><strong>Meta Description:</strong> <%= results.metaDescription ? 'Present' : 'Missing' %></li>
+                                            <li><strong>Charset:</strong> <%= results.charset || 'N/A' %></li>
+                                            <li><strong>Viewport:</strong> <%= results.viewport ? 'Set' : 'Missing' %></li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Technical Metrics</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Response Time:</strong> <%= results.responseTime || 'N/A' %></li>
+                                            <li><strong>Content Type:</strong> <%= results.contentType || 'N/A' %></li>
+                                            <li><strong>Server:</strong> <%= results.server || 'N/A' %></li>
+                                            <li><strong>Compression:</strong> <%= results.compression ? 'Enabled' : 'Disabled' %></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Action Items -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>Priority Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (results.priorityActions && results.priorityActions.length > 0) { %>
+                            <% results.priorityActions.forEach((action, index) => { %>
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="me-3">
+                                        <span class="badge bg-<%= action.priority === 'high' ? 'danger' : action.priority === 'medium' ? 'warning' : 'info' %> rounded-pill">
+                                            <%= index + 1 %>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1"><%= action.title %></h6>
+                                        <small class="text-muted"><%= action.description %></small>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <p class="text-muted mb-0">No critical actions needed at this time.</p>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Share Results -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-share me-2"></i>Share Results
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="copyToClipboard()">
+                                <i class="fas fa-copy me-2"></i>Copy Link
+                            </button>
+                            <a href="mailto:?subject=Website Audit Results&body=Check out my website audit results: <%= results.shareUrl %>" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Action Buttons -->
+<section class="py-4 bg-light">
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h3 class="mb-4">What's Next?</h3>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="/audit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Audit Another Site
+                    </a>
+                    <% if (!user) { %>
+                    <a href="/auth/register" class="btn btn-success">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up for More Features
+                    </a>
+                    <% } %>
+                    <a href="/audit/export/pdf?id=<%= results.id %>" class="btn btn-outline-primary">
+                        <i class="fas fa-file-pdf me-2"></i>Download PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function copyToClipboard() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    });
+}
+</script>
+
+<%- include('../partials/footer') %>

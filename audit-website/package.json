@@ -1,0 +1,35 @@
+{
+  "name": "sitescope-audit-website",
+  "version": "1.0.0",
+  "description": "Website audit tool with EJS and Bootstrap",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "express-session": "^1.17.3",
+    "connect-sqlite3": "^0.9.13",
+    "sqlite3": "^5.1.6",
+    "bcryptjs": "^2.4.3",
+    "express-rate-limit": "^6.10.0",
+    "cheerio": "^1.0.0-rc.12",
+    "validator": "^13.11.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "website",
+    "audit",
+    "seo",
+    "performance",
+    "monitoring"
+  ],
+  "author": "Nimrod Galor",
+  "license": "MIT"
+}
