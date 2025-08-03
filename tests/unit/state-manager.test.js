@@ -5,7 +5,7 @@ import {
   restoreMap,
   saveState,
   loadState
-} from '../../src/core/state-manager.js';
+} from '../../legacy/state-manager.js';
 import fs from 'fs';
 import path from 'path';
 

@@ -569,36 +569,7 @@ export class AuditComparisonReportGenerator {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audit Comparison Report</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { color: #2c3e50; margin-bottom: 10px; }
-        .audit-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .audit-card { padding: 20px; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; }
-        .summary { margin-bottom: 30px; padding: 20px; border-radius: 6px; }
-        .summary.positive { background: #d4edda; border: 1px solid #c3e6cb; }
-        .summary.negative { background: #f8d7da; border: 1px solid #f5c6cb; }
-        .summary.neutral { background: #e2e3e5; border: 1px solid #d1d3d5; }
-        .section { margin-bottom: 30px; }
-        .section h3 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .metric-card { padding: 15px; border: 1px solid #ddd; border-radius: 6px; }
-        .metric-value { font-size: 1.2em; font-weight: bold; }
-        .trend-up { color: #27ae60; }
-        .trend-down { color: #e74c3c; }
-        .trend-stable { color: #7f8c8d; }
-        .changes-list { list-style: none; padding: 0; }
-        .changes-list li { padding: 8px 12px; margin: 5px 0; border-radius: 4px; }
-        .change-positive { background: #d4edda; }
-        .change-negative { background: #f8d7da; }
-        .change-neutral { background: #e2e3e5; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; font-weight: 600; }
-        .status-200 { color: #27ae60; }
-        .status-error { color: #e74c3c; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="../styles.css">
 </head>
 <body>
     <div class="container">

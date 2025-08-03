@@ -1,0 +1,20 @@
+{
+  "domain": "stefanbakery-com",
+  "audits": [
+    {
+      "id": "audit-2025-08-03-08-59-49",
+      "startTime": "2025-08-03T08:59:49.411Z",
+      "status": "completed",
+      "version": "1.0.0",
+      "domain": "stefanbakery-com",
+      "endTime": "2025-08-03T09:00:22.876Z",
+      "duration": 33,
+      "pagesAnalyzed": 214428,
+      "linksChecked": 50
+    }
+  ],
+  "totalAudits": 1,
+  "lastAuditId": "audit-2025-08-03-08-59-49",
+  "created": "2025-08-03T08:59:49.411Z",
+  "lastUpdated": "2025-08-03T09:00:22.876Z"
+}

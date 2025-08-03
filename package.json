@@ -9,6 +9,7 @@
   },
   "type": "module",
   "scripts": {
+    "dev": "node bin/domain-audit.js audit stefanbakery.com",
     "start": "node bin/domain-audit.js",
     "analyze": "node bin/data-analyzer.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
