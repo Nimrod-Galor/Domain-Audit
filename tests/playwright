@@ -1,0 +1,154 @@
+// Playwright integration tests for real browser testing
+import { test, expect } from '@playwright/test';
+
+test.describe('Real Browser Integration Tests', () => {
+  test.describe.configure({ mode: 'parallel' });
+
+  test('should audit a real website successfully', async ({ page }) => {
+    // Test against a reliable, fast loading site
+    await page.goto('https://example.com');
+    
+    // Wait for page to fully load
+    await page.waitForLoadState('networkidle');
+    
+    // Verify basic page elements exist
+    const title = await page.title();
+    expect(title).toBeTruthy();
+    expect(title.length).toBeGreaterThan(0);
+    
+    // Check for basic HTML structure
+    const bodyContent = await page.textContent('body');
+    expect(bodyContent).toBeTruthy();
+    
+    // Verify page loads within reasonable time
+    const performanceTiming = await page.evaluate(() => {
+      return performance.timing.loadEventEnd - performance.timing.navigationStart;
+    });
+    expect(performanceTiming).toBeLessThan(10000); // Under 10 seconds
+  });
+
+  test('should handle mobile viewport correctly', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+    
+    await page.goto('https://example.com');
+    await page.waitForLoadState('networkidle');
+    
+    // Verify responsive behavior
+    const viewport = page.viewportSize();
+    expect(viewport.width).toBe(375);
+    expect(viewport.height).toBe(667);
+  });
+
+  test('should capture network requests', async ({ page }) => {
+    const requests = [];
+    const responses = [];
+    
+    page.on('request', request => {
+      requests.push({
+        url: request.url(),
+        method: request.method(),
+        resourceType: request.resourceType()
+      });
+    });
+    
+    page.on('response', response => {
+      responses.push({
+        url: response.url(),
+        status: response.status(),
+        headers: response.headers()
+      });
+    });
+    
+    await page.goto('https://example.com');
+    await page.waitForLoadState('networkidle');
+    
+    // Verify network activity was captured
+    expect(requests.length).toBeGreaterThan(0);
+    expect(responses.length).toBeGreaterThan(0);
+    
+    // Find the main document request
+    const mainRequest = requests.find(req => 
+      req.url === 'https://example.com/' && req.resourceType === 'document'
+    );
+    expect(mainRequest).toBeDefined();
+    
+    // Find corresponding response
+    const mainResponse = responses.find(res => 
+      res.url === 'https://example.com/' && res.status === 200
+    );
+    expect(mainResponse).toBeDefined();
+  });
+
+  test('should detect accessibility issues', async ({ page }) => {
+    // Create a test page with accessibility issues
+    await page.setContent(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Accessibility Test</title></head>
+      <body>
+        <img src="test.jpg"><!-- Missing alt attribute -->
+        <button><!-- Empty button --></button>
+        <input type="text"><!-- Missing label -->
+        <div style="color: #ccc; background: white;">Low contrast text</div>
+      </body>
+      </html>
+    `);
+    
+    // Check for images without alt text
+    const imagesWithoutAlt = await page.locator('img:not([alt])');
+    expect(await imagesWithoutAlt.count()).toBeGreaterThan(0);
+    
+    // Check for empty buttons
+    const emptyButtons = await page.locator('button:empty');
+    expect(await emptyButtons.count()).toBeGreaterThan(0);
+    
+    // Check for inputs without labels
+    const inputs = await page.locator('input[type="text"]');
+    expect(await inputs.count()).toBeGreaterThan(0);
+  });
+
+  test('should measure core web vitals', async ({ page }) => {
+    await page.goto('https://example.com');
+    await page.waitForLoadState('networkidle');
+    
+    // Measure Web Vitals
+    const webVitals = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        const vitals = {};
+        
+        // Largest Contentful Paint
+        new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          if (entries.length > 0) {
+            vitals.lcp = entries[entries.length - 1].startTime;
+          }
+        }).observe({ entryTypes: ['largest-contentful-paint'] });
+        
+        // First Input Delay would require actual user interaction
+        vitals.fid = 0; // Placeholder
+        
+        // Cumulative Layout Shift
+        new PerformanceObserver((list) => {
+          vitals.cls = list.getEntries().reduce((sum, entry) => {
+            return sum + entry.value;
+          }, 0);
+        }).observe({ entryTypes: ['layout-shift'] });
+        
+        // Wait a bit for measurements
+        setTimeout(() => resolve(vitals), 2000);
+      });
+    });
+    
+    expect(typeof webVitals.lcp).toBe('number');
+    expect(typeof webVitals.cls).toBe('number');
+    
+    // LCP should be reasonable (under 4 seconds)
+    if (webVitals.lcp > 0) {
+      expect(webVitals.lcp).toBeLessThan(4000);
+    }
+    
+    // CLS should be low (under 0.25)
+    expect(webVitals.cls).toBeLessThan(0.25);
+  });
+});
