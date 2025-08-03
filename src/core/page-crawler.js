@@ -1,4 +1,4 @@
-import { JSDOM, VirtualConsole } from 'jsdom';
+import * as cheerio from 'cheerio';
 import fetch from 'node-fetch';
 import { CustomResourceLoader } from './resource-loader.js';
 import * as analyzers from '../analyzers/index.js';
@@ -203,29 +203,26 @@ export class PageCrawler {
     // ========== DOM & FETCH UTILITIES ==========
 
     /**
-     * Create JSDOM instance with optimized configuration
+     * Create Cheerio instance with optimized configuration
      */
     _createDOM(html) {
-        return new JSDOM(html, {
-            resources: new CustomResourceLoader(),
-            runScripts: "outside-only",
-            pretendToBeVisual: false,
-            virtualConsole: this.virtualConsole,
-            includeNodeLocations: false
-        });
+        return {
+            $: cheerio.load(html, {
+                xmlMode: false,
+                decodeEntities: false,
+                normalizeWhitespace: false
+            }),
+            window: { document: { URL: '' } }
+        };
     }
 
     /**
-     * Create virtual console for JSDOM error handling
+     * Create virtual console placeholder for compatibility
      */
     _createVirtualConsole() {
-        const virtualConsole = new VirtualConsole();
-        virtualConsole.on("error", (err) => {
-            if (err.includes('critical') || err.includes('fatal')) {
-                console.error(`Critical JSDOM error:`, err);
-            }
-        });
-        return virtualConsole;
+        return {
+            on: () => {} // No-op for Cheerio compatibility
+        };
     }
 
     /**

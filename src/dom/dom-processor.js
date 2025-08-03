@@ -26,11 +26,11 @@
  * @version 1.0.0
  */
 
-import { JSDOM, VirtualConsole, ResourceLoader } from 'jsdom';
+import * as cheerio from 'cheerio';
 
 /**
  * DOM Processing Manager Class
- * Handles all DOM parsing, analysis, and utility operations
+ * Handles all DOM parsing, analysis, and utility operations with Cheerio
  */
 export class DOMProcessor {
   /**
@@ -41,11 +41,10 @@ export class DOMProcessor {
   constructor(performanceManager = null, options = {}) {
     this.performanceManager = performanceManager;
     this.config = {
-      // JSDOM Configuration
-      includeNodeLocations: false,
-      storageQuota: 10000000,
-      runScripts: 'outside-only',
-      pretendToBeVisual: false,
+      // Cheerio Configuration (lightweight)
+      decodeEntities: false,
+      normalizeWhitespace: false,
+      xmlMode: false,
       
       // Processing Limits
       maxElementsToProcess: options.maxElementsToProcess || 10000,
@@ -68,57 +67,100 @@ export class DOMProcessor {
   }
 
   /**
-   * Create optimized JSDOM instance from HTML
+   * Create optimized Cheerio instance from HTML
    * @param {string} html - HTML content
    * @param {string} url - Base URL for the document
-   * @param {Object} options - JSDOM options
-   * @returns {Promise<Object>} DOM instance and document
+   * @param {Object} options - Cheerio options
+   * @returns {Promise<Object>} Cheerio instance and document-like interface
    */
   async createDOM(html, url = 'https://example.com', options = {}) {
     try {
-      const virtualConsole = new VirtualConsole();
-      virtualConsole.on('error', () => {}); // Silence all JSDOM errors for performance
-      
-      const jsdomOptions = {
-        url,
-        virtualConsole,
-        resources: options.loadResources ? 'usable' : new NoOpResourceLoader(),
-        includeNodeLocations: this.config.includeNodeLocations,
-        storageQuota: this.config.storageQuota,
-        runScripts: this.config.runScripts,
-        pretendToBeVisual: this.config.pretendToBeVisual,
+      // Load HTML with Cheerio
+      const $ = cheerio.load(html, {
+        xmlMode: false,
+        decodeEntities: false,
+        normalizeWhitespace: false,
+        withStartIndices: false,
+        withEndIndices: false,
         ...options
+      });
+      
+      // Create document-like interface for compatibility
+      const document = {
+        querySelector: (selector) => {
+          const elements = $(selector);
+          return elements.length > 0 ? this.cheerioToElement(elements.first(), $) : null;
+        },
+        querySelectorAll: (selector) => {
+          const elements = $(selector);
+          return Array.from({ length: elements.length }, (_, i) => 
+            this.cheerioToElement(elements.eq(i), $)
+          );
+        },
+        createElement: (tagName) => ({ tagName, textContent: '', innerHTML: '' }),
+        documentElement: this.cheerioToElement($('html'), $) || { innerHTML: html },
+        body: this.cheerioToElement($('body'), $) || { innerHTML: '' },
+        head: this.cheerioToElement($('head'), $) || { innerHTML: '' },
+        title: $('title').text() || '',
+        URL: url
       };
       
-      const dom = new JSDOM(html, jsdomOptions);
-      const document = dom.window.document;
-      
-      // Track active DOMs for cleanup
-      this.activeDOMs.add(dom);
       this.processedCount++;
       
       // Clean scripts and styles for performance unless explicitly requested
       if (!options.keepScripts) {
-        this.cleanDOMElements(document, ['script', 'style']);
+        $('script, style').remove();
       }
       
       return {
-        dom,
+        $,
         document,
-        window: dom.window,
-        cleanup: () => this.cleanupDOM(dom)
+        window: { document },
+        cleanup: () => {} // No cleanup needed for Cheerio
       };
       
     } catch (error) {
       console.error('Error creating DOM:', error.message);
       return {
-        dom: null,
+        $: null,
         document: null,
         window: null,
         cleanup: () => {},
         error: error.message
       };
     }
+  }
+
+  /**
+   * Convert Cheerio element to DOM-like element interface
+   * @param {Object} cheerioElement - Cheerio element
+   * @param {Object} $ - Cheerio instance
+   * @returns {Object} DOM-like element
+   */
+  cheerioToElement(cheerioElement, $) {
+    if (!cheerioElement || cheerioElement.length === 0) return null;
+    
+    const elem = cheerioElement.get(0);
+    return {
+      tagName: elem.name || elem.tagName,
+      textContent: cheerioElement.text(),
+      innerHTML: cheerioElement.html(),
+      outerHTML: $.html(cheerioElement),
+      getAttribute: (name) => cheerioElement.attr(name),
+      hasAttribute: (name) => cheerioElement.attr(name) !== undefined,
+      classList: {
+        contains: (className) => cheerioElement.hasClass(className)
+      },
+      href: cheerioElement.attr('href'),
+      src: cheerioElement.attr('src'),
+      alt: cheerioElement.attr('alt'),
+      title: cheerioElement.attr('title'),
+      id: cheerioElement.attr('id'),
+      className: cheerioElement.attr('class') || '',
+      children: cheerioElement.children().toArray().map(child => 
+        this.cheerioToElement($(child), $)
+      ).filter(Boolean)
+    };
   }
 
   /**
@@ -824,15 +866,6 @@ export class DOMProcessor {
 // NO-OP RESOURCE LOADER FOR PERFORMANCE
 // ============================================================================
 
-/**
- * No-operation resource loader that blocks all resource loading
- */
-class NoOpResourceLoader extends ResourceLoader {
-  fetch(url, options) {
-    return Promise.reject(new Error('Resource loading disabled for performance'));
-  }
-}
-
 // ============================================================================
 // STANDALONE UTILITY FUNCTIONS
 // ============================================================================
@@ -924,7 +957,7 @@ export function getDOMStatsOptimized(document) {
 }
 
 /**
- * Legacy JSDOM creation function
+ * Legacy DOM creation function (now using Cheerio)
  * @param {string} html - HTML content
  * @param {string} url - Base URL
  * @returns {Promise<Object>} DOM instance

@@ -23,7 +23,7 @@
   "AI assistant": "Claude Sonnet 4",
   "license": "MIT",
   "dependencies": {
-    "jsdom": "^26.1.0",
+    "cheerio": "^1.1.2",
     "node-fetch": "^3.3.2"
   }
 }
