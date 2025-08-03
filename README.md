@@ -9,7 +9,8 @@ Advanced domain link audit tool with AI intelligence and comprehensive analysis 
 - **📊 Advanced Analytics**: Performance metrics, SEO analysis, and business intelligence
 - **🛡️ Security Analysis**: SSL certificates, security headers, and vulnerability detection
 - **⚡ Performance Monitoring**: Web vitals, load times, and optimization insights
-- **📱 Modern Architecture**: Modular design with 99.92% feature coverage
+- **� Multi-Audit System**: Version history with resume capability and historical tracking
+- **�📱 Modern Architecture**: Modular design with 99.92% feature coverage
 
 ## 📁 Project Structure
 
@@ -56,27 +57,82 @@ npm install
 ### Basic Usage
 
 ```bash
-# Audit a domain with default settings (50 internal links)
+# Audit a domain (automatically resumes if incomplete)
+node bin/domain-audit.js audit example.com 50
+
+# Force new audit (ignore incomplete audits)
+node bin/domain-audit.js audit example.com 50 --new
+
+# View audit history
+node bin/domain-audit.js list example.com
+
+# Clean up old audits (keep latest 10)
+node bin/domain-audit.js cleanup example.com 10
+```
+
+### Advanced Management
+
+```bash
+# Audit management tool
+node bin/audit-manager.js list example.com
+node bin/audit-manager.js stats example.com
+node bin/audit-manager.js compare example.com audit-2025-08-03-10-30-45 audit-2025-08-02-15-20-30
+
+# Advanced data analysis (for specific audit)
+node bin/data-analyzer.js ./audits/example/audit-2025-08-03-10-30-45/crawl-state.json
+```
+
+### Legacy Commands (Backward Compatible)
+
+```bash
+# NPM scripts (still supported)
 npm start example.com
-
-# Audit with custom link limit
-npm start example.com 100
-
-# Analyze existing audit data
 npm run analyze ./audits/example/crawl-state.json
 ```
 
-### Direct Command Usage
+## � Multi-Audit System
 
-```bash
-# Main audit tool
-node bin/domain-audit.js example.com
+The tool now supports multiple audits per domain with comprehensive version history:
 
-# Advanced data analysis
-node bin/data-analyzer.js ./audits/example/crawl-state.json
+### 🔄 **Resume Capability**
+
+- Automatically resumes incomplete audits
+- Preserves all crawl state and progress
+- Graceful handling of interruptions
+
+### 📊 **Version History**
+
+- Unique timestamped audit IDs
+- Track performance changes over time
+- Compare metrics between audits
+- Historical data preservation
+
+### 🧹 **Management Tools**
+
+- List all audits with detailed statistics
+- Clean up old audits while preserving recent ones
+- Compare performance between different audits
+- Export audit data for external analysis
+
+### 📁 **Organized Storage**
+
+```
+audits/
+└── [domain]/
+    ├── audit-index.json
+    ├── audit-2025-08-03-10-30-45/
+    │   ├── crawl-state.json
+    │   ├── crawl-report.html
+    │   └── page-data/
+    └── audit-2025-08-03-15-20-30/
+        ├── crawl-state.json
+        ├── crawl-report.html
+        └── page-data/
 ```
 
-## 📊 Coverage & Capabilities
+See [Multi-Audit System Documentation](docs/MULTI_AUDIT_SYSTEM.md) for complete details.
+
+## �📊 Coverage & Capabilities
 
 - **Current Coverage**: 99.92% ✨
 - **Total Modules**: 17 comprehensive analysis modules

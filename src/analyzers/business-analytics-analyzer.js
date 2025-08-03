@@ -12,7 +12,8 @@
  * 
  * This module addresses the remaining 0.5% coverage gap in Business Analytics
  * 
- * @author Domain Link Audit Tool
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  */
 

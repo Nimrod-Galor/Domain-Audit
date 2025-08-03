@@ -13,7 +13,8 @@
  * - External link status checking
  * - Rate limiting and throttling
  * 
- * @author Domain Link Audit Team
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  */
 

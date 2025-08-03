@@ -15,7 +15,8 @@
  * - Focus management analysis
  * - Semantic HTML structure validation
  * 
- * @author Domain Link Audit Tool
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  */
 

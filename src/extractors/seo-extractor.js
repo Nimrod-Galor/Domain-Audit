@@ -12,7 +12,8 @@
  * - Structured data parsing (JSON-LD)
  * - Content analysis for SEO metrics
  * 
- * @author Domain Link Audit Team
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  */
 

@@ -1,3 +1,16 @@
+/**
+ * ============================================================================
+ * CHUNKED PAGE DATA MANAGER
+ * ============================================================================
+ * 
+ * Manages chunked storage of page data to reduce memory usage.
+ * Provides efficient caching and file-based storage for large datasets.
+ * 
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
+ * @version 1.0.0
+ */
+
 // Manages chunked storage of page data to reduce memory usage
 import fs from 'fs';
 import path from 'path';
@@ -86,11 +99,21 @@ export class ChunkedPageDataManager {
         const files = fs.readdirSync(this.pageDataFolder);
         for (const file of files) {
             const filePath = path.join(this.pageDataFolder, file);
+            
+            // Skip directories and non-JSON files
+            if (!fs.statSync(filePath).isFile() || !file.endsWith('.json')) {
+                continue;
+            }
+            
             const url = Buffer.from(file.replace('.json', ''), 'base64url').toString();
             
             if (!this.memoryCache.has(url)) {
-                const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-                yield [url, data];
+                try {
+                    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+                    yield [url, data];
+                } catch (error) {
+                    console.warn(`⚠️  Failed to read page data file ${file}: ${error.message}`);
+                }
             }
         }
     }

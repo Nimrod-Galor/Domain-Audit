@@ -9,7 +9,8 @@
  * - Security strength assessment
  * - Mixed content detection
  * 
- * @author AI Assistant
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  * @date August 2, 2025
  */

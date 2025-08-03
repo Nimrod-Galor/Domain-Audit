@@ -4,7 +4,8 @@
  * 
  * @fileoverview Determines page depth and site architecture patterns
  * @version 1.0.0
- * @author AI Assistant
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @date 2025-08-02
  */
 

@@ -21,7 +21,8 @@
  * - DOM Processor for advanced element analysis
  * - Network utilities for performance correlation
  * 
- * @author Domain Link Audit Tool
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  */
 

@@ -2361,18 +2361,40 @@ function generateUrlArchitectureAnalysis(pageData) {
   let totalLength = 0;
   
   for (const [url, data] of Object.entries(pageData)) {
+    urlMetrics.totalPages++;
+    
+    let urlDepth = 0;
+    let urlLength = 0;
+    
+    if (data.architecture && data.architecture.url) {
+      const arch = data.architecture.url;
+      // Use architecture data if available
+      urlDepth = isNaN(arch.depth) ? 0 : (arch.depth || 0);
+      urlLength = isNaN(arch.length) ? 0 : (arch.length || 0);
+    } else {
+      // Fallback: calculate from URL directly
+      try {
+        const urlObj = new URL(url);
+        urlLength = url.length;
+        urlDepth = urlObj.pathname.split('/').filter(segment => segment.length > 0).length;
+      } catch (e) {
+        urlLength = url.length;
+        urlDepth = (url.match(/\//g) || []).length - 2; // Subtract protocol slashes
+        if (urlDepth < 0) urlDepth = 0;
+      }
+    }
+    
+    totalDepth += urlDepth;
+    totalLength += urlLength;
+    
+    urlMetrics.maxDepth = Math.max(urlMetrics.maxDepth, urlDepth);
+    urlMetrics.maxLength = Math.max(urlMetrics.maxLength, urlLength);
+    urlMetrics.minDepth = Math.min(urlMetrics.minDepth, urlDepth);
+    urlMetrics.minLength = Math.min(urlMetrics.minLength, urlLength);
+    
+    // Continue with other analysis only if architecture data exists
     if (data.architecture) {
       const arch = data.architecture;
-      urlMetrics.totalPages++;
-      
-      // Depth and length analysis
-      totalDepth += arch.urlDepth;
-      totalLength += arch.urlLength;
-      
-      urlMetrics.maxDepth = Math.max(urlMetrics.maxDepth, arch.urlDepth);
-      urlMetrics.maxLength = Math.max(urlMetrics.maxLength, arch.urlLength);
-      urlMetrics.minDepth = Math.min(urlMetrics.minDepth, arch.urlDepth);
-      urlMetrics.minLength = Math.min(urlMetrics.minLength, arch.urlLength);
       
       // Pattern analysis
       if (arch.hasParameters) urlMetrics.withParameters++;
@@ -2407,8 +2429,14 @@ function generateUrlArchitectureAnalysis(pageData) {
     }
   }
   
-  urlMetrics.averageDepth = urlMetrics.totalPages > 0 ? (totalDepth / urlMetrics.totalPages).toFixed(1) : 0;
+  urlMetrics.averageDepth = urlMetrics.totalPages > 0 ? (totalDepth / urlMetrics.totalPages).toFixed(1) : '0.0';
   urlMetrics.averageLength = urlMetrics.totalPages > 0 ? Math.round(totalLength / urlMetrics.totalPages) : 0;
+  
+  // Ensure no NaN values
+  if (isNaN(urlMetrics.averageDepth)) urlMetrics.averageDepth = '0.0';
+  if (isNaN(urlMetrics.averageLength)) urlMetrics.averageLength = 0;
+  if (isNaN(urlMetrics.maxDepth)) urlMetrics.maxDepth = 0;
+  if (isNaN(urlMetrics.maxLength)) urlMetrics.maxLength = 0;
   
   if (urlMetrics.minDepth === Infinity) urlMetrics.minDepth = 0;
   if (urlMetrics.minLength === Infinity) urlMetrics.minLength = 0;
@@ -2842,6 +2870,804 @@ function generateContentQualityAnalysis(pageData) {
   `;
 }
 
+// Generate SSL Certificate Analysis
+function generateSSLCertificateAnalysis(pageData) {
+  if (!pageData || Object.keys(pageData).length === 0) {
+    return `
+      <div class="analysis-section">
+        <h3>🔒 SSL Certificate Analysis</h3>
+        <p class="no-data">No page data available for SSL certificate analysis</p>
+      </div>
+    `;
+  }
+  
+  const sslMetrics = {
+    totalPages: 0,
+    httpsPages: 0,
+    validCertificates: 0,
+    expiredCertificates: 0,
+    selfSignedCertificates: 0,
+    weakEncryption: 0,
+    certificateIssues: [],
+    certificateDetails: [],
+    securityProtocols: {},
+    cipherSuites: {},
+    certificateAuthorities: {}
+  };
+  
+  for (const [url, data] of Object.entries(pageData)) {
+    sslMetrics.totalPages++;
+    
+    // Check if HTTPS is enabled
+    if (data.security && data.security.https && data.security.https.enabled) {
+      sslMetrics.httpsPages++;
+    }
+    
+    // Check for SSL certificate data in enhanced section
+    if (data.enhanced && data.enhanced.sslCertificate) {
+      const ssl = data.enhanced.sslCertificate;
+      
+      if (ssl.enabled && ssl.status === 'available') {
+        // SSL certificate analysis is available but needs to be extracted
+        // For now, we'll use available security data
+        if (data.security && data.security.transport) {
+          const transport = data.security.transport;
+          
+          if (transport.isHTTPS) {
+            sslMetrics.validCertificates++;
+            
+            // Extract certificate details if available
+            sslMetrics.certificateDetails.push({
+              url: url,
+              https: transport.isHTTPS,
+              hsts: transport.hasHSTS,
+              hstsMaxAge: transport.hstsMaxAge || 0,
+              hstsIncludeSubdomains: transport.hstsIncludeSubdomains || false,
+              hstsPreload: transport.hstsPreload || false
+            });
+          }
+        }
+      }
+    } else if (data.security && data.security.transport) {
+      // Fallback to basic security transport data
+      const transport = data.security.transport;
+      
+      if (transport.isHTTPS) {
+        sslMetrics.validCertificates++;
+        
+        sslMetrics.certificateDetails.push({
+          url: url,
+          https: transport.isHTTPS,
+          hsts: transport.hasHSTS,
+          hstsMaxAge: transport.hstsMaxAge || 0,
+          hstsIncludeSubdomains: transport.hstsIncludeSubdomains || false,
+          hstsPreload: transport.hstsPreload || false
+        });
+      }
+    }
+    
+    // Check for SSL/TLS related security headers
+    if (data.security && data.security.headers) {
+      const headers = data.security.headers;
+      
+      if (!headers.hasHSTS && sslMetrics.httpsPages > 0) {
+        sslMetrics.certificateIssues.push({
+          url: url,
+          issue: 'Missing HSTS header',
+          severity: 'medium',
+          description: 'HTTPS enabled but no HTTP Strict Transport Security header found'
+        });
+      }
+    }
+  }
+  
+  const httpsPercentage = sslMetrics.totalPages > 0 ? 
+    ((sslMetrics.httpsPages / sslMetrics.totalPages) * 100).toFixed(1) : 0;
+  
+  const validCertPercentage = sslMetrics.httpsPages > 0 ? 
+    ((sslMetrics.validCertificates / sslMetrics.httpsPages) * 100).toFixed(1) : 0;
+  
+  const hstsEnabledPages = sslMetrics.certificateDetails.filter(cert => cert.hsts).length;
+  const hstsPercentage = sslMetrics.httpsPages > 0 ? 
+    ((hstsEnabledPages / sslMetrics.httpsPages) * 100).toFixed(1) : 0;
+  
+  const getSecurityClass = (percentage) => {
+    if (percentage >= 90) return 'good';
+    if (percentage >= 70) return 'warning';
+    return 'error';
+  };
+  
+  return `
+    <div class="analysis-section">
+      <h3>🔒 SSL Certificate Analysis</h3>
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">HTTPS Enabled</div>
+          <div class="metric-value ${getSecurityClass(httpsPercentage)}">${sslMetrics.httpsPages}/${sslMetrics.totalPages} (${httpsPercentage}%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Valid Certificates</div>
+          <div class="metric-value ${getSecurityClass(validCertPercentage)}">${sslMetrics.validCertificates}/${sslMetrics.httpsPages} (${validCertPercentage}%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">HSTS Enabled</div>
+          <div class="metric-value ${getSecurityClass(hstsPercentage)}">${hstsEnabledPages}/${sslMetrics.httpsPages} (${hstsPercentage}%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Certificate Issues</div>
+          <div class="metric-value ${sslMetrics.certificateIssues.length > 0 ? 'warning' : 'good'}">${sslMetrics.certificateIssues.length}</div>
+        </div>
+      </div>
+      
+      ${sslMetrics.certificateDetails.length > 0 ? `
+        <div class="sub-section">
+          <h4>📋 Certificate Details</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>HTTPS</th>
+                  <th>HSTS</th>
+                  <th>HSTS Max Age</th>
+                  <th>Include Subdomains</th>
+                  <th>Preload</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sslMetrics.certificateDetails.map(cert => `
+                  <tr>
+                    <td><a href="${cert.url}" target="_blank">${safeDecodeURIComponent(cert.url)}</a></td>
+                    <td><span class="status-badge ${cert.https ? 'success' : 'error'}">${cert.https ? '✅ Yes' : '❌ No'}</span></td>
+                    <td><span class="status-badge ${cert.hsts ? 'success' : 'warning'}">${cert.hsts ? '✅ Yes' : '⚠️ No'}</span></td>
+                    <td>${cert.hstsMaxAge > 0 ? formatTime(cert.hstsMaxAge * 1000) : 'N/A'}</td>
+                    <td><span class="status-badge ${cert.hstsIncludeSubdomains ? 'success' : 'warning'}">${cert.hstsIncludeSubdomains ? '✅ Yes' : '⚠️ No'}</span></td>
+                    <td><span class="status-badge ${cert.hstsPreload ? 'success' : 'info'}">${cert.hstsPreload ? '✅ Yes' : '➖ No'}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${sslMetrics.certificateIssues.length > 0 ? `
+        <div class="issues-section">
+          <h4>⚠️ SSL Certificate Issues (${sslMetrics.certificateIssues.length} found)</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Issue</th>
+                  <th>Severity</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sslMetrics.certificateIssues.slice(0, 10).map(issue => `
+                  <tr>
+                    <td><a href="${issue.url}" target="_blank">${safeDecodeURIComponent(issue.url)}</a></td>
+                    <td>${issue.issue}</td>
+                    <td><span class="severity-badge severity-${issue.severity}">${issue.severity.toUpperCase()}</span></td>
+                    <td>${issue.description}</td>
+                  </tr>
+                `).join('')}
+                ${sslMetrics.certificateIssues.length > 10 ? `
+                  <tr><td colspan="4">... and ${sslMetrics.certificateIssues.length - 10} more issues</td></tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : sslMetrics.httpsPages > 0 ? '<div class="success-message">✅ No SSL certificate issues found!</div>' : ''}
+      
+      ${sslMetrics.httpsPages === 0 ? `
+        <div class="warning-message">
+          ⚠️ No HTTPS pages detected. Consider implementing SSL/TLS encryption for better security.
+        </div>
+      ` : ''}
+      
+      ${sslMetrics.httpsPages > 0 && hstsEnabledPages === 0 ? `
+        <div class="warning-message">
+          ⚠️ HTTPS is enabled but HSTS (HTTP Strict Transport Security) is not configured. Consider adding HSTS headers for enhanced security.
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// Generate Third-Party Services Analysis
+function generateThirdPartyAnalysis(pageData) {
+  if (!pageData || Object.keys(pageData).length === 0) {
+    return `
+      <div class="analysis-section">
+        <h3>🌐 Third-Party Services Analysis</h3>
+        <p class="no-data">No page data available for third-party analysis</p>
+      </div>
+    `;
+  }
+  
+  const thirdPartyMetrics = {
+    totalPages: 0,
+    pagesWithThirdParties: 0,
+    totalServices: 0,
+    servicesByType: {},
+    servicesByCategory: {},
+    totalRequests: 0,
+    totalSize: 0,
+    privacyRisks: [],
+    performanceImpacts: [],
+    securityConcerns: [],
+    trackingServices: [],
+    advertisingServices: [],
+    cdnServices: [],
+    analyticsServices: []
+  };
+  
+  for (const [url, data] of Object.entries(pageData)) {
+    thirdPartyMetrics.totalPages++;
+    
+    if (data.enhanced && data.enhanced.thirdPartyAnalysis) {
+      const thirdParty = data.enhanced.thirdPartyAnalysis;
+      thirdPartyMetrics.pagesWithThirdParties++;
+      
+      // Service counts
+      if (thirdParty.summary) {
+        thirdPartyMetrics.totalServices += thirdParty.summary.totalServices || 0;
+        thirdPartyMetrics.totalRequests += thirdParty.summary.totalRequests || 0;
+        thirdPartyMetrics.totalSize += thirdParty.summary.totalSize || 0;
+        
+        // Service types
+        if (thirdParty.summary.servicesByType) {
+          Object.entries(thirdParty.summary.servicesByType).forEach(([type, count]) => {
+            thirdPartyMetrics.servicesByType[type] = (thirdPartyMetrics.servicesByType[type] || 0) + count;
+          });
+        }
+        
+        // Service categories
+        if (thirdParty.summary.servicesByCategory) {
+          Object.entries(thirdParty.summary.servicesByCategory).forEach(([category, count]) => {
+            thirdPartyMetrics.servicesByCategory[category] = (thirdPartyMetrics.servicesByCategory[category] || 0) + count;
+          });
+        }
+      }
+      
+      // Privacy analysis
+      if (thirdParty.privacyImplications) {
+        const privacy = thirdParty.privacyImplications;
+        if (privacy.riskLevel && privacy.riskLevel !== 'low') {
+          thirdPartyMetrics.privacyRisks.push({
+            url: url,
+            riskLevel: privacy.riskLevel,
+            trackingServices: privacy.trackingServices || 0,
+            dataCollection: privacy.dataCollection || [],
+            compliance: privacy.compliance || {}
+          });
+        }
+      }
+      
+      // Performance analysis
+      if (thirdParty.performanceImpact) {
+        const performance = thirdParty.performanceImpact;
+        if (performance.impactScore > 50) {
+          thirdPartyMetrics.performanceImpacts.push({
+            url: url,
+            impactScore: performance.impactScore,
+            totalScripts: performance.totalThirdPartyScripts || 0,
+            loadTime: performance.estimatedLoadTime || 0,
+            blockingScripts: performance.blockingScripts || 0
+          });
+        }
+      }
+      
+      // Tracking services
+      if (thirdParty.tracking) {
+        const tracking = thirdParty.tracking;
+        ['analytics', 'advertising', 'social'].forEach(type => {
+          if (tracking[type] && tracking[type].length > 0) {
+            tracking[type].forEach(service => {
+              if (type === 'analytics') thirdPartyMetrics.analyticsServices.push({ url, service, type });
+              if (type === 'advertising') thirdPartyMetrics.advertisingServices.push({ url, service, type });
+            });
+          }
+        });
+      }
+    }
+    
+    // CDN Analysis
+    if (data.enhanced && data.enhanced.cdnAnalysis) {
+      const cdn = data.enhanced.cdnAnalysis;
+      if (cdn.detectedServices) {
+        cdn.detectedServices.forEach(service => {
+          thirdPartyMetrics.cdnServices.push({
+            url: url,
+            name: service.name,
+            type: service.type,
+            category: service.category,
+            resourceCount: service.resourceCount || 0,
+            totalSize: service.totalSize || 0
+          });
+        });
+      }
+    }
+  }
+  
+  const thirdPartyPercentage = thirdPartyMetrics.totalPages > 0 ? 
+    ((thirdPartyMetrics.pagesWithThirdParties / thirdPartyMetrics.totalPages) * 100).toFixed(1) : 0;
+  
+  const avgServicesPerPage = thirdPartyMetrics.pagesWithThirdParties > 0 ? 
+    (thirdPartyMetrics.totalServices / thirdPartyMetrics.pagesWithThirdParties).toFixed(1) : 0;
+  
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  return `
+    <div class="analysis-section">
+      <h3>🌐 Third-Party Services Analysis</h3>
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Pages with Third-Parties</div>
+          <div class="metric-value">${thirdPartyMetrics.pagesWithThirdParties}/${thirdPartyMetrics.totalPages} (${thirdPartyPercentage}%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Services</div>
+          <div class="metric-value">${thirdPartyMetrics.totalServices}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Avg Services per Page</div>
+          <div class="metric-value">${avgServicesPerPage}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Data Size</div>
+          <div class="metric-value">${formatBytes(thirdPartyMetrics.totalSize)}</div>
+        </div>
+      </div>
+      
+      ${Object.keys(thirdPartyMetrics.servicesByType).length > 0 ? `
+        <div class="sub-section">
+          <h4>📊 Service Types Distribution</h4>
+          <div class="service-types">
+            ${Object.entries(thirdPartyMetrics.servicesByType).map(([type, count]) => `
+              <div class="service-type-item">
+                <span class="service-type-name">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                <span class="service-type-count">${count} services</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      
+      ${Object.keys(thirdPartyMetrics.servicesByCategory).length > 0 ? `
+        <div class="sub-section">
+          <h4>🏷️ Service Categories</h4>
+          <div class="service-categories">
+            ${Object.entries(thirdPartyMetrics.servicesByCategory).map(([category, count]) => `
+              <div class="service-category-item">
+                <span class="service-category-name">${category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
+                <span class="service-category-count">${count} services</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      
+      ${thirdPartyMetrics.cdnServices.length > 0 ? `
+        <div class="sub-section">
+          <h4>🚀 CDN Services</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Type</th>
+                  <th>Resources</th>
+                  <th>Size</th>
+                  <th>Used On</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${thirdPartyMetrics.cdnServices.slice(0, 10).map(service => `
+                  <tr>
+                    <td><strong>${service.name}</strong></td>
+                    <td><span class="service-badge service-${service.type}">${service.type.toUpperCase()}</span></td>
+                    <td>${service.resourceCount}</td>
+                    <td>${formatBytes(service.totalSize)}</td>
+                    <td><a href="${service.url}" target="_blank">${safeDecodeURIComponent(service.url)}</a></td>
+                  </tr>
+                `).join('')}
+                ${thirdPartyMetrics.cdnServices.length > 10 ? `
+                  <tr><td colspan="5">... and ${thirdPartyMetrics.cdnServices.length - 10} more CDN services</td></tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${thirdPartyMetrics.advertisingServices.length > 0 ? `
+        <div class="sub-section">
+          <h4>📢 Advertising Services</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Type</th>
+                  <th>Used On</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${thirdPartyMetrics.advertisingServices.slice(0, 5).map(item => `
+                  <tr>
+                    <td><strong>${item.service.name || 'Unknown'}</strong></td>
+                    <td><span class="service-badge service-advertising">${item.type.toUpperCase()}</span></td>
+                    <td><a href="${item.url}" target="_blank">${safeDecodeURIComponent(item.url)}</a></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${thirdPartyMetrics.privacyRisks.length > 0 ? `
+        <div class="issues-section">
+          <h4>🔒 Privacy Concerns (${thirdPartyMetrics.privacyRisks.length} pages)</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Risk Level</th>
+                  <th>Tracking Services</th>
+                  <th>Data Collection</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${thirdPartyMetrics.privacyRisks.slice(0, 5).map(risk => `
+                  <tr>
+                    <td><a href="${risk.url}" target="_blank">${safeDecodeURIComponent(risk.url)}</a></td>
+                    <td><span class="risk-badge risk-${risk.riskLevel}">${risk.riskLevel.toUpperCase()}</span></td>
+                    <td>${risk.trackingServices}</td>
+                    <td>${risk.dataCollection.length} types</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${thirdPartyMetrics.performanceImpacts.length > 0 ? `
+        <div class="issues-section">
+          <h4>⚡ Performance Impact (${thirdPartyMetrics.performanceImpacts.length} pages)</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Impact Score</th>
+                  <th>Scripts</th>
+                  <th>Blocking</th>
+                  <th>Est. Load Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${thirdPartyMetrics.performanceImpacts.slice(0, 5).map(impact => `
+                  <tr>
+                    <td><a href="${impact.url}" target="_blank">${safeDecodeURIComponent(impact.url)}</a></td>
+                    <td><span class="impact-score impact-${impact.impactScore > 75 ? 'high' : impact.impactScore > 50 ? 'medium' : 'low'}">${impact.impactScore}/100</span></td>
+                    <td>${impact.totalScripts}</td>
+                    <td>${impact.blockingScripts}</td>
+                    <td>${impact.loadTime}ms</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${thirdPartyMetrics.totalServices === 0 ? 
+        '<div class="success-message">✅ No third-party services detected - excellent for privacy and performance!</div>' : 
+        thirdPartyMetrics.privacyRisks.length === 0 && thirdPartyMetrics.performanceImpacts.length === 0 ? 
+        '<div class="success-message">✅ Third-party services are well-optimized with minimal privacy and performance impact!</div>' : ''}
+    </div>
+  `;
+}
+
+// Generate Content Intelligence Analysis
+function generateContentIntelligenceAnalysis(pageData) {
+  if (!pageData || Object.keys(pageData).length === 0) {
+    return `
+      <div class="analysis-section">
+        <h3>🧠 Content Intelligence Analysis</h3>
+        <p class="no-data">No page data available for content intelligence analysis</p>
+      </div>
+    `;
+  }
+  
+  const intelligenceMetrics = {
+    totalPages: 0,
+    pagesAnalyzed: 0,
+    averageUniqueness: 0,
+    averageOriginality: 0,
+    totalContentLength: 0,
+    uniquenessDistribution: { 'Very Low': 0, 'Low': 0, 'Medium': 0, 'High': 0, 'Very High': 0 },
+    duplicateContent: [],
+    plagiarismRisks: [],
+    contentFingerprints: [],
+    similarityIssues: [],
+    qualityIssues: []
+  };
+  
+  for (const [url, data] of Object.entries(pageData)) {
+    intelligenceMetrics.totalPages++;
+    
+    if (data.enhanced && data.enhanced.contentIntelligence) {
+      const intelligence = data.enhanced.contentIntelligence;
+      intelligenceMetrics.pagesAnalyzed++;
+      
+      // Uniqueness analysis
+      if (intelligence.uniquenessAnalysis) {
+        const uniqueness = intelligence.uniquenessAnalysis;
+        intelligenceMetrics.averageUniqueness += uniqueness.overallUniquenessScore || 0;
+        
+        // Categorize uniqueness
+        const score = uniqueness.overallUniquenessScore || 0;
+        if (score >= 80) intelligenceMetrics.uniquenessDistribution['Very High']++;
+        else if (score >= 60) intelligenceMetrics.uniquenessDistribution['High']++;
+        else if (score >= 40) intelligenceMetrics.uniquenessDistribution['Medium']++;
+        else if (score >= 20) intelligenceMetrics.uniquenessDistribution['Low']++;
+        else intelligenceMetrics.uniquenessDistribution['Very Low']++;
+      }
+      
+      // Originality analysis
+      if (intelligence.originalityScore) {
+        intelligenceMetrics.averageOriginality += intelligence.originalityScore;
+      }
+      
+      // Content length
+      if (intelligence.contentLength) {
+        intelligenceMetrics.totalContentLength += intelligence.contentLength;
+      }
+      
+      // Plagiarism risk
+      if (intelligence.plagiarismRisk) {
+        const plagiarism = intelligence.plagiarismRisk;
+        if (plagiarism.riskLevel && plagiarism.riskLevel !== 'very-low') {
+          intelligenceMetrics.plagiarismRisks.push({
+            url: url,
+            riskLevel: plagiarism.riskLevel,
+            riskScore: plagiarism.riskScore,
+            confidence: plagiarism.confidence,
+            riskFactors: plagiarism.riskFactors || []
+          });
+        }
+      }
+      
+      // Duplicate detection
+      if (intelligence.duplicateDetection) {
+        const duplicate = intelligence.duplicateDetection;
+        if (duplicate.duplicateCount > 0 || duplicate.nearDuplicateCount > 0) {
+          intelligenceMetrics.duplicateContent.push({
+            url: url,
+            exactDuplicates: duplicate.duplicateCount,
+            nearDuplicates: duplicate.nearDuplicateCount,
+            uniquenessRatio: duplicate.uniquenessRatio
+          });
+        }
+      }
+      
+      // Content fingerprint
+      if (intelligence.contentFingerprint) {
+        intelligenceMetrics.contentFingerprints.push({
+          url: url,
+          hash: intelligence.contentFingerprint.contentHash,
+          shingleCount: intelligence.contentFingerprint.shingleCount,
+          method: intelligence.contentFingerprint.fingerprintMethod
+        });
+      }
+      
+      // Similarity analysis
+      if (intelligence.similarityAnalysis && intelligence.similarityAnalysis.similarPages && intelligence.similarityAnalysis.similarPages.length > 0) {
+        intelligenceMetrics.similarityIssues.push({
+          url: url,
+          similarPages: intelligence.similarityAnalysis.similarPages.length,
+          averageSimilarity: intelligence.similarityAnalysis.averageSitewideSimilarity
+        });
+      }
+    }
+  }
+  
+  if (intelligenceMetrics.pagesAnalyzed === 0) {
+    return `
+      <div class="analysis-section">
+        <h3>🧠 Content Intelligence Analysis</h3>
+        <div class="no-data-message">No content intelligence data available for analysis</div>
+      </div>
+    `;
+  }
+  
+  intelligenceMetrics.averageUniqueness = (intelligenceMetrics.averageUniqueness / intelligenceMetrics.pagesAnalyzed).toFixed(1);
+  intelligenceMetrics.averageOriginality = (intelligenceMetrics.averageOriginality / intelligenceMetrics.pagesAnalyzed).toFixed(1);
+  const averageContentLength = Math.round(intelligenceMetrics.totalContentLength / intelligenceMetrics.pagesAnalyzed);
+  
+  const getUniquenessClass = (score) => {
+    if (score >= 70) return 'good';
+    if (score >= 50) return 'warning';
+    return 'error';
+  };
+  
+  return `
+    <div class="analysis-section">
+      <h3>🧠 Content Intelligence Analysis</h3>
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Average Uniqueness Score</div>
+          <div class="metric-value ${getUniquenessClass(intelligenceMetrics.averageUniqueness)}">${intelligenceMetrics.averageUniqueness}/100</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Average Originality Score</div>
+          <div class="metric-value ${getUniquenessClass(intelligenceMetrics.averageOriginality)}">${intelligenceMetrics.averageOriginality}/100</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Average Content Length</div>
+          <div class="metric-value">${averageContentLength} chars</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Pages Analyzed</div>
+          <div class="metric-value">${intelligenceMetrics.pagesAnalyzed}/${intelligenceMetrics.totalPages}</div>
+        </div>
+      </div>
+      
+      <div class="sub-section">
+        <h4>📊 Content Uniqueness Distribution</h4>
+        <div class="uniqueness-distribution">
+          ${Object.entries(intelligenceMetrics.uniquenessDistribution).map(([level, count]) => {
+            if (count === 0) return '';
+            const percentage = ((count / intelligenceMetrics.pagesAnalyzed) * 100).toFixed(1);
+            return `
+              <div class="uniqueness-item">
+                <span class="uniqueness-level">${level} Uniqueness</span>
+                <span class="uniqueness-count">${count} pages (${percentage}%)</span>
+                <div class="uniqueness-bar">
+                  <div class="uniqueness-fill uniqueness-${level.toLowerCase().replace(' ', '-')}" 
+                       style="width: ${percentage}%"></div>
+                </div>
+              </div>
+            `;
+          }).filter(Boolean).join('')}
+        </div>
+      </div>
+      
+      ${intelligenceMetrics.contentFingerprints.length > 0 ? `
+        <div class="sub-section">
+          <h4>🔍 Content Fingerprints</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Content Hash</th>
+                  <th>Shingles</th>
+                  <th>Method</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${intelligenceMetrics.contentFingerprints.slice(0, 10).map(fingerprint => `
+                  <tr>
+                    <td><a href="${fingerprint.url}" target="_blank">${safeDecodeURIComponent(fingerprint.url)}</a></td>
+                    <td><code>${fingerprint.hash.substring(0, 16)}...</code></td>
+                    <td>${fingerprint.shingleCount}</td>
+                    <td>${fingerprint.method}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${intelligenceMetrics.plagiarismRisks.length > 0 ? `
+        <div class="issues-section">
+          <h4>⚠️ Plagiarism Risk Detection (${intelligenceMetrics.plagiarismRisks.length} pages)</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Risk Level</th>
+                  <th>Risk Score</th>
+                  <th>Confidence</th>
+                  <th>Risk Factors</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${intelligenceMetrics.plagiarismRisks.slice(0, 5).map(risk => `
+                  <tr>
+                    <td><a href="${risk.url}" target="_blank">${safeDecodeURIComponent(risk.url)}</a></td>
+                    <td><span class="risk-badge risk-${risk.riskLevel}">${risk.riskLevel.replace('-', ' ').toUpperCase()}</span></td>
+                    <td>${risk.riskScore}/100</td>
+                    <td>${(risk.confidence * 100).toFixed(1)}%</td>
+                    <td>${risk.riskFactors.length} factors</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${intelligenceMetrics.duplicateContent.length > 0 ? `
+        <div class="issues-section">
+          <h4>📝 Duplicate Content Detection (${intelligenceMetrics.duplicateContent.length} pages)</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Exact Duplicates</th>
+                  <th>Near Duplicates</th>
+                  <th>Uniqueness Ratio</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${intelligenceMetrics.duplicateContent.slice(0, 5).map(duplicate => `
+                  <tr>
+                    <td><a href="${duplicate.url}" target="_blank">${safeDecodeURIComponent(duplicate.url)}</a></td>
+                    <td>${duplicate.exactDuplicates}</td>
+                    <td>${duplicate.nearDuplicates}</td>
+                    <td>${(duplicate.uniquenessRatio * 100).toFixed(1)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${intelligenceMetrics.similarityIssues.length > 0 ? `
+        <div class="issues-section">
+          <h4>🔄 Content Similarity Issues (${intelligenceMetrics.similarityIssues.length} pages)</h4>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Similar Pages</th>
+                  <th>Average Similarity</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${intelligenceMetrics.similarityIssues.slice(0, 5).map(similarity => `
+                  <tr>
+                    <td><a href="${similarity.url}" target="_blank">${safeDecodeURIComponent(similarity.url)}</a></td>
+                    <td>${similarity.similarPages}</td>
+                    <td>${(similarity.averageSimilarity * 100).toFixed(1)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${intelligenceMetrics.plagiarismRisks.length === 0 && intelligenceMetrics.duplicateContent.length === 0 && intelligenceMetrics.similarityIssues.length === 0 ? 
+        '<div class="success-message">✅ Excellent content originality! No plagiarism risks or duplicate content detected.</div>' : ''}
+    </div>
+  `;
+}
+
 // Generate the complete HTML report
 function generateHTMLReport(data, filename) {
   const { stats, externalLinks, badRequests, mailtoLinks, telLinks, pageData, visited } = data;
@@ -2873,6 +3699,9 @@ function generateHTMLReport(data, filename) {
   const webVitalsAnalysis = generateWebVitalsAnalysis(pageData);
   const advancedAccessibilityAnalysis = generateAdvancedAccessibilityAnalysis(pageData);
   const contentQualityAnalysis = generateContentQualityAnalysis(pageData);
+  const sslCertificateAnalysis = generateSSLCertificateAnalysis(pageData);
+  const thirdPartyAnalysis = generateThirdPartyAnalysis(pageData);
+  const contentIntelligenceAnalysis = generateContentIntelligenceAnalysis(pageData);
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -4466,6 +5295,9 @@ function generateHTMLReport(data, filename) {
         ${pageTypeAnalysis}
         ${securityAnalysis}
         ${enhancedSecurityAnalysis}
+        ${sslCertificateAnalysis}
+        ${thirdPartyAnalysis}
+        ${contentIntelligenceAnalysis}
         ${pageDetailsTable}
     </div>
 </body>

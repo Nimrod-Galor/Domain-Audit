@@ -4,7 +4,8 @@
  * 
  * @fileoverview Comprehensive analysis of third-party dependencies for performance and privacy insights
  * @version 1.0.0
- * @author AI Assistant
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @date 2025-08-02
  */
 

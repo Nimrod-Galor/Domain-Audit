@@ -14,7 +14,8 @@
  * - Smart resource allocation
  * - Adaptive AI configuration
  * 
- * @author Domain Link Audit Tool
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  * @module AIIntegrationManager
  */

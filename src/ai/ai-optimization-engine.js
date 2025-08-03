@@ -14,7 +14,8 @@
  * - Adaptive user experience optimization
  * - Evolutionary algorithm testing
  * 
- * @author Domain Link Audit Tool
+ * @author Nimrod Galor
+ * @AI assistant Claude Sonnet 4
  * @version 1.0.0
  * @module AIOptimizationEngine
  */

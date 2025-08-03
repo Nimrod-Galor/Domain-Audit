@@ -1,7 +1,7 @@
 {
-  "name": "domain-link-audit",
+  "name": "domain-audit",
   "version": "2.0.0",
-  "description": "Advanced domain link audit tool with AI intelligence and comprehensive analysis",
+  "description": "Advanced domain audit tool with AI intelligence and comprehensive analysis",
   "main": "lib/crawler.js",
   "bin": {
     "domain-audit": "bin/domain-audit.js",
@@ -19,7 +19,8 @@
     "ai-analysis",
     "performance"
   ],
-  "author": "Domain Link Audit Team",
+  "author": "Nimrod Galor",
+  "AI assistant": "Claude Sonnet 4",
   "license": "MIT",
   "dependencies": {
     "jsdom": "^26.1.0",
