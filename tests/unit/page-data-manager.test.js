@@ -2,7 +2,7 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
-import { ChunkedPageDataManager } from '../../legacy/page-data-manager.js';
+import { ChunkedPageDataManager } from '../../src/storage/page-data-manager.js';
 
 describe('ChunkedPageDataManager Directory Structure', () => {
   const testAuditDir = './test-audit-temp';

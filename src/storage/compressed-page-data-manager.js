@@ -399,4 +399,4 @@ export class CompressedPageDataManager {
 }
 
 // Export the original class as well for backward compatibility
-export { ChunkedPageDataManager } from '../../legacy/page-data-manager.js';
+export { ChunkedPageDataManager } from './page-data-manager.js';
