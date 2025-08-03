@@ -16,6 +16,11 @@ import fs from 'fs';
 import path from 'path';
 
 export class ChunkedPageDataManager {
+    /**
+     * Creates a ChunkedPageDataManager instance
+     * @param {string} domainFolder - The audit/domain folder path (NOT the page-data folder itself)
+     * @param {number} maxItemsInMemory - Maximum items to keep in memory cache
+     */
     constructor(domainFolder, maxItemsInMemory = 100) {
         this.domainFolder = domainFolder;
         this.maxItemsInMemory = maxItemsInMemory;
