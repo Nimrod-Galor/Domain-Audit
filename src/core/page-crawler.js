@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import fetch from 'node-fetch';
-import { CustomResourceLoader } from './resource-loader.js';
 import * as analyzers from '../analyzers/index.js';
+import { DOMProcessor } from '../dom/dom-processor.js';
 
 /**
  * PageCrawler - Handles crawling and analysis of web pages
@@ -17,6 +17,7 @@ export class PageCrawler {
     constructor(config) {
         this.config = config;
         this.virtualConsole = this._createVirtualConsole();
+        this.domProcessor = new DOMProcessor();
     }
 
     // ========== PUBLIC API METHODS ==========
@@ -44,7 +45,7 @@ export class PageCrawler {
         const html = await this._fetchPage(url);
         const responseTime = Date.now() - startTime;
         const pageSize = Buffer.byteLength(html, 'utf8');
-        const dom = this._createDOM(html);
+        const dom = await this._createDOM(html, url);
         
         return this._extractPageData(url, dom, html, responseTime, pageSize);
     }
@@ -164,16 +165,22 @@ export class PageCrawler {
      * Extract comprehensive page analysis data
      */
     _extractPageData(url, dom, html, responseTime, pageSize) {
+        // Check if DOM creation failed
+        if (!dom || dom.error || !dom.document) {
+            console.error(`DOM creation failed for ${url}:`, dom?.error || 'Unknown error');
+            throw new Error('Failed to create DOM instance');
+        }
+
         const basePageData = {
             url,
             timestamp: new Date().toISOString(),
-            seo: analyzers.seoAnalyzer.analyze(dom),
-            content: analyzers.contentAnalyzer.analyze(dom, html),
-            links: analyzers.linkAnalyzer.analyze(dom, url),
-            technical: analyzers.technicalAnalyzer.analyze(dom),
-            security: analyzers.securityAnalyzer.analyze(dom),
-            accessibility: analyzers.accessibilityAnalyzer.analyze(dom),
-            mobile: analyzers.mobileAnalyzer.analyze(dom)
+            seo: analyzers.seoAnalyzer.analyze(dom.document),
+            content: analyzers.contentAnalyzer.analyze(dom.document, html),
+            links: analyzers.linkAnalyzer.analyze(dom.document, url),
+            technical: analyzers.technicalAnalyzer.analyze(dom.document),
+            security: analyzers.securityAnalyzer.analyze(dom.document),
+            accessibility: analyzers.accessibilityAnalyzer.analyze(dom.document),
+            mobile: analyzers.mobileAnalyzer.analyze(dom.document)
         };
         
         // Enhanced features (medium-priority)
@@ -182,7 +189,7 @@ export class PageCrawler {
                 const enhancedExtractors = new analyzers.enhancedExtractors();
                 console.log('✅ Enhanced extractors instantiated');
                 basePageData.enhanced = enhancedExtractors.extractAllEnhancedData(
-                    dom, 
+                    dom.document, 
                     basePageData, 
                     responseTime, 
                     pageSize, 
@@ -203,17 +210,21 @@ export class PageCrawler {
     // ========== DOM & FETCH UTILITIES ==========
 
     /**
-     * Create Cheerio instance with optimized configuration
+     * Create DOM instance using DOMProcessor for proper compatibility
      */
-    _createDOM(html) {
-        return {
-            $: cheerio.load(html, {
-                xmlMode: false,
-                decodeEntities: false,
-                normalizeWhitespace: false
-            }),
-            window: { document: { URL: '' } }
-        };
+    async _createDOM(html, url = 'https://example.com') {
+        try {
+            return await this.domProcessor.createDOM(html, url);
+        } catch (error) {
+            console.error('Error creating DOM:', error.message);
+            return {
+                $: null,
+                document: null,
+                window: null,
+                cleanup: () => {},
+                error: error.message
+            };
+        }
     }
 
     /**

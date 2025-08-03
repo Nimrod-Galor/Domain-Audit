@@ -88,14 +88,35 @@ export class DOMProcessor {
       // Create document-like interface for compatibility
       const document = {
         querySelector: (selector) => {
-          const elements = $(selector);
-          return elements.length > 0 ? this.cheerioToElement(elements.first(), $) : null;
+          try {
+            const elements = $(selector);
+            return elements.length > 0 ? this.cheerioToElement(elements.first(), $) : null;
+          } catch (error) {
+            console.warn(`querySelector error with selector "${selector}":`, error.message);
+            return null;
+          }
         },
         querySelectorAll: (selector) => {
-          const elements = $(selector);
-          return Array.from({ length: elements.length }, (_, i) => 
-            this.cheerioToElement(elements.eq(i), $)
-          );
+          try {
+            const elements = $(selector);
+            return Array.from({ length: elements.length }, (_, i) => 
+              this.cheerioToElement(elements.eq(i), $)
+            );
+          } catch (error) {
+            console.warn(`querySelectorAll error with selector "${selector}":`, error.message);
+            return [];
+          }
+        },
+        getElementsByTagName: (tagName) => {
+          try {
+            const elements = $(tagName);
+            return Array.from({ length: elements.length }, (_, i) => 
+              this.cheerioToElement(elements.eq(i), $)
+            );
+          } catch (error) {
+            console.warn(`getElementsByTagName error with tag "${tagName}":`, error.message);
+            return [];
+          }
         },
         createElement: (tagName) => ({ tagName, textContent: '', innerHTML: '' }),
         documentElement: this.cheerioToElement($('html'), $) || { innerHTML: html },
@@ -148,6 +169,41 @@ export class DOMProcessor {
       outerHTML: $.html(cheerioElement),
       getAttribute: (name) => cheerioElement.attr(name),
       hasAttribute: (name) => cheerioElement.attr(name) !== undefined,
+      getElementsByTagName: (tagName) => {
+        const elements = cheerioElement.find(tagName);
+        return Array.from({ length: elements.length }, (_, i) => 
+          this.cheerioToElement(elements.eq(i), $)
+        ).filter(Boolean);
+      },
+      querySelector: (selector) => {
+        try {
+          const element = cheerioElement.find(selector).first();
+          return element.length > 0 ? this.cheerioToElement(element, $) : null;
+        } catch (error) {
+          console.warn(`Element querySelector error with selector "${selector}":`, error.message);
+          return null;
+        }
+      },
+      querySelectorAll: (selector) => {
+        try {
+          const elements = cheerioElement.find(selector);
+          return Array.from({ length: elements.length }, (_, i) => 
+            this.cheerioToElement(elements.eq(i), $)
+          ).filter(Boolean);
+        } catch (error) {
+          console.warn(`Element querySelectorAll error with selector "${selector}":`, error.message);
+          return [];
+        }
+      },
+      closest: (selector) => {
+        try {
+          const element = cheerioElement.closest(selector);
+          return element.length > 0 ? this.cheerioToElement(element, $) : null;
+        } catch (error) {
+          console.warn(`Element closest error with selector "${selector}":`, error.message);
+          return null;
+        }
+      },
       classList: {
         contains: (className) => cheerioElement.hasClass(className)
       },
