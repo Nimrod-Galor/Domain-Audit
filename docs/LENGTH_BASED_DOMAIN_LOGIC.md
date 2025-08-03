@@ -1,8 +1,18 @@
-# Length-Based Domain Extraction Logic
+# ⚠️ SUPERSEDED: Length-Based Domain Extraction Logic
 
-## 🎯 Improved Domain Folder Naming
+## 🔄 **MIGRATION NOTICE**
 
-### **New Logic Implementation**
+**This file has been superseded by the new TLD-Based Domain Logic.**
+
+👉 **See**: `TLD_BASED_DOMAIN_LOGIC.md` for the current implementation.
+
+---
+
+## 📝 Historical Reference
+
+This document describes the previous length-based domain extraction approach that was replaced on August 3, 2025, with a more robust TLD-aware system.
+
+### **Old Logic (No Longer Used)**
 
 Instead of hardcoding specific TLD patterns, the system now uses a smart length-based approach:
 

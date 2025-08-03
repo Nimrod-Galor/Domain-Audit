@@ -7,12 +7,17 @@ export function extractMainDomain(hostname) {
   
   // If it's a standard domain (e.g., example.com, blog.example.com)
   if (parts.length >= 2) {
-    // For subdomains, include both subdomain and main domain
+    const tld = parts[parts.length - 1];  // e.g., com, org, co.uk
+    const domain = parts[parts.length - 2];  // e.g., example, google
+    
+    // For subdomains, include subdomain, domain, and TLD
     if (parts.length > 2) {
-      return `${parts[0]}-${parts[parts.length - 2]}`;  // e.g., blog-example
+      const subdomain = parts[0];  // e.g., blog, api, shop
+      return `${subdomain}-${domain}-${tld}`;  // e.g., blog-example-com
     }
-    // For regular domains, just use the main part
-    return parts[0];  // e.g., example
+    
+    // For regular domains, use domain and TLD
+    return `${domain}-${tld}`;  // e.g., example-com, google-org
   }
   
   // Fallback to first part if something unusual
