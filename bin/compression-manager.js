@@ -17,6 +17,7 @@
 
 import { migrateStateFiles, getCompressionStats, printCompressionStats } from '../src/core/compressed-state-manager.js';
 import { CompressedPageDataManager } from '../src/storage/compressed-page-data-manager.js';
+import { CompressedHtmlReportManager } from '../src/reporting/compressed-html-report-manager.js';
 import { extractMainDomain } from '../src/utils/core-utils.js';
 import fs from 'fs';
 import path from 'path';
@@ -43,17 +44,18 @@ if (!command) {
 Usage: node bin/compression-manager.js <command> [domain]
 
 Commands:
-  migrate <domain>     Migrate all uncompressed files for domain (state + page-data)
+  migrate <domain>     Migrate all uncompressed files for domain (state + page-data + HTML)
   migrate-all          Migrate all domains' uncompressed files
   migrate-state <domain>   Migrate only state files for domain
   migrate-pagedata <domain> Migrate only page-data files for domain
+  migrate-html <domain>    Migrate only HTML report files for domain
   stats <domain>       Show compression statistics for domain
   stats-all            Show compression statistics for all domains
   help                 Show this help message
 
 Examples:
   node bin/compression-manager.js migrate stefanbakery.com
-  node bin/compression-manager.js migrate-pagedata stefanbakery.com
+  node bin/compression-manager.js migrate-html stefanbakery.com
   node bin/compression-manager.js stats stefanbakery.com
   node bin/compression-manager.js migrate-all
   node bin/compression-manager.js stats-all
@@ -106,14 +108,19 @@ function handleMigrateCommand() {
     totalPageDataErrors += pageDataResult.errors;
   }
 
+  // Migrate HTML report files
+  console.log('\n📄 Migrating HTML report files...');
+  const htmlResult = CompressedHtmlReportManager.migrateHtmlFiles(auditDir);
+
   // Summary
   console.log('\n' + '═'.repeat(60));
   console.log('🎉 Complete migration summary:');
   console.log(`   State files migrated: ${stateResult.migrated}`);
   console.log(`   Page-data files migrated: ${totalPageDataMigrated}`);
-  console.log(`   Total space saved: ${((stateResult.totalSaved + totalPageDataSaved)/1024).toFixed(1)}KB`);
+  console.log(`   HTML files migrated: ${htmlResult.migrated}`);
+  console.log(`   Total space saved: ${((stateResult.totalSaved + totalPageDataSaved + htmlResult.totalSaved)/1024).toFixed(1)}KB`);
   
-  const totalErrors = stateResult.errors + totalPageDataErrors;
+  const totalErrors = stateResult.errors + totalPageDataErrors + htmlResult.errors;
   if (totalErrors > 0) {
     console.log(`   Total errors: ${totalErrors}`);
   }
@@ -232,6 +239,9 @@ function handleStatsCommand() {
       }
     }
   }
+
+  // HTML report statistics
+  CompressedHtmlReportManager.printCompressionStats(auditDir);
 }
 
 /**
@@ -308,8 +318,11 @@ function handleHelpCommand() {
 🗜️  Compression Management Commands:
 
 📦 Migration Commands:
-  migrate <domain>     Migrate uncompressed state files for specific domain
-  migrate-all          Migrate all domains' uncompressed state files
+  migrate <domain>     Migrate all uncompressed files for specific domain (state + page-data + HTML)
+  migrate-all          Migrate all domains' uncompressed files
+  migrate-state <domain>   Migrate only state files for domain
+  migrate-pagedata <domain> Migrate only page-data files for domain
+  migrate-html <domain>    Migrate only HTML report files for domain
 
 📊 Statistics Commands:
   stats <domain>       Show compression statistics for specific domain
@@ -319,15 +332,17 @@ function handleHelpCommand() {
   help                 Show this help message
 
 💡 Tips:
-  • State files larger than 10KB are automatically compressed
-  • Compression typically saves 70-80% of space for JSON files
-  • Both compressed (.json.gz) and uncompressed (.json) files are supported
+  • State/Page-data files larger than 10KB are automatically compressed
+  • HTML files larger than 5KB are automatically compressed
+  • Compression typically saves 70-80% of space for JSON and 60-70% for HTML
+  • Both compressed (.gz) and uncompressed files are supported
   • The system automatically chooses the best format when loading
   • Migration is safe - original files are only deleted after successful compression
 
 📝 Examples:
   node bin/compression-manager.js stats-all
   node bin/compression-manager.js migrate stefanbakery.com
+  node bin/compression-manager.js migrate-html stefanbakery.com
   node bin/compression-manager.js stats stefanbakery.com
 `);
 }
@@ -424,6 +439,44 @@ function handleMigratePageDataCommand() {
   }
 }
 
+/**
+ * Handle migrate-html command for specific domain (HTML report files only)
+ */
+function handleMigrateHtmlCommand() {
+  if (!domain) {
+    console.error('❌ Domain required for migrate-html command');
+    console.log('Usage: node bin/compression-manager.js migrate-html <domain>');
+    process.exit(1);
+  }
+
+  const mainDomain = extractMainDomain(domain);
+  const domainFolder = mainDomain.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const auditDir = path.resolve(process.cwd(), 'audits', domainFolder);
+
+  if (!fs.existsSync(auditDir)) {
+    console.error(`❌ No audit directory found for domain: ${mainDomain}`);
+    process.exit(1);
+  }
+
+  console.log(`🗜️  Migrating HTML report files for domain: ${mainDomain}`);
+  console.log(`📁 Audit directory: ${auditDir}\n`);
+
+  const result = CompressedHtmlReportManager.migrateHtmlFiles(auditDir);
+
+  console.log('\n' + '═'.repeat(60));
+  console.log('🎉 HTML migration summary:');
+  console.log(`   Files migrated: ${result.migrated}`);
+  console.log(`   Space saved: ${(result.totalSaved/1024).toFixed(1)}KB`);
+
+  if (result.errors > 0) {
+    console.log(`   Errors: ${result.errors}`);
+  }
+
+  if (result.migrated === 0 && result.errors === 0) {
+    console.log('✅ No HTML files need migration - all are already optimized!');
+  }
+}
+
 // Command routing
 switch (command) {
   case 'migrate':
@@ -437,6 +490,9 @@ switch (command) {
     break;
   case 'migrate-pagedata':
     handleMigratePageDataCommand();
+    break;
+  case 'migrate-html':
+    handleMigrateHtmlCommand();
     break;
   case 'stats':
     handleStatsCommand();
