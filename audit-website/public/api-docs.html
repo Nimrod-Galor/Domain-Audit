@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiteScope API Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+        .content {
+            padding-left: 0;
+        }
+        .nav-link {
+            color: #495057;
+            padding: 0.75rem 1rem;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: #e9ecef;
+            color: #0d6efd;
+        }
+        .endpoint-card {
+            border-left: 4px solid #0d6efd;
+            margin-bottom: 2rem;
+        }
+        .method-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            margin-right: 0.5rem;
+        }
+        .method-get { background-color: #198754; }
+        .method-post { background-color: #0d6efd; }
+        .method-put { background-color: #fd7e14; }
+        .method-delete { background-color: #dc3545; }
+        
+        pre[class*="language-"] {
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+        }
+        
+        .response-example {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .tier-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .code-container {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="p-3">
+                    <h5 class="text-primary">
+                        <i class="fas fa-code"></i> API Docs
+                    </h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#getting-started">
+                            <i class="fas fa-play"></i> Getting Started
+                        </a>
+                        <a class="nav-link" href="#authentication">
+                            <i class="fas fa-key"></i> Authentication
+                        </a>
+                        <a class="nav-link" href="#rate-limits">
+                            <i class="fas fa-tachometer-alt"></i> Rate Limits
+                        </a>
+                        <a class="nav-link" href="#endpoints">
+                            <i class="fas fa-network-wired"></i> Endpoints
+                        </a>
+                        <a class="nav-link" href="#errors">
+                            <i class="fas fa-exclamation-triangle"></i> Error Handling
+                        </a>
+                        <a class="nav-link" href="#examples">
+                            <i class="fas fa-code"></i> Code Examples
+                        </a>
+                        <a class="nav-link" href="#webhooks">
+                            <i class="fas fa-webhook"></i> Webhooks
+                        </a>
+                        <a class="nav-link" href="#support">
+                            <i class="fas fa-life-ring"></i> Support
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 content">
+                <div class="container-fluid p-4">
+                    
+                    <!-- Header -->
+                    <div class="row mb-4">
+                        <div class="col">
+                            <h1 class="display-4">
+                                <i class="fas fa-rocket text-primary"></i>
+                                SiteScope API Documentation
+                            </h1>
+                            <p class="lead">Integrate website auditing capabilities into your applications with our RESTful API.</p>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>API Version:</strong> v1 | 
+                                <strong>Base URL:</strong> <code>https://your-domain.com/api/v1</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Getting Started -->
+                    <section id="getting-started" class="mb-5">
+                        <h2><i class="fas fa-play text-primary"></i> Getting Started</h2>
+                        <p>The SiteScope API allows you to programmatically create and manage website audits. To get started:</p>
+                        
+                        <ol>
+                            <li><strong>Upgrade to Professional or Enterprise tier</strong> to access API features</li>
+                            <li><strong>Generate an API key</strong> from your dashboard</li>
+                            <li><strong>Make authenticated requests</strong> using your API key</li>
+                        </ol>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-star text-warning"></i> Professional Tier
+                                        </h5>
+                                        <p class="card-text">1,000 API calls per month</p>
+                                        <span class="badge bg-primary tier-badge">$29.99/month</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-crown text-warning"></i> Enterprise Tier
+                                        </h5>
+                                        <p class="card-text">10,000 API calls per month</p>
+                                        <span class="badge bg-success tier-badge">$99.99/month</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Authentication -->
+                    <section id="authentication" class="mb-5">
+                        <h2><i class="fas fa-key text-primary"></i> Authentication</h2>
+                        <p>All API requests must be authenticated using your API key in the Authorization header:</p>
+                        
+                        <div class="code-container">
+                            <button class="copy-btn" onclick="copyToClipboard('auth-example')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <pre><code id="auth-example" class="language-bash">curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://your-domain.com/api/v1/audits</code></pre>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-shield-alt"></i>
+                            <strong>Security:</strong> Keep your API key secure and never expose it in client-side code.
+                        </div>
+                    </section>
+
+                    <!-- Rate Limits -->
+                    <section id="rate-limits" class="mb-5">
+                        <h2><i class="fas fa-tachometer-alt text-primary"></i> Rate Limits</h2>
+                        <p>API usage is limited based on your subscription tier:</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Tier</th>
+                                        <th>Monthly Limit</th>
+                                        <th>Rate Limit Headers</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-primary">Professional</span></td>
+                                        <td>1,000 calls</td>
+                                        <td><code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">Enterprise</span></td>
+                                        <td>10,000 calls</td>
+                                        <td><code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Endpoints -->
+                    <section id="endpoints" class="mb-5">
+                        <h2><i class="fas fa-network-wired text-primary"></i> API Endpoints</h2>
+                        
+                        <!-- Create Audit -->
+                        <div class="card endpoint-card">
+                            <div class="card-header">
+                                <span class="badge method-badge method-post">POST</span>
+                                <strong>/api/v1/audits</strong>
+                                <span class="text-muted">Create a new audit</span>
+                            </div>
+                            <div class="card-body">
+                                <h6>Request Body:</h6>
+                                <div class="code-container">
+                                    <button class="copy-btn" onclick="copyToClipboard('create-audit-request')">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <pre><code id="create-audit-request" class="language-json">{
+  "url": "https://example.com",
+  "options": {
+    "deep_scan": true,
+    "include_images": true,
+    "mobile_friendly": true
+  },
+  "webhook_url": "https://your-app.com/webhook" // optional
+}</code></pre>
+                                </div>
+
+                                <h6>Response (202 Accepted):</h6>
+                                <div class="response-example">
+                                    <pre><code class="language-json">{
+  "audit_id": "audit_1234567890",
+  "status": "queued",
+  "estimated_completion": "2025-08-05T10:15:30Z",
+  "webhook_url": "https://your-app.com/webhook"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Get Audit Status -->
+                        <div class="card endpoint-card">
+                            <div class="card-header">
+                                <span class="badge method-badge method-get">GET</span>
+                                <strong>/api/v1/audits/{audit_id}/status</strong>
+                                <span class="text-muted">Check audit status</span>
+                            </div>
+                            <div class="card-body">
+                                <h6>Response (200 OK):</h6>
+                                <div class="response-example">
+                                    <pre><code class="language-json">{
+  "audit_id": "audit_1234567890",
+  "status": "completed", // queued, in_progress, completed, failed
+  "progress": 100,
+  "started_at": "2025-08-05T10:00:00Z",
+  "completed_at": "2025-08-05T10:15:30Z",
+  "url": "https://example.com"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Get Audit Results -->
+                        <div class="card endpoint-card">
+                            <div class="card-header">
+                                <span class="badge method-badge method-get">GET</span>
+                                <strong>/api/v1/audits/{audit_id}/result</strong>
+                                <span class="text-muted">Get audit results</span>
+                            </div>
+                            <div class="card-body">
+                                <h6>Response (200 OK):</h6>
+                                <div class="response-example">
+                                    <pre><code class="language-json">{
+  "audit_id": "audit_1234567890",
+  "url": "https://example.com",
+  "status": "completed",
+  "score": 85,
+  "results": {
+    "performance": {
+      "score": 88,
+      "load_time": 2.34,
+      "issues": []
+    },
+    "seo": {
+      "score": 92,
+      "title": "Example Website",
+      "meta_description": "This is an example...",
+      "issues": []
+    },
+    "accessibility": {
+      "score": 78,
+      "issues": [
+        {
+          "type": "missing_alt_text",
+          "description": "Images missing alt text",
+          "count": 3
+        }
+      ]
+    }
+  },
+  "completed_at": "2025-08-05T10:15:30Z"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- List Audits -->
+                        <div class="card endpoint-card">
+                            <div class="card-header">
+                                <span class="badge method-badge method-get">GET</span>
+                                <strong>/api/v1/audits</strong>
+                                <span class="text-muted">List your audits</span>
+                            </div>
+                            <div class="card-body">
+                                <h6>Query Parameters:</h6>
+                                <ul>
+                                    <li><code>page</code> - Page number (default: 1)</li>
+                                    <li><code>limit</code> - Results per page (default: 10, max: 100)</li>
+                                    <li><code>status</code> - Filter by status (queued, in_progress, completed, failed)</li>
+                                </ul>
+
+                                <h6>Response (200 OK):</h6>
+                                <div class="response-example">
+                                    <pre><code class="language-json">{
+  "audits": [
+    {
+      "audit_id": "audit_1234567890",
+      "url": "https://example.com",
+      "status": "completed",
+      "score": 85,
+      "created_at": "2025-08-05T10:00:00Z",
+      "completed_at": "2025-08-05T10:15:30Z"
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_count": 47,
+    "has_next": true,
+    "has_prev": false
+  }
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Error Handling -->
+                    <section id="errors" class="mb-5">
+                        <h2><i class="fas fa-exclamation-triangle text-primary"></i> Error Handling</h2>
+                        <p>The API uses conventional HTTP response codes to indicate success or failure:</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Meaning</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>200</code></td>
+                                        <td>OK</td>
+                                        <td>Request successful</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>202</code></td>
+                                        <td>Accepted</td>
+                                        <td>Audit queued for processing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>400</code></td>
+                                        <td>Bad Request</td>
+                                        <td>Invalid request parameters</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>401</code></td>
+                                        <td>Unauthorized</td>
+                                        <td>Invalid or missing API key</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>403</code></td>
+                                        <td>Forbidden</td>
+                                        <td>API access not available for your tier</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>429</code></td>
+                                        <td>Too Many Requests</td>
+                                        <td>Rate limit exceeded</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>500</code></td>
+                                        <td>Internal Server Error</td>
+                                        <td>Something went wrong on our end</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h6>Error Response Format:</h6>
+                        <div class="response-example">
+                            <pre><code class="language-json">{
+  "error": {
+    "code": "invalid_url",
+    "message": "The provided URL is not valid",
+    "details": "URL must include protocol (http/https)"
+  }
+}</code></pre>
+                        </div>
+                    </section>
+
+                    <!-- Code Examples -->
+                    <section id="examples" class="mb-5">
+                        <h2><i class="fas fa-code text-primary"></i> Code Examples</h2>
+                        
+                        <!-- JavaScript Example -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <strong><i class="fab fa-js"></i> JavaScript / Node.js</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="code-container">
+                                    <button class="copy-btn" onclick="copyToClipboard('js-example')">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <pre><code id="js-example" class="language-javascript">const apiKey = 'your_api_key_here';
+const baseUrl = 'https://your-domain.com/api/v1';
+
+// Create a new audit
+async function createAudit(url) {
+  const response = await fetch(`${baseUrl}/audits`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      url: url,
+      options: {
+        deep_scan: true,
+        include_images: true
+      }
+    })
+  });
+  
+  return await response.json();
+}
+
+// Check audit status
+async function checkStatus(auditId) {
+  const response = await fetch(`${baseUrl}/audits/${auditId}/status`, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`
+    }
+  });
+  
+  return await response.json();
+}
+
+// Get audit results
+async function getResults(auditId) {
+  const response = await fetch(`${baseUrl}/audits/${auditId}/result`, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`
+    }
+  });
+  
+  return await response.json();
+}
+
+// Example usage
+async function runAudit() {
+  try {
+    // Create audit
+    const audit = await createAudit('https://example.com');
+    console.log('Audit created:', audit.audit_id);
+    
+    // Poll for completion
+    let status;
+    do {
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+      status = await checkStatus(audit.audit_id);
+      console.log('Status:', status.status);
+    } while (status.status !== 'completed' && status.status !== 'failed');
+    
+    // Get results
+    if (status.status === 'completed') {
+      const results = await getResults(audit.audit_id);
+      console.log('Results:', results);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Python Example -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <strong><i class="fab fa-python"></i> Python</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="code-container">
+                                    <button class="copy-btn" onclick="copyToClipboard('python-example')">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <pre><code id="python-example" class="language-python">import requests
+import time
+import json
+
+class SiteScopeAPI:
+    def __init__(self, api_key, base_url='https://your-domain.com/api/v1'):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+    
+    def create_audit(self, url, options=None):
+        """Create a new audit"""
+        data = {'url': url}
+        if options:
+            data['options'] = options
+            
+        response = requests.post(
+            f'{self.base_url}/audits',
+            headers=self.headers,
+            json=data
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def get_status(self, audit_id):
+        """Get audit status"""
+        response = requests.get(
+            f'{self.base_url}/audits/{audit_id}/status',
+            headers=self.headers
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def get_results(self, audit_id):
+        """Get audit results"""
+        response = requests.get(
+            f'{self.base_url}/audits/{audit_id}/result',
+            headers=self.headers
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def wait_for_completion(self, audit_id, poll_interval=5):
+        """Wait for audit to complete"""
+        while True:
+            status = self.get_status(audit_id)
+            if status['status'] in ['completed', 'failed']:
+                return status
+            time.sleep(poll_interval)
+
+# Example usage
+if __name__ == '__main__':
+    api = SiteScopeAPI('your_api_key_here')
+    
+    # Create audit
+    audit = api.create_audit('https://example.com', {
+        'deep_scan': True,
+        'include_images': True
+    })
+    
+    print(f"Audit created: {audit['audit_id']}")
+    
+    # Wait for completion
+    final_status = api.wait_for_completion(audit['audit_id'])
+    
+    if final_status['status'] == 'completed':
+        results = api.get_results(audit['audit_id'])
+        print(f"Audit completed with score: {results['score']}")
+    else:
+        print("Audit failed")</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Webhooks -->
+                    <section id="webhooks" class="mb-5">
+                        <h2><i class="fas fa-webhook text-primary"></i> Webhooks</h2>
+                        <p>Receive real-time notifications when your audits complete by providing a webhook URL:</p>
+                        
+                        <h6>Webhook Payload:</h6>
+                        <div class="response-example">
+                            <pre><code class="language-json">{
+  "event": "audit.completed",
+  "audit_id": "audit_1234567890",
+  "url": "https://example.com",
+  "status": "completed",
+  "score": 85,
+  "completed_at": "2025-08-05T10:15:30Z",
+  "results_url": "https://your-domain.com/api/v1/audits/audit_1234567890/result"
+}</code></pre>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Security:</strong> Webhook payloads are signed with your API key using HMAC-SHA256.
+                        </div>
+                    </section>
+
+                    <!-- Support -->
+                    <section id="support" class="mb-5">
+                        <h2><i class="fas fa-life-ring text-primary"></i> Support</h2>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-book"></i> Need Help?
+                                        </h5>
+                                        <p class="card-text">Check out our comprehensive guides and tutorials.</p>
+                                        <a href="/docs" class="btn btn-outline-primary">View Documentation</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-envelope"></i> Contact Support
+                                        </h5>
+                                        <p class="card-text">Get help from our technical support team.</p>
+                                        <a href="mailto:api-support@your-domain.com" class="btn btn-outline-primary">Email Support</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <script>
+        // Copy to clipboard functionality
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Show feedback
+                const button = element.parentElement.querySelector('.copy-btn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                }, 2000);
+            });
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Update active nav link
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Update active nav link on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (window.pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

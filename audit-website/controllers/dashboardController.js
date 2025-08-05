@@ -4,6 +4,7 @@
  */
 import tierService from '../services/tierService.js';
 import { Audit } from '../models/index.js';
+import { query } from '../models/database.js';
 
 /**
  * Display user dashboard
@@ -188,8 +189,124 @@ export const getSettings = async (req, res) => {
   }
 };
 
+/**
+ * Display API management page
+ */
+export const getApiPage = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    // Get user tier information and limits
+    const limits = await tierService.getUserTierLimits(userId);
+    
+    // Get current usage statistics
+    const usage = await tierService.getCurrentMonthUsage(userId);
+    
+    // Get updated user data with API key
+    const userResult = await query(`
+      SELECT api_key FROM users WHERE id = $1
+    `, [userId]);
+    
+    const userData = {
+      ...req.session.user,
+      api_key: userResult.rows[0]?.api_key || null
+    };
+    
+    res.render('dashboard/api', {
+      title: 'API Access - Dashboard',
+      user: userData,
+      limits,
+      usage,
+      request: req
+    });
+    
+  } catch (error) {
+    console.error('API page error:', error);
+    res.render('error', {
+      title: 'API Access Error',
+      user: req.session.user || null,
+      error: 'Unable to load API page. Please try again.'
+    });
+  }
+};
+
+/**
+ * Generate new API key
+ */
+export const generateApiKey = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    const apiKey = await tierService.generateApiKey(userId);
+    
+    res.json({ 
+      success: true, 
+      message: 'API key generated successfully',
+      key: apiKey
+    });
+    
+  } catch (error) {
+    console.error('Generate API key error:', error);
+    res.status(400).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * Regenerate existing API key
+ */
+export const regenerateApiKey = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    const apiKey = await tierService.generateApiKey(userId);
+    
+    res.json({ 
+      success: true, 
+      message: 'API key regenerated successfully',
+      key: apiKey
+    });
+    
+  } catch (error) {
+    console.error('Regenerate API key error:', error);
+    res.status(400).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * Revoke API key
+ */
+export const revokeApiKey = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    await tierService.revokeApiKey(userId);
+    
+    res.json({ 
+      success: true, 
+      message: 'API key revoked successfully'
+    });
+    
+  } catch (error) {
+    console.error('Revoke API key error:', error);
+    res.status(400).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
 export default {
   getDashboard,
   getDashboardData,
-  getSettings
+  getSettings,
+  getApiPage,
+  generateApiKey,
+  regenerateApiKey,
+  revokeApiKey
 };

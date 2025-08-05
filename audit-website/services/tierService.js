@@ -558,6 +558,57 @@ export class TierService {
       return false;
     }
   }
+
+  /**
+   * Generate API key for user
+   * @param {number} userId - User ID
+   * @returns {Promise<string>} Generated API key
+   */
+  async generateApiKey(userId) {
+    try {
+      // Check if user has API access
+      const limits = await this.getUserTierLimits(userId);
+      if (!limits.api_access) {
+        throw new Error('User tier does not include API access');
+      }
+
+      // Generate secure API key
+      const crypto = await import('crypto');
+      const apiKey = 'sk_' + crypto.randomBytes(32).toString('hex');
+
+      // Update user with new API key
+      await query(`
+        UPDATE users SET 
+          api_key = $1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+      `, [apiKey, userId]);
+
+      return apiKey;
+    } catch (error) {
+      console.error('Error generating API key:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Revoke user's API key
+   * @param {number} userId - User ID
+   * @returns {Promise<void>}
+   */
+  async revokeApiKey(userId) {
+    try {
+      await query(`
+        UPDATE users SET 
+          api_key = NULL,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+      `, [userId]);
+    } catch (error) {
+      console.error('Error revoking API key:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

@@ -1,0 +1,313 @@
+<%- include('../partials/header', { title: 'API Access - SiteScope', user: user }) %>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 sidebar bg-light">
+      <div class="position-sticky pt-3">
+        <%- include('../partials/dashboard-sidebar', { activePage: 'api' }) %>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+          <i class="fas fa-code me-2"></i>API Access
+        </h1>
+      </div>
+
+      <% if (!limits.api_access) { %>
+        <!-- No API Access -->
+        <div class="row">
+          <div class="col-12">
+            <div class="alert alert-info">
+              <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>API Access Not Available</h4>
+              <p>Your current <strong><%= user.tier.charAt(0).toUpperCase() + user.tier.slice(1) %></strong> tier doesn't include API access.</p>
+              <p class="mb-0">Upgrade to <strong>Professional</strong> or <strong>Enterprise</strong> to access our RESTful API.</p>
+            </div>
+            
+            <div class="card">
+              <div class="card-body text-center">
+                <h5 class="card-title">Unlock API Access</h5>
+                <p class="card-text">Integrate SiteScope audits directly into your applications and workflows.</p>
+                <a href="/pricing" class="btn btn-primary">View Pricing Plans</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <!-- API Access Available -->
+        
+        <!-- API Overview -->
+        <div class="row mb-4">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-key me-2"></i>API Key Management</h5>
+              </div>
+              <div class="card-body">
+                <% if (user.api_key) { %>
+                  <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>API key is active and ready to use
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="form-label">Your API Key:</label>
+                    <div class="input-group">
+                      <input type="password" class="form-control" id="apiKeyField" value="<%= user.api_key %>" readonly>
+                      <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKey()">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                      </button>
+                      <button class="btn btn-outline-primary" type="button" onclick="copyApiKey()">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                    <div class="form-text">Keep this key secure and never share it publicly.</div>
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-warning" onclick="regenerateApiKey()">
+                      <i class="fas fa-sync-alt me-1"></i>Regenerate Key
+                    </button>
+                    <button class="btn btn-danger" onclick="revokeApiKey()">
+                      <i class="fas fa-trash me-1"></i>Revoke Access
+                    </button>
+                  </div>
+                <% } else { %>
+                  <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>No API key generated yet
+                  </div>
+                  
+                  <p>Generate your API key to start using the SiteScope API.</p>
+                  <button class="btn btn-primary" onclick="generateApiKey()">
+                    <i class="fas fa-plus me-1"></i>Generate API Key
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Usage Statistics</h5>
+              </div>
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span>API Calls This Month:</span>
+                  <strong><%= usage.api_calls_used || 0 %></strong>
+                </div>
+                <div class="progress mb-3">
+                  <% 
+                    const apiLimit = limits.tier === 'professional' ? 1000 : 10000;
+                    const apiUsagePercent = Math.min(((usage.api_calls_used || 0) / apiLimit) * 100, 100);
+                  %>
+                  <div class="progress-bar <%= apiUsagePercent > 80 ? 'bg-warning' : 'bg-primary' %>" 
+                       style="width: <%= apiUsagePercent %>%"></div>
+                </div>
+                <small class="text-muted">
+                  Limit: <%= apiLimit.toLocaleString() %> calls/month<br>
+                  Resets: <%= new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString() %>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Documentation -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-book me-2"></i>Quick Start Guide</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Authentication</h6>
+                    <p>Include your API key in the request header:</p>
+                    <pre class="bg-light p-3 rounded"><code>curl -H "x-api-key: YOUR_API_KEY" \
+     <%= request.protocol %>://<%= request.get('host') %>/api/v1/audits</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Create Audit</h6>
+                    <p>Start a new audit via POST request:</p>
+                    <pre class="bg-light p-3 rounded"><code>curl -X POST \
+     -H "x-api-key: YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://example.com"}' \
+     <%= request.protocol %>://<%= request.get('host') %>/api/v1/audits</code></pre>
+                  </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                  <a href="/api/v1" class="btn btn-outline-primary me-2" target="_blank">
+                    <i class="fas fa-external-link-alt me-1"></i>API Explorer
+                  </a>
+                  <a href="/api-docs" class="btn btn-outline-secondary" target="_blank">
+                    <i class="fas fa-book me-1"></i>Full Documentation
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Endpoints Reference -->
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Available Endpoints</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/v1/health</code></td>
+                        <td>API health check</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge bg-primary">POST</span></td>
+                        <td><code>/api/v1/audits</code></td>
+                        <td>Create a new audit</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/v1/audits</code></td>
+                        <td>List your audits</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/v1/audits/{id}/status</code></td>
+                        <td>Get audit status</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/v1/audits/{id}/result</code></td>
+                        <td>Get audit results</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </main>
+  </div>
+</div>
+
+<script>
+function toggleApiKey() {
+  const field = document.getElementById('apiKeyField');
+  const icon = document.getElementById('eyeIcon');
+  
+  if (field.type === 'password') {
+    field.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    field.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+function copyApiKey() {
+  const field = document.getElementById('apiKeyField');
+  field.select();
+  document.execCommand('copy');
+  
+  // Show success message
+  const btn = event.target.closest('button');
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-check"></i>';
+  btn.disabled = true;
+  
+  setTimeout(() => {
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+  }, 2000);
+}
+
+async function generateApiKey() {
+  if (!confirm('Generate a new API key? You\'ll need to update any existing integrations.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/dashboard/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (response.ok) {
+      location.reload();
+    } else {
+      alert('Failed to generate API key. Please try again.');
+    }
+  } catch (error) {
+    alert('Error generating API key. Please try again.');
+  }
+}
+
+async function regenerateApiKey() {
+  if (!confirm('Regenerate your API key? This will invalidate the current key and break existing integrations until updated.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/dashboard/api/regenerate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (response.ok) {
+      location.reload();
+    } else {
+      alert('Failed to regenerate API key. Please try again.');
+    }
+  } catch (error) {
+    alert('Error regenerating API key. Please try again.');
+  }
+}
+
+async function revokeApiKey() {
+  if (!confirm('Revoke your API key? This will permanently disable API access until a new key is generated.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/dashboard/api/revoke', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (response.ok) {
+      location.reload();
+    } else {
+      alert('Failed to revoke API key. Please try again.');
+    }
+  } catch (error) {
+    alert('Error revoking API key. Please try again.');
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

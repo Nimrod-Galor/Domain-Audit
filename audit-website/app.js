@@ -22,6 +22,7 @@ import authRouter from './routes/auth.js';
 import notificationRouter from './routes/notifications.js';
 import billingRouter from './routes/billing.js';
 import dashboardRouter from './routes/dashboard.js';
+import apiRouter from './routes/api/index.js';
 
 // ES6 module compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -85,6 +86,7 @@ app.use('/', indexRouter);
 app.use('/audit', auditLimiter, rateLimitLogger, auditRouter);
 app.use('/auth', authRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api', apiRouter);  // API routes
 app.use('/billing', billingRouter);
 app.use('/dashboard', dashboardRouter);
 
@@ -135,6 +137,8 @@ async function startServer() {
       console.log(`📱 Open http://localhost:${PORT} in your browser`);
       console.log(`💾 Database: PostgreSQL (${process.env.DATABASE_URL ? 'Connected' : 'Waiting for connection string'})`);
     });
+    
+    return app; // Return app instance for testing
   } catch (error) {
     logger.error('❌ Failed to start server:', error);
     console.error('❌ Failed to start server:', error.message);
@@ -142,4 +146,19 @@ async function startServer() {
   }
 }
 
-startServer();
+// Export app for testing
+let appInstance;
+
+async function getApp() {
+  if (!appInstance) {
+    appInstance = await startServer();
+  }
+  return appInstance;
+}
+
+export default getApp;
+
+// Start server if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startServer();
+}

@@ -3,7 +3,7 @@
  * Handles user dashboard and settings routes
  */
 import express from 'express';
-import { getDashboard, getDashboardData, getSettings } from '../controllers/dashboardController.js';
+import { getDashboard, getDashboardData, getSettings, getApiPage, generateApiKey, regenerateApiKey, revokeApiKey } from '../controllers/dashboardController.js';
 
 const router = express.Router();
 
@@ -19,5 +19,11 @@ const requireAuth = (req, res, next) => {
 router.get('/', requireAuth, getDashboard);
 router.get('/data', requireAuth, getDashboardData);
 router.get('/settings', requireAuth, getSettings);
+
+// API management routes
+router.get('/api', requireAuth, getApiPage);
+router.post('/api/generate', requireAuth, generateApiKey);
+router.post('/api/regenerate', requireAuth, regenerateApiKey);
+router.post('/api/revoke', requireAuth, revokeApiKey);
 
 export default router;
