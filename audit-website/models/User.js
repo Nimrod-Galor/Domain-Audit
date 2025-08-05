@@ -13,10 +13,12 @@ export const User = {
    */
   async findByEmail(email) {
     try {
+      console.log(`🔍 Finding user by email: ${email}`);
       const result = await query(
         'SELECT * FROM users WHERE email = $1',
         [email.toLowerCase()]
       );
+      console.log(`✅ Query result: ${result.rows.length} rows found`);
       return result.rows[0] || null;
     } catch (error) {
       console.error('❌ Error finding user by email:', error.message);
@@ -78,7 +80,7 @@ export const User = {
       if (password && sendVerificationEmail) {
         try {
           const emailService = await import('../services/emailService.js');
-          const token = await this.generateVerificationToken(newUser.id);
+          const token = await User.generateVerificationToken(newUser.id);
           await emailService.default.sendVerificationEmail(email, firstName, token);
           console.log(`📧 Verification email sent to: ${email}`);
           
@@ -373,12 +375,19 @@ export const User = {
    */
   async resendVerificationToken(email) {
     try {
-      const user = await this.findByEmail(email);
-      if (!user || user.email_verified) {
+      console.log(`🔄 Looking up user for email: ${email}`);
+      const user = await User.findByEmail(email);
+      if (!user) {
+        console.log('❌ User not found');
+        return null;
+      }
+      if (user.email_verified) {
+        console.log('❌ Email already verified');
         return null;
       }
 
-      return await this.generateVerificationToken(user.id);
+      console.log(`✅ User found, generating token for user ID: ${user.id}`);
+      return await User.generateVerificationToken(user.id);
     } catch (error) {
       console.error('❌ Error resending verification token:', error.message);
       throw error;

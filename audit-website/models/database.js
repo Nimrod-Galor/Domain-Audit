@@ -23,14 +23,20 @@ export const initializeDatabase = () => {
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 10, // Maximum number of clients in the pool
-    idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+    idleTimeoutMillis: 0, // Keep connections alive (don't close idle clients)
     connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection cannot be established
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000
   });
 
   // Handle pool errors
   pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err);
-    process.exit(-1);
+    console.error('❌ Unexpected error on idle client:', err.message);
+    // Don't exit the process, just log the error
+  });
+
+  pool.on('connect', () => {
+    console.log('✅ New client connected to database pool');
   });
 
   console.log('✅ Database pool initialized');
@@ -57,6 +63,12 @@ export const query = async (text, params = []) => {
   const start = Date.now();
   
   try {
+    // Check if pool is available and not ended
+    if (!pool || pool.ended) {
+      console.warn('⚠️ Database pool is not available, reinitializing...');
+      initializeDatabase();
+    }
+    
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
     
@@ -67,6 +79,21 @@ export const query = async (text, params = []) => {
     
     return result;
   } catch (error) {
+    // If it's a pool-related error, try to reinitialize
+    if (error.message.includes('pool') || error.message.includes('ended')) {
+      console.warn('⚠️ Pool error detected, attempting to reinitialize database connection...');
+      try {
+        initializeDatabase();
+        // Retry the query once
+        const result = await pool.query(text, params);
+        console.log('✅ Query succeeded after pool reinitializition');
+        return result;
+      } catch (retryError) {
+        console.error('❌ Query failed even after pool reinitializition:', retryError.message);
+        throw retryError;
+      }
+    }
+    
     console.error('❌ Database query error:', {
       query: text.substring(0, 100),
       params: params,
@@ -146,6 +173,6 @@ export const tableExists = async (tableName) => {
   }
 };
 
-// Graceful shutdown
-process.on('SIGTERM', closeDatabase);
-process.on('SIGINT', closeDatabase);
+// Graceful shutdown - DISABLED to prevent premature pool closure
+// process.on('SIGTERM', closeDatabase);
+// process.on('SIGINT', closeDatabase);

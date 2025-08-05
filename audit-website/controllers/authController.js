@@ -368,24 +368,51 @@ export const verifyEmail = async (req, res) => {
  */
 export const resendVerification = async (req, res) => {
   try {
+    console.log('🔄 Resend verification request received');
     const { email } = req.body;
     
     if (!email) {
+      console.log('❌ No email provided');
       return res.json({ success: false, message: 'Email is required' });
     }
 
-    // Generate new token and resend email
-    const token = await User.resendVerificationToken(email);
+    console.log(`🔄 Attempting to resend verification for: ${email}`);
+
+    // Find user first to give better error messages
+    const user = await User.findByEmail(email);
     
-    if (!token) {
+    if (!user) {
+      console.log('❌ User not found');
       return res.json({ 
         success: false, 
-        message: 'User not found or email already verified' 
+        message: 'No account found with this email address' 
       });
     }
 
+    if (user.email_verified) {
+      console.log('❌ Email already verified');
+      return res.json({ 
+        success: false, 
+        message: 'This email address is already verified' 
+      });
+    }
+
+    console.log('✅ User found and unverified, generating token...');
+
+    // Generate new token and resend email
+    const token = await User.generateVerificationToken(user.id);
+    
+    if (!token) {
+      console.log('❌ Failed to generate token');
+      return res.json({ 
+        success: false, 
+        message: 'Failed to generate verification token. Please try again.' 
+      });
+    }
+
+    console.log('✅ Token generated, sending email...');
+
     // Send verification email
-    const user = await User.findByEmail(email);
     const emailService = await import('../services/emailService.js');
     const emailSent = await emailService.default.sendVerificationEmail(
       email, 
@@ -394,11 +421,13 @@ export const resendVerification = async (req, res) => {
     );
 
     if (emailSent) {
+      console.log('✅ Verification email sent successfully');
       res.json({ 
         success: true, 
         message: 'Verification email sent! Please check your inbox.' 
       });
     } else {
+      console.log('❌ Failed to send email');
       res.json({ 
         success: false, 
         message: 'Failed to send verification email. Please try again.' 
@@ -409,7 +438,7 @@ export const resendVerification = async (req, res) => {
     console.error('❌ Resend verification error:', error);
     res.json({ 
       success: false, 
-      message: 'An error occurred. Please try again.' 
+      message: `Error: ${error.message}` 
     });
   }
 };

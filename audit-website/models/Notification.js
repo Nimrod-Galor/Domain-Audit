@@ -165,6 +165,7 @@ export class Notification {
             WHERE user_id = $1 
             AND is_read = FALSE 
             AND type IN ('critical', 'alert')
+            AND title NOT LIKE '%Email Verification Required%'
             ORDER BY 
                 CASE type 
                     WHEN 'critical' THEN 1 
