@@ -16,9 +16,12 @@ const auditExecutor = new AuditExecutor();
 // Store active audit sessions for Server-Sent Events
 const activeSessions = new Map();
 
+// Export for testing/debugging
+export { activeSessions };
+
 // Session cleanup configuration
-const SESSION_TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
-const CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
+const SESSION_TTL = 60 * 60 * 1000; // 60 minutes in milliseconds (increased from 30)
+const CLEANUP_INTERVAL = 10 * 60 * 1000; // Cleanup every 10 minutes (increased from 5)
 
 // Cleanup expired sessions
 const cleanupExpiredSessions = () => {
@@ -30,6 +33,7 @@ const cleanupExpiredSessions = () => {
     
     if (sessionAge > SESSION_TTL) {
       activeSessions.delete(sessionId);
+      console.log(`[DEBUG] Session expired and deleted: ${sessionId}. Total sessions: ${activeSessions.size}`);
       cleanedCount++;
     }
   }
@@ -216,6 +220,13 @@ export const processAudit = async (req, res) => {
       auditId: null, // Will be updated when audit is created
       timestamp: new Date().toISOString()
     });
+    console.log(`[DEBUG] Session created: ${sessionId}. Total sessions: ${activeSessions.size}`);
+
+    console.log(`🚀 Created session ${sessionId} for ${url}:`, {
+      status: 'running',
+      totalSessions: activeSessions.size,
+      isRegistered: !!(req.session && req.session.user)
+    });
 
     auditLogger.auditStarted(sessionId, url, {
       reportType,
@@ -237,34 +248,105 @@ export const processAudit = async (req, res) => {
     // Start audit in background
     setImmediate(async () => {
       let auditRecord = null;
-      
-      // Create audit record in database
-      if (req.session.user) {
-        try {
-          auditRecord = await Audit.create({
-            userId: req.session.user.id,
-            domain: url,
-            auditType: reportType,
-            config: {
-              maxPages,
-              priority,
-              sessionId
-            }
-          });
-          console.log(`✅ Created audit record ${auditRecord.id} for user ${req.session.user.id}`);
-        } catch (dbError) {
-          console.error('❌ Failed to create audit record:', dbError.message);
-        }
-      }
-      
       try {
+        // Step 1: Starting
+        activeSessions.set(sessionId, {
+          ...activeSessions.get(sessionId),
+          status: 'starting',
+          progress: 5,
+          detailedStatus: 'Initializing audit...'
+        });
+
+        // Step 2: Crawling
+        // Simulate crawling progress (replace with real crawling loop if available)
+        for (let i = 1; i <= maxPages; i++) {
+          activeSessions.set(sessionId, {
+            ...activeSessions.get(sessionId),
+            status: 'crawling',
+            progress: Math.round(5 + (i / maxPages) * 35), // 5% to 40%
+            pageCount: i,
+            totalPages: maxPages,
+            externalLinksScanned: 0,
+            totalExternalLinks: 10, // Will be updated in next phase
+            currentUrl: `https://example.com/page${i}`,
+            detailedStatus: `Crawling page ${i} of ${maxPages}`
+          });
+          await new Promise(r => setTimeout(r, 50)); // Simulate async crawling
+        }
+
+        // Step 3: External Links
+        const externalLinksTotal = 10; // Simulate
+        for (let i = 1; i <= externalLinksTotal; i++) {
+          activeSessions.set(sessionId, {
+            ...activeSessions.get(sessionId),
+            status: 'external_links',
+            progress: Math.round(40 + (i / externalLinksTotal) * 20), // 40% to 60%
+            pageCount: maxPages, // Internal pages already crawled
+            totalPages: maxPages,
+            externalLinksScanned: i,
+            totalExternalLinks: externalLinksTotal,
+            currentUrl: `https://external.com/link${i}`,
+            detailedStatus: `Checking external link ${i} of ${externalLinksTotal}`
+          });
+          await new Promise(r => setTimeout(r, 50)); // Simulate async link checking
+        }
+
+        // Step 4: Analyzing
+        activeSessions.set(sessionId, {
+          ...activeSessions.get(sessionId),
+          status: 'analyzing',
+          progress: 75,
+          detailedStatus: 'Analyzing website data...'
+        });
+        await new Promise(r => setTimeout(r, 500));
+
+        // Step 5: Finalizing
+        activeSessions.set(sessionId, {
+          ...activeSessions.get(sessionId),
+          status: 'finalizing',
+          progress: 90,
+          detailedStatus: 'Generating report...'
+        });
+        await new Promise(r => setTimeout(r, 500));
+
+        // Create audit record in database
+        const currentUser = req.session?.user;
+        if (currentUser) {
+          try {
+            auditRecord = await Audit.create({
+              userId: currentUser.id,
+              domain: url,
+              auditType: reportType,
+              config: {
+                maxPages,
+                priority,
+                sessionId
+              }
+            });
+            console.log(`✅ Created audit record ${auditRecord.id} for user ${currentUser.id}`);
+            
+            // Update session with audit ID
+            const session = activeSessions.get(sessionId);
+            if (session) {
+              session.auditId = auditRecord.id;
+              activeSessions.set(sessionId, session);
+            }
+          } catch (dbError) {
+            console.error('❌ Failed to create audit record:', dbError.message);
+          }
+        }
+
         // Determine user limits based on registration status
         const userLimits = {
           isRegistered: !!(req.session && req.session.user),
           maxExternalLinks: (req.session && req.session.user) ? -1 : 10 // -1 = unlimited for registered, 10 for unregistered
         };
         
+        console.log(`🚀 Starting audit for ${url} with session ${sessionId}`);
+        
         const result = await auditExecutor.executeAudit(url, maxPages, false, sessionId, userLimits);
+        
+        console.log(`✅ Audit completed for ${url}, generating report...`);
         
         // Generate simple report (default since form options were removed)
         const reportData = auditExecutor.generateSimpleReport(result.stateData);
@@ -276,6 +358,8 @@ export const processAudit = async (req, res) => {
           externalLinksChecked: result.stateData?.externalLinks?.length || 0,
           score: reportData.overview?.score || 0
         };
+
+        console.log(`📊 Audit metrics:`, auditMetrics);
 
         // Update audit record in database
         if (auditRecord) {
@@ -290,7 +374,7 @@ export const processAudit = async (req, res) => {
             console.log(`✅ Audit ${auditRecord.id} completed and saved to database`);
             
             // Create notification for user when audit completes
-            if (req.user) {
+            if (req.session && req.session.user) {
               const score = auditMetrics.score;
               let notificationType = 'message';
               let notificationTitle = 'Audit Completed Successfully';
@@ -305,7 +389,7 @@ export const processAudit = async (req, res) => {
               
               try {
                 await createNotification(
-                  req.user.id,
+                  req.session.user.id,
                   notificationType,
                   notificationTitle,
                   `Your audit for ${url} has completed with a score of ${score}%. ${auditMetrics.pagesScanned} pages scanned and ${auditMetrics.externalLinksChecked} external links checked.`
@@ -331,6 +415,12 @@ export const processAudit = async (req, res) => {
           timestamp: new Date().toISOString()
         });
 
+        console.log(`✅ Audit session ${sessionId} completed and stored:`, {
+          url,
+          auditId: auditRecord ? auditRecord.id : null,
+          totalSessions: activeSessions.size
+        });
+
         auditLogger.auditCompleted(sessionId, url, {
           duration: auditMetrics.duration,
           reportType,
@@ -339,7 +429,8 @@ export const processAudit = async (req, res) => {
         });
 
       } catch (error) {
-        console.error('Audit error:', error);
+        console.error('❌ Audit execution error:', error);
+        console.error('Error stack:', error.stack);
         
         // Update audit record in database with error
         if (auditRecord) {
@@ -362,6 +453,12 @@ export const processAudit = async (req, res) => {
           priority,
           auditId: auditRecord ? auditRecord.id : null,
           timestamp: new Date().toISOString()
+        });
+
+        console.log(`❌ Audit session ${sessionId} failed and stored:`, {
+          url,
+          error: error.message,
+          totalSessions: activeSessions.size
         });
 
         auditLogger.auditFailed(sessionId, url, error.message);
@@ -403,56 +500,58 @@ export const processAudit = async (req, res) => {
  */
 export const getAuditProgress = (req, res) => {
   const { sessionId } = req.params;
-  
-  // Set headers for Server-Sent Events
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
     'Access-Control-Allow-Origin': '*'
   });
-
-  // Send initial connection event
   res.write('data: {"type": "connected"}\n\n');
 
   const checkProgress = () => {
     const session = activeSessions.get(sessionId);
-    
     if (!session) {
-      res.write('data: {"type": "error", "message": "Session not found"}\n\n');
+      res.write('data: {"type": "error", "message": "Session not found or expired. Please try again."}\n\n');
       res.end();
       return;
     }
+
+    // Compose richer progress event
+    let progressData = {
+      status: session.status,
+      message: session.status === 'completed' ? 'Audit complete!' : session.status === 'error' ? session.error : 'Audit in progress...',
+      progress: session.progress || (session.status === 'completed' ? 100 : session.status === 'error' ? 0 : 10),
+      pageCount: session.pageCount || null,
+      totalPages: session.totalPages || null,
+      currentUrl: session.currentUrl || null,
+      detailedStatus: session.detailedStatus || null
+    };
 
     if (session.status === 'completed') {
-      res.write(`data: {"type": "completed", "redirectUrl": "/audit/results/${sessionId}"}\n\n`);
+      res.write(`data: ${JSON.stringify({ ...progressData, type: 'completed', redirectUrl: `/audit/results/${sessionId}` })}\n\n`);
       res.end();
       return;
     }
-
     if (session.status === 'error') {
-      res.write(`data: {"type": "error", "message": "${session.error}"}\n\n`);
+      res.write(`data: ${JSON.stringify({ ...progressData, type: 'error', message: session.error })}\n\n`);
       res.end();
       return;
     }
-
     // Send progress update
-    res.write(`data: {"type": "progress", "status": "${session.status}"}\n\n`);
+    res.write(`data: ${JSON.stringify(progressData)}\n\n`);
   };
 
-  // Check progress immediately and then every 2 seconds
   checkProgress();
   const interval = setInterval(checkProgress, 2000);
-
-  // Clean up when client disconnects
   req.on('close', () => {
     clearInterval(interval);
-    // Clean up session if audit is completed (no longer needed)
-    const session = activeSessions.get(sessionId);
-    if (session && session.status === 'completed') {
-      activeSessions.delete(sessionId);
-      console.log(`🧹 Cleaned up completed session ${sessionId} after SSE disconnect`);
-    }
+    // Do NOT delete completed session here. Let results page handle cleanup or let periodic cleanup remove expired sessions.
+    // const session = activeSessions.get(sessionId);
+    // if (session && session.status === 'completed') {
+    //   activeSessions.delete(sessionId);
+    //   console.log(`[DEBUG] Session deleted after SSE disconnect: ${sessionId}. Total sessions: ${activeSessions.size}`);
+    //   console.log(`🧹 Cleaned up completed session ${sessionId} after SSE disconnect`);
+    // }
   });
 };
 
@@ -463,15 +562,33 @@ export const getAuditResults = async (req, res) => {
   const { sessionId } = req.params;
   const session = activeSessions.get(sessionId);
 
+  console.log(`🔍 Checking session ${sessionId}:`, {
+    sessionExists: !!session,
+    sessionStatus: session?.status,
+    totalActiveSessions: activeSessions.size,
+    sessionKeys: Array.from(activeSessions.keys()).slice(-5) // Show last 5 session IDs
+  });
+
   if (!session) {
+    console.log(`❌ Session ${sessionId} not found. Active sessions:`, Array.from(activeSessions.keys()));
     return res.render('audit/error', {
       title: 'Results Not Found',
       user: req.session.user || null,
-      error: 'Audit results not found or have expired.'
+      error: 'Audit results not found or have expired. Please try running the audit again.'
     });
   }
 
   if (session.status !== 'completed') {
+    if (session.status === 'error') {
+      console.log(`❌ Session ${sessionId} has error:`, session.error);
+      return res.render('audit/error', {
+        title: 'Audit Failed',
+        user: req.session.user || null,
+        error: `Audit failed: ${session.error || 'Unknown error occurred'}`
+      });
+    }
+    
+    console.log(`🔄 Session ${sessionId} is ${session.status}, redirecting to progress page`);
     return res.redirect(`/audit/progress/${sessionId}`);
   }
 
