@@ -24,6 +24,7 @@ import billingRouter from './routes/billing.js';
 import dashboardRouter from './routes/dashboard.js';
 import apiRouter from './routes/api/index.js';
 import healthRouter from './routes/health.js';
+import adminRouter from './routes/admin.js';
 
 // ES6 module compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -90,6 +91,7 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api', apiRouter);  // API routes
 app.use('/billing', billingRouter);
 app.use('/dashboard', dashboardRouter);
+app.use('/admin', adminRouter);  // Admin routes
 app.use('/health', healthRouter);  // Health check routes
 
 // Error handling middleware

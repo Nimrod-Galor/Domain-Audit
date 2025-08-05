@@ -1603,4 +1603,909 @@ async function createTestUser(tier = "starter") {
 
 ---
 
+## 🔧 **Phase 7: Administrator Dashboard** (Week 11-12)
+
+### **7.1 Admin User Management**
+
+#### **Update `users` table for admin roles:**
+
+```sql
+-- Add admin-related columns
+ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'user';
+ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN admin_permissions JSON NULL;
+ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL;
+ALTER TABLE users ADD COLUMN login_count INT DEFAULT 0;
+
+-- Create admin roles
+INSERT INTO users (email, full_name, role, is_admin, admin_permissions, password_hash) VALUES
+('admin@sitescope.com', 'System Administrator', 'super_admin', TRUE, '["users", "billing", "audits", "analytics", "system"]', '$2b$12$...');
+```
+
+#### **Create `admin_activity_log` table:**
+
+```sql
+CREATE TABLE admin_activity_log (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  admin_user_id INT,
+  action VARCHAR(100) NOT NULL,
+  target_type VARCHAR(50), -- 'user', 'subscription', 'audit', 'system'
+  target_id VARCHAR(100),
+  details JSON NULL,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_admin_activity (admin_user_id, created_at),
+  INDEX idx_target (target_type, target_id)
+);
+```
+
+#### **Create `system_settings` table:**
+
+```sql
+CREATE TABLE system_settings (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  setting_key VARCHAR(100) UNIQUE NOT NULL,
+  setting_value TEXT,
+  setting_type VARCHAR(20) DEFAULT 'string', -- string, number, boolean, json
+  description TEXT,
+  is_public BOOLEAN DEFAULT FALSE,
+  updated_by INT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Insert default system settings
+INSERT INTO system_settings (setting_key, setting_value, setting_type, description, is_public) VALUES
+('maintenance_mode', 'false', 'boolean', 'Enable maintenance mode', FALSE),
+('max_concurrent_audits', '50', 'number', 'Maximum concurrent audits allowed', FALSE),
+('default_audit_timeout', '900', 'number', 'Default audit timeout in seconds', FALSE),
+('email_notifications_enabled', 'true', 'boolean', 'Enable system email notifications', FALSE),
+('new_user_registration', 'true', 'boolean', 'Allow new user registrations', TRUE),
+('freemium_daily_limit', '1', 'number', 'Daily audit limit for freemium users', TRUE);
+```
+
+### **7.2 Admin Authentication & Middleware**
+
+#### **Create `middleware/adminAuth.js`:**
+
+```javascript
+// File: audit-website/middleware/adminAuth.js
+import { query } from "../config/database.js";
+
+export const requireAdmin = (requiredPermissions = []) => {
+  return async (req, res, next) => {
+    if (!req.session.user || !req.session.user.is_admin) {
+      return res.status(403).render("errors/403", {
+        title: "Access Denied",
+        message: "Administrator access required",
+      });
+    }
+
+    // Check specific permissions if required
+    if (requiredPermissions.length > 0) {
+      const userPermissions = req.session.user.admin_permissions || [];
+      const hasPermission = requiredPermissions.some(
+        (perm) =>
+          userPermissions.includes(perm) || userPermissions.includes("*")
+      );
+
+      if (!hasPermission) {
+        return res.status(403).render("errors/403", {
+          title: "Insufficient Permissions",
+          message: "You do not have permission to access this resource",
+        });
+      }
+    }
+
+    next();
+  };
+};
+
+export const logAdminActivity = async (req, res, next) => {
+  const originalSend = res.send;
+
+  res.send = function (data) {
+    // Log successful admin actions
+    if (req.session.user?.is_admin && res.statusCode < 400) {
+      setTimeout(async () => {
+        try {
+          await query(
+            `
+            INSERT INTO admin_activity_log (
+              admin_user_id, action, target_type, target_id, 
+              details, ip_address, user_agent
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          `,
+            [
+              req.session.user.id,
+              `${req.method} ${req.route?.path || req.path}`,
+              req.params.type || "system",
+              req.params.id || null,
+              JSON.stringify({ body: req.body, query: req.query }),
+              req.ip,
+              req.headers["user-agent"],
+            ]
+          );
+        } catch (error) {
+          console.error("Failed to log admin activity:", error);
+        }
+      }, 0);
+    }
+
+    originalSend.call(this, data);
+  };
+
+  next();
+};
+```
+
+### **7.3 Admin Services**
+
+#### **Create `services/adminService.js`:**
+
+```javascript
+// File: audit-website/services/adminService.js
+import { query } from "../config/database.js";
+
+export class AdminService {
+  // Dashboard Analytics
+  async getDashboardStats() {
+    const stats = await Promise.all([
+      // Total users by tier
+      query(`
+        SELECT tier, COUNT(*) as count 
+        FROM users 
+        WHERE tier IS NOT NULL 
+        GROUP BY tier
+      `),
+
+      // Revenue metrics
+      query(`
+        SELECT 
+          SUM(amount) as total_revenue,
+          COUNT(*) as total_subscriptions,
+          AVG(amount) as avg_revenue
+        FROM subscriptions 
+        WHERE status = 'active'
+      `),
+
+      // Usage metrics
+      query(`
+        SELECT 
+          DATE(created_at) as date,
+          COUNT(*) as audits_count,
+          COUNT(DISTINCT user_id) as unique_users
+        FROM audits 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+      `),
+
+      // System health
+      query(`
+        SELECT 
+          COUNT(*) as total_audits,
+          SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_audits,
+          SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_audits,
+          AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) as avg_duration
+        FROM audits 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+      `),
+    ]);
+
+    return {
+      usersByTier: stats[0],
+      revenue: stats[1][0] || {
+        total_revenue: 0,
+        total_subscriptions: 0,
+        avg_revenue: 0,
+      },
+      dailyUsage: stats[2],
+      systemHealth: stats[3][0] || {
+        total_audits: 0,
+        completed_audits: 0,
+        failed_audits: 0,
+        avg_duration: 0,
+      },
+    };
+  }
+
+  // User Management
+  async getAllUsers(page = 1, limit = 50, filters = {}) {
+    let whereClause = "WHERE 1=1";
+    let params = [];
+
+    if (filters.tier) {
+      whereClause += " AND tier = ?";
+      params.push(filters.tier);
+    }
+
+    if (filters.status) {
+      whereClause += " AND subscription_status = ?";
+      params.push(filters.status);
+    }
+
+    if (filters.search) {
+      whereClause += " AND (email LIKE ? OR full_name LIKE ?)";
+      params.push(`%${filters.search}%`, `%${filters.search}%`);
+    }
+
+    const offset = (page - 1) * limit;
+
+    const [users, totalCount] = await Promise.all([
+      query(
+        `
+        SELECT u.*, ul.audits_per_month, ul.max_internal_pages,
+               s.status as subscription_status, s.amount as subscription_amount
+        FROM users u
+        LEFT JOIN user_limits ul ON u.id = ul.user_id
+        LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+        ${whereClause}
+        ORDER BY u.created_at DESC
+        LIMIT ? OFFSET ?
+      `,
+        [...params, limit, offset]
+      ),
+
+      query(
+        `
+        SELECT COUNT(*) as total 
+        FROM users u 
+        ${whereClause}
+      `,
+        params
+      ),
+    ]);
+
+    return {
+      users,
+      totalCount: totalCount[0].total,
+      totalPages: Math.ceil(totalCount[0].total / limit),
+      currentPage: page,
+    };
+  }
+
+  // Subscription Management
+  async updateUserTier(userId, newTier, adminId) {
+    await query(
+      `
+      UPDATE users SET tier = ?, updated_at = NOW() 
+      WHERE id = ?
+    `,
+      [newTier, userId]
+    );
+
+    // Log the action
+    await query(
+      `
+      INSERT INTO admin_activity_log (
+        admin_user_id, action, target_type, target_id, details
+      ) VALUES (?, ?, ?, ?, ?)
+    `,
+      [
+        adminId,
+        "UPDATE_USER_TIER",
+        "user",
+        userId,
+        JSON.stringify({ old_tier: null, new_tier: newTier }),
+      ]
+    );
+
+    return true;
+  }
+
+  // System Settings
+  async getSystemSettings() {
+    const settings = await query(`
+      SELECT setting_key, setting_value, setting_type, description, is_public 
+      FROM system_settings 
+      ORDER BY setting_key
+    `);
+
+    return settings.reduce((acc, setting) => {
+      let value = setting.setting_value;
+
+      // Parse value based on type
+      switch (setting.setting_type) {
+        case "boolean":
+          value = value === "true";
+          break;
+        case "number":
+          value = parseFloat(value);
+          break;
+        case "json":
+          value = JSON.parse(value);
+          break;
+      }
+
+      acc[setting.setting_key] = {
+        value,
+        type: setting.setting_type,
+        description: setting.description,
+        isPublic: setting.is_public,
+      };
+
+      return acc;
+    }, {});
+  }
+
+  async updateSystemSetting(key, value, adminId) {
+    await query(
+      `
+      UPDATE system_settings 
+      SET setting_value = ?, updated_by = ?, updated_at = NOW() 
+      WHERE setting_key = ?
+    `,
+      [value.toString(), adminId, key]
+    );
+
+    return true;
+  }
+
+  // Audit Management
+  async getAuditStats(days = 30) {
+    const stats = await query(
+      `
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as total_audits,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+        SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as running,
+        AVG(CASE WHEN status = 'completed' THEN 
+          TIMESTAMPDIFF(SECOND, created_at, updated_at) 
+        END) as avg_duration
+      FROM audits 
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `,
+      [days]
+    );
+
+    return stats;
+  }
+
+  // Revenue Analytics
+  async getRevenueStats(period = "monthly") {
+    let dateFormat = "%Y-%m";
+    let interval = "MONTH";
+
+    if (period === "daily") {
+      dateFormat = "%Y-%m-%d";
+      interval = "DAY";
+    } else if (period === "yearly") {
+      dateFormat = "%Y";
+      interval = "YEAR";
+    }
+
+    const stats = await query(
+      `
+      SELECT 
+        DATE_FORMAT(created_at, ?) as period,
+        COUNT(*) as new_subscriptions,
+        SUM(amount) as revenue,
+        AVG(amount) as avg_revenue
+      FROM subscriptions 
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 ${interval})
+      GROUP BY DATE_FORMAT(created_at, ?)
+      ORDER BY period DESC
+    `,
+      [dateFormat, dateFormat]
+    );
+
+    return stats;
+  }
+}
+
+export const adminService = new AdminService();
+```
+
+### **7.4 Admin Routes**
+
+#### **Create `routes/admin.js`:**
+
+```javascript
+// File: audit-website/routes/admin.js
+import express from "express";
+import { requireAdmin, logAdminActivity } from "../middleware/adminAuth.js";
+import { adminService } from "../services/adminService.js";
+
+const router = express.Router();
+
+// Apply admin authentication to all routes
+router.use(requireAdmin());
+router.use(logAdminActivity);
+
+// Admin Dashboard
+router.get("/", async (req, res) => {
+  try {
+    const stats = await adminService.getDashboardStats();
+
+    res.render("admin/dashboard", {
+      title: "Admin Dashboard",
+      user: req.session.user,
+      stats,
+      layout: "admin",
+    });
+  } catch (error) {
+    res.status(500).render("errors/500", { error: error.message });
+  }
+});
+
+// User Management
+router.get("/users", requireAdmin(["users"]), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const filters = {
+      tier: req.query.tier,
+      status: req.query.status,
+      search: req.query.search,
+    };
+
+    const userdata = await adminService.getAllUsers(page, 50, filters);
+
+    res.render("admin/users", {
+      title: "User Management",
+      user: req.session.user,
+      ...userdata,
+      filters,
+      layout: "admin",
+    });
+  } catch (error) {
+    res.status(500).render("errors/500", { error: error.message });
+  }
+});
+
+// Update User Tier
+router.post("/users/:id/tier", requireAdmin(["users"]), async (req, res) => {
+  try {
+    const { tier } = req.body;
+    await adminService.updateUserTier(req.params.id, tier, req.session.user.id);
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Analytics
+router.get("/analytics", requireAdmin(["analytics"]), async (req, res) => {
+  try {
+    const period = req.query.period || "monthly";
+    const [auditStats, revenueStats] = await Promise.all([
+      adminService.getAuditStats(30),
+      adminService.getRevenueStats(period),
+    ]);
+
+    res.render("admin/analytics", {
+      title: "Analytics",
+      user: req.session.user,
+      auditStats,
+      revenueStats,
+      period,
+      layout: "admin",
+    });
+  } catch (error) {
+    res.status(500).render("errors/500", { error: error.message });
+  }
+});
+
+// System Settings
+router.get("/settings", requireAdmin(["system"]), async (req, res) => {
+  try {
+    const settings = await adminService.getSystemSettings();
+
+    res.render("admin/settings", {
+      title: "System Settings",
+      user: req.session.user,
+      settings,
+      layout: "admin",
+    });
+  } catch (error) {
+    res.status(500).render("errors/500", { error: error.message });
+  }
+});
+
+// Update System Setting
+router.post("/settings/:key", requireAdmin(["system"]), async (req, res) => {
+  try {
+    const { value } = req.body;
+    await adminService.updateSystemSetting(
+      req.params.key,
+      value,
+      req.session.user.id
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Activity Log
+router.get("/activity", requireAdmin(["system"]), async (req, res) => {
+  try {
+    const activities = await query(`
+      SELECT al.*, u.email as admin_email 
+      FROM admin_activity_log al
+      LEFT JOIN users u ON al.admin_user_id = u.id
+      ORDER BY al.created_at DESC
+      LIMIT 100
+    `);
+
+    res.render("admin/activity", {
+      title: "Activity Log",
+      user: req.session.user,
+      activities,
+      layout: "admin",
+    });
+  } catch (error) {
+    res.status(500).render("errors/500", { error: error.message });
+  }
+});
+
+export default router;
+```
+
+### **7.5 Admin Dashboard Views**
+
+#### **Create `views/layouts/admin.ejs`:**
+
+```html
+<!-- File: audit-website/views/layouts/admin.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %> - SiteScope Admin</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .admin-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        width: 240px;
+        background: #2c3e50;
+        transition: all 0.3s;
+      }
+      .admin-sidebar .nav-link {
+        color: #bdc3c7;
+        border-radius: 0;
+        margin: 2px 0;
+      }
+      .admin-sidebar .nav-link:hover,
+      .admin-sidebar .nav-link.active {
+        color: #fff;
+        background: #34495e;
+      }
+      .admin-content {
+        margin-left: 240px;
+        padding: 20px;
+      }
+      .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+      }
+      .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Admin Sidebar -->
+    <nav class="admin-sidebar">
+      <div class="p-3">
+        <h4 class="text-white mb-4">
+          <i class="fas fa-tachometer-alt"></i> SiteScope Admin
+        </h4>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a
+              class="nav-link <%= title.includes('Dashboard') ? 'active' : '' %>"
+              href="/admin"
+            >
+              <i class="fas fa-home"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link <%= title.includes('User') ? 'active' : '' %>"
+              href="/admin/users"
+            >
+              <i class="fas fa-users"></i> Users
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link <%= title.includes('Analytics') ? 'active' : '' %>"
+              href="/admin/analytics"
+            >
+              <i class="fas fa-chart-bar"></i> Analytics
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/subscriptions">
+              <i class="fas fa-credit-card"></i> Subscriptions
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/audits">
+              <i class="fas fa-search"></i> Audits
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link <%= title.includes('Settings') ? 'active' : '' %>"
+              href="/admin/settings"
+            >
+              <i class="fas fa-cogs"></i> Settings
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link <%= title.includes('Activity') ? 'active' : '' %>"
+              href="/admin/activity"
+            >
+              <i class="fas fa-history"></i> Activity Log
+            </a>
+          </li>
+          <li class="nav-item mt-3">
+            <a class="nav-link" href="/dashboard">
+              <i class="fas fa-external-link-alt"></i> User Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/auth/logout">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="admin-content"><%- body %></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // Global admin utilities
+      function updateUserTier(userId, newTier) {
+        fetch(`/admin/users/${userId}/tier`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tier: newTier }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert("Error updating user tier");
+            }
+          });
+      }
+
+      function updateSystemSetting(key, value) {
+        fetch(`/admin/settings/${key}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              showNotification("Setting updated successfully", "success");
+            } else {
+              showNotification("Error updating setting", "error");
+            }
+          });
+      }
+
+      function showNotification(message, type) {
+        // Simple notification system
+        const alert = document.createElement("div");
+        alert.className = `alert alert-${
+          type === "success" ? "success" : "danger"
+        } position-fixed`;
+        alert.style.cssText = "top: 20px; right: 20px; z-index: 9999;";
+        alert.textContent = message;
+        document.body.appendChild(alert);
+
+        setTimeout(() => alert.remove(), 3000);
+      }
+    </script>
+  </body>
+</html>
+```
+
+#### **Create `views/admin/dashboard.ejs`:**
+
+```html
+<!-- File: audit-website/views/admin/dashboard.ejs -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Admin Dashboard</h1>
+  <div class="d-flex gap-2">
+    <span class="badge bg-success">System Online</span>
+    <span class="badge bg-info">
+      <i class="fas fa-clock"></i>
+      <%= new Date().toLocaleString() %>
+    </span>
+  </div>
+</div>
+
+<!-- Key Metrics Row -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="card stats-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="flex-grow-1">
+            <h5>Total Users</h5>
+            <h2>
+              <%= stats.usersByTier.reduce((sum, tier) => sum + tier.count, 0)
+              %>
+            </h2>
+          </div>
+          <i class="fas fa-users fa-2x opacity-50"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card stats-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="flex-grow-1">
+            <h5>Monthly Revenue</h5>
+            <h2>$<%= (stats.revenue.total_revenue || 0).toLocaleString() %></h2>
+          </div>
+          <i class="fas fa-dollar-sign fa-2x opacity-50"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card stats-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="flex-grow-1">
+            <h5>Audits Today</h5>
+            <h2><%= stats.systemHealth.total_audits %></h2>
+          </div>
+          <i class="fas fa-search fa-2x opacity-50"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card stats-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="flex-grow-1">
+            <h5>Success Rate</h5>
+            <h2>
+              <%= stats.systemHealth.total_audits > 0 ?
+              Math.round((stats.systemHealth.completed_audits /
+              stats.systemHealth.total_audits) * 100) : 0 %>%
+            </h2>
+          </div>
+          <i class="fas fa-check-circle fa-2x opacity-50"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Users by Tier</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="tierChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Daily Usage (Last 30 Days)</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="usageChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tier Distribution Chart
+  const tierCtx = document.getElementById('tierChart').getContext('2d');
+  new Chart(tierCtx, {
+      type: 'doughnut',
+      data: {
+          labels: [<%= stats.usersByTier.map(t => `'${t.tier}'`).join(',') %>],
+          datasets: [{
+              data: [<%= stats.usersByTier.map(t => t.count).join(',') %>],
+              backgroundColor: ['#3498db', '#2ecc71', '#f39c12', '#e74c3c']
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: { position: 'bottom' }
+          }
+      }
+  });
+
+  // Usage Chart
+  const usageCtx = document.getElementById('usageChart').getContext('2d');
+  new Chart(usageCtx, {
+      type: 'line',
+      data: {
+          labels: [<%= stats.dailyUsage.map(d => `'${d.date}'`).join(',') %>],
+          datasets: [{
+              label: 'Audits',
+              data: [<%= stats.dailyUsage.map(d => d.audits_count).join(',') %>],
+              borderColor: '#3498db',
+              tension: 0.1
+          }, {
+              label: 'Unique Users',
+              data: [<%= stats.dailyUsage.map(d => d.unique_users).join(',') %>],
+              borderColor: '#2ecc71',
+              tension: 0.1
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: { beginAtZero: true }
+          }
+      }
+  });
+</script>
+```
+
+### **7.6 Integration with Main App**
+
+#### **Update `app.js` to include admin routes:**
+
+```javascript
+// Add to audit-website/app.js after other route imports
+import adminRoutes from "./routes/admin.js";
+
+// Add admin routes (after authentication middleware)
+app.use("/admin", adminRoutes);
+```
+
+---
+
 _This implementation plan transforms your audit tool from a simple service into a scalable SaaS platform with clear monetization strategy and growth potential. Each phase builds upon the previous one, ensuring a smooth transition while maintaining service quality._

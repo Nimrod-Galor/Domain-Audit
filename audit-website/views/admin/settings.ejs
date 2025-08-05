@@ -1,0 +1,407 @@
+<!-- Admin Settings View -->
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>System Settings</strong> - Configure global application settings. Changes take effect immediately.
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- General Settings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">General Settings</h5>
+            </div>
+            <div class="card-body">
+                <% if (settings && settings.maintenance_mode) { %>
+                    <div class="mb-3">
+                        <label class="form-label">Maintenance Mode</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="maintenance_mode" 
+                                   <%= settings.maintenance_mode.value ? 'checked' : '' %>
+                                   onchange="updateSystemSetting('maintenance_mode', this.checked)">
+                            <label class="form-check-label" for="maintenance_mode">
+                                Enable maintenance mode
+                            </label>
+                        </div>
+                        <small class="text-muted">When enabled, non-admin users will see a maintenance page</small>
+                    </div>
+                <% } %>
+
+                <% if (settings && settings.new_user_registration) { %>
+                    <div class="mb-3">
+                        <label class="form-label">User Registration</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="new_user_registration" 
+                                   <%= settings.new_user_registration.value ? 'checked' : '' %>
+                                   onchange="updateSystemSetting('new_user_registration', this.checked)">
+                            <label class="form-check-label" for="new_user_registration">
+                                Allow new user registrations
+                            </label>
+                        </div>
+                        <small class="text-muted">Disable to prevent new users from signing up</small>
+                    </div>
+                <% } %>
+
+                <% if (settings && settings.email_notifications_enabled) { %>
+                    <div class="mb-3">
+                        <label class="form-label">Email Notifications</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="email_notifications_enabled" 
+                                   <%= settings.email_notifications_enabled.value ? 'checked' : '' %>
+                                   onchange="updateSystemSetting('email_notifications_enabled', this.checked)">
+                            <label class="form-check-label" for="email_notifications_enabled">
+                                Enable system email notifications
+                            </label>
+                        </div>
+                        <small class="text-muted">Controls whether the system sends email notifications</small>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Settings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">Performance Settings</h5>
+            </div>
+            <div class="card-body">
+                <% if (settings && settings.max_concurrent_audits) { %>
+                    <div class="mb-3">
+                        <label for="max_concurrent_audits" class="form-label">Max Concurrent Audits</label>
+                        <input type="number" class="form-control" 
+                               id="max_concurrent_audits" 
+                               value="<%= settings.max_concurrent_audits.value %>"
+                               min="1" max="100"
+                               onchange="updateSystemSetting('max_concurrent_audits', this.value)">
+                        <small class="text-muted">Maximum number of audits that can run simultaneously</small>
+                    </div>
+                <% } %>
+
+                <% if (settings && settings.default_audit_timeout) { %>
+                    <div class="mb-3">
+                        <label for="default_audit_timeout" class="form-label">Default Audit Timeout (seconds)</label>
+                        <input type="number" class="form-control" 
+                               id="default_audit_timeout" 
+                               value="<%= settings.default_audit_timeout.value %>"
+                               min="60" max="3600"
+                               onchange="updateSystemSetting('default_audit_timeout', this.value)">
+                        <small class="text-muted">How long to wait before timing out an audit</small>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tier Limits -->
+    <div class="col-lg-6 mb-4">
+        <div class="card admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">Tier Limits</h5>
+            </div>
+            <div class="card-body">
+                <% if (settings && settings.freemium_daily_limit) { %>
+                    <div class="mb-3">
+                        <label for="freemium_daily_limit" class="form-label">Freemium Daily Limit</label>
+                        <input type="number" class="form-control" 
+                               id="freemium_daily_limit" 
+                               value="<%= settings.freemium_daily_limit.value %>"
+                               min="0" max="10"
+                               onchange="updateSystemSetting('freemium_daily_limit', this.value)">
+                        <small class="text-muted">Daily audit limit for freemium users</small>
+                    </div>
+                <% } %>
+
+                <% if (settings && settings.api_rate_limit_professional) { %>
+                    <div class="mb-3">
+                        <label for="api_rate_limit_professional" class="form-label">Professional API Limit</label>
+                        <input type="number" class="form-control" 
+                               id="api_rate_limit_professional" 
+                               value="<%= settings.api_rate_limit_professional.value %>"
+                               min="100" max="10000"
+                               onchange="updateSystemSetting('api_rate_limit_professional', this.value)">
+                        <small class="text-muted">Monthly API calls for professional tier</small>
+                    </div>
+                <% } %>
+
+                <% if (settings && settings.api_rate_limit_enterprise) { %>
+                    <div class="mb-3">
+                        <label for="api_rate_limit_enterprise" class="form-label">Enterprise API Limit</label>
+                        <input type="number" class="form-control" 
+                               id="api_rate_limit_enterprise" 
+                               value="<%= settings.api_rate_limit_enterprise.value %>"
+                               min="1000" max="100000"
+                               onchange="updateSystemSetting('api_rate_limit_enterprise', this.value)">
+                        <small class="text-muted">Monthly API calls for enterprise tier</small>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Settings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card admin-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Advanced Settings</h5>
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addSettingModal">
+                    <i class="fas fa-plus"></i> Add Setting
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> Advanced settings should only be modified by experienced administrators.
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Value</th>
+                                <th>Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (settings) { %>
+                                <% Object.entries(settings).forEach(([key, setting]) => { %>
+                                    <% if (!setting.isPublic) { %>
+                                        <tr>
+                                            <td>
+                                                <small class="text-muted"><%= key %></small>
+                                                <% if (setting.description) { %>
+                                                    <br><small class="text-muted"><%= setting.description %></small>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (setting.type === 'boolean') { %>
+                                                    <span class="badge bg-<%= setting.value ? 'success' : 'secondary' %>">
+                                                        <%= setting.value ? 'true' : 'false' %>
+                                                    </span>
+                                                <% } else { %>
+                                                    <code><%= setting.value %></code>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info"><%= setting.type %></span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="editSetting('<%= key %>', '<%= setting.value %>', '<%= setting.type %>')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                <% }); %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status -->
+<div class="row">
+    <div class="col-12">
+        <div class="card admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Database</h6>
+                                <small class="text-success">Connected</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Server</h6>
+                                <small class="text-success">Running</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Email Service</h6>
+                                <small class="text-warning">Checking...</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Queue</h6>
+                                <small class="text-info">Active</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-outline-primary" onclick="checkSystemHealth()">
+                        <i class="fas fa-sync-alt"></i> Refresh Status
+                    </button>
+                    <button class="btn btn-outline-info" onclick="downloadSystemInfo()">
+                        <i class="fas fa-download"></i> Download System Info
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Setting Modal -->
+<div class="modal fade" id="addSettingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add System Setting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSettingForm">
+                    <div class="mb-3">
+                        <label for="settingKey" class="form-label">Setting Key</label>
+                        <input type="text" class="form-control" id="settingKey" required>
+                        <small class="text-muted">Use lowercase with underscores (e.g., max_file_size)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="settingValue" class="form-label">Value</label>
+                        <input type="text" class="form-control" id="settingValue" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="settingType" class="form-label">Type</label>
+                        <select class="form-select" id="settingType" required>
+                            <option value="string">String</option>
+                            <option value="number">Number</option>
+                            <option value="boolean">Boolean</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="settingDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="settingDescription" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="settingPublic">
+                            <label class="form-check-label" for="settingPublic">
+                                Public setting (visible to users)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addNewSetting()">Add Setting</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editSetting(key, currentValue, type) {
+    const newValue = prompt(`Edit ${key} (${type}):`, currentValue);
+    if (newValue !== null && newValue !== currentValue) {
+        updateSystemSetting(key, newValue);
+    }
+}
+
+function addNewSetting() {
+    const form = document.getElementById('addSettingForm');
+    const formData = new FormData(form);
+    
+    const setting = {
+        key: formData.get('settingKey'),
+        value: formData.get('settingValue'),
+        type: formData.get('settingType'),
+        description: formData.get('settingDescription'),
+        isPublic: formData.get('settingPublic') === 'on'
+    };
+    
+    AdminUI.makeRequest('/admin/settings/add', {
+        method: 'POST',
+        body: JSON.stringify(setting)
+    })
+    .then(data => {
+        if (data.success) {
+            AdminUI.showNotification('Setting added successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addSettingModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        }
+    })
+    .catch(error => {
+        AdminUI.showNotification(error.message, 'error');
+    });
+}
+
+function checkSystemHealth() {
+    AdminUI.makeRequest('/admin/health')
+        .then(data => {
+            AdminUI.showNotification('System health check completed', 'success');
+            // Update status indicators based on response
+        })
+        .catch(error => {
+            AdminUI.showNotification('Health check failed: ' + error.message, 'error');
+        });
+}
+
+function downloadSystemInfo() {
+    window.open('/admin/system-info', '_blank');
+}
+
+// Auto-save settings on change with debouncing
+let settingChangeTimeout;
+function debouncedSettingUpdate(key, value) {
+    clearTimeout(settingChangeTimeout);
+    settingChangeTimeout = setTimeout(() => {
+        updateSystemSetting(key, value);
+    }, 1000);
+}
+
+// Add debounced listeners to number inputs
+document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('input', function() {
+        debouncedSettingUpdate(this.id, this.value);
+    });
+});
+</script>

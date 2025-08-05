@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SiteScope Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            width: 240px;
+            background: #2c3e50;
+            transition: all 0.3s;
+            overflow-y: auto;
+        }
+        
+        .admin-sidebar .nav-link {
+            color: #bdc3c7;
+            border-radius: 0;
+            margin: 2px 0;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background: #34495e;
+            transform: translateX(5px);
+        }
+        
+        .admin-sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .admin-content {
+            margin-left: 240px;
+            padding: 20px;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            transition: transform 0.3s;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        .admin-header {
+            background: #fff;
+            padding: 15px 25px;
+            margin: -20px -20px 20px -20px;
+            border-bottom: 1px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .admin-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .admin-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .status-badge {
+            font-size: 0.8em;
+            padding: 4px 8px;
+        }
+        
+        .activity-item {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+        
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid #34495e;
+            text-align: center;
+        }
+        
+        .sidebar-brand h4 {
+            color: #ecf0f1;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .admin-content {
+                margin-left: 0;
+            }
+        }
+        
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        
+        .table-actions {
+            white-space: nowrap;
+        }
+        
+        .table-actions .btn {
+            margin: 2px;
+            padding: 4px 8px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Admin Sidebar -->
+    <nav class="admin-sidebar">
+        <div class="sidebar-brand">
+            <h4><i class="fas fa-tachometer-alt"></i> SiteScope Admin</h4>
+        </div>
+        
+        <div class="p-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link <%= title.includes('Dashboard') ? 'active' : '' %>" href="/admin">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= title.includes('User') ? 'active' : '' %>" href="/admin/users">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= title.includes('Analytics') ? 'active' : '' %>" href="/admin/analytics">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= title.includes('Audit Management') ? 'active' : '' %>" href="/admin/audits">
+                        <i class="fas fa-search"></i> Audits
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/subscriptions">
+                        <i class="fas fa-credit-card"></i> Subscriptions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= title.includes('Settings') ? 'active' : '' %>" href="/admin/settings">
+                        <i class="fas fa-cogs"></i> Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= title.includes('Activity') ? 'active' : '' %>" href="/admin/activity">
+                        <i class="fas fa-history"></i> Activity Log
+                    </a>
+                </li>
+                
+                <li class="nav-item mt-4">
+                    <hr style="border-color: #34495e;">
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">
+                        <i class="fas fa-external-link-alt"></i> User Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/health" target="_blank">
+                        <i class="fas fa-heartbeat"></i> System Health
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/auth/logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0"><%= title %></h1>
+                    <% if (user) { %>
+                        <small class="text-muted">Welcome back, <%= user.full_name || user.email %></small>
+                    <% } %>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-success">
+                        <i class="fas fa-circle pulse"></i> System Online
+                    </span>
+                    <span class="badge bg-info">
+                        <i class="fas fa-clock"></i> 
+                        <%= new Date().toLocaleString() %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <%- body %>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Global admin utilities
+        class AdminUI {
+            static showLoading() {
+                document.querySelector('.loading-spinner').style.display = 'block';
+            }
+
+            static hideLoading() {
+                document.querySelector('.loading-spinner').style.display = 'none';
+            }
+
+            static showNotification(message, type = 'success') {
+                const container = document.getElementById('notificationContainer');
+                const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+                
+                const notification = document.createElement('div');
+                notification.className = `alert ${alertClass} alert-dismissible fade show notification`;
+                notification.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                container.appendChild(notification);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 5000);
+            }
+
+            static async makeRequest(url, options = {}) {
+                this.showLoading();
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        },
+                        ...options
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Request failed');
+                    }
+                    
+                    return data;
+                } finally {
+                    this.hideLoading();
+                }
+            }
+        }
+
+        // Global functions for backward compatibility
+        function updateUserTier(userId, newTier) {
+            AdminUI.makeRequest(`/admin/users/${userId}/tier`, {
+                method: 'POST',
+                body: JSON.stringify({ tier: newTier })
+            })
+            .then(data => {
+                if (data.success) {
+                    AdminUI.showNotification('User tier updated successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    AdminUI.showNotification(data.error || 'Error updating user tier', 'error');
+                }
+            })
+            .catch(error => {
+                AdminUI.showNotification(error.message, 'error');
+            });
+        }
+
+        function updateSystemSetting(key, value) {
+            AdminUI.makeRequest(`/admin/settings/${key}`, {
+                method: 'POST',
+                body: JSON.stringify({ value })
+            })
+            .then(data => {
+                if (data.success) {
+                    AdminUI.showNotification('Setting updated successfully', 'success');
+                } else {
+                    AdminUI.showNotification(data.error || 'Error updating setting', 'error');
+                }
+            })
+            .catch(error => {
+                AdminUI.showNotification(error.message, 'error');
+            });
+        }
+
+        function suspendUser(userId, suspend = true) {
+            AdminUI.makeRequest(`/admin/users/${userId}/suspend`, {
+                method: 'POST',
+                body: JSON.stringify({ suspend })
+            })
+            .then(data => {
+                if (data.success) {
+                    AdminUI.showNotification(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    AdminUI.showNotification(data.error || 'Error updating user status', 'error');
+                }
+            })
+            .catch(error => {
+                AdminUI.showNotification(error.message, 'error');
+            });
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            .pulse {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!-- Admin Analytics View -->
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Analytics & Reports</h2>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" id="refreshData">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-outline-info" onclick="exportAnalytics()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Time Range Filter -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Time Range</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" 
+                               value="<%= new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0] %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" 
+                               value="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary" onclick="updateAnalytics()">
+                        Update Charts
+                    </button>
+                    <div class="btn-group ms-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="setTimeRange(7)">7 Days</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="setTimeRange(30)">30 Days</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="setTimeRange(90)">90 Days</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Quick Stats</h6>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 text-primary mb-0" id="totalAuditsToday">-</div>
+                        <small class="text-muted">Today</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 text-success mb-0" id="totalAuditsWeek">-</div>
+                        <small class="text-muted">This Week</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 text-info mb-0" id="totalAuditsMonth">-</div>
+                        <small class="text-muted">This Month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Audit Volume Over Time</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="auditVolumeChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">User Tier Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tierDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Revenue Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">User Growth</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userGrowthChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Performance Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-primary mb-1" id="avgAuditTime">-</div>
+                            <div class="text-muted">Avg Audit Time</div>
+                            <small class="text-success" id="auditTimeChange">-</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-success mb-1" id="successRate">-</div>
+                            <div class="text-muted">Success Rate</div>
+                            <small class="text-success" id="successRateChange">-</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-info mb-1" id="userSatisfaction">-</div>
+                            <div class="text-muted">User Satisfaction</div>
+                            <small class="text-info" id="satisfactionChange">-</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-warning mb-1" id="systemLoad">-</div>
+                            <div class="text-muted">System Load</div>
+                            <small class="text-warning" id="loadChange">-</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Domains and Error Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Top Audited Domains</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportTopDomains()">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Domain</th>
+                                <th>Audits</th>
+                                <th>Last Audit</th>
+                                <th>Avg Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topDomainsTable">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Error Analysis</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="errorAnalysisChart"></canvas>
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="text-danger h5" id="timeoutErrors">-</div>
+                            <small class="text-muted">Timeouts</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-warning h5" id="networkErrors">-</div>
+                            <small class="text-muted">Network</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-info h5" id="otherErrors">-</div>
+                            <small class="text-muted">Other</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent System Activity</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active" data-filter="all">All</button>
+                    <button class="btn btn-outline-secondary" data-filter="audits">Audits</button>
+                    <button class="btn btn-outline-secondary" data-filter="users">Users</button>
+                    <button class="btn btn-outline-secondary" data-filter="system">System</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>User</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityTable">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Loading recent activity...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-outline-primary" onclick="loadMoreActivity()">
+                        Load More Activity
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Chart configurations and data
+let charts = {};
+let activityOffset = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadAnalyticsData();
+    loadRecentActivity();
+    
+    // Auto-refresh every 5 minutes
+    setInterval(loadAnalyticsData, 5 * 60 * 1000);
+});
+
+function initializeCharts() {
+    // Audit Volume Chart
+    const auditVolumeCtx = document.getElementById('auditVolumeChart').getContext('2d');
+    charts.auditVolume = new Chart(auditVolumeCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Total Audits',
+                data: [],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Successful',
+                data: [],
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Failed',
+                data: [],
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Tier Distribution Chart
+    const tierCtx = document.getElementById('tierDistributionChart').getContext('2d');
+    charts.tierDistribution = new Chart(tierCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Freemium', 'Professional', 'Enterprise'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#6c757d', '#0d6efd', '#198754']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    charts.revenue = new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Revenue ($)',
+                data: [],
+                backgroundColor: '#198754'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    charts.userGrowth = new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'New Users',
+                data: [],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Error Analysis Chart
+    const errorCtx = document.getElementById('errorAnalysisChart').getContext('2d');
+    charts.errorAnalysis = new Chart(errorCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Timeout Errors', 'Network Errors', 'Parse Errors', 'Other Errors'],
+            datasets: [{
+                data: [0, 0, 0, 0],
+                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadAnalyticsData() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    AdminUI.makeRequest(`/admin/analytics/data?start=${startDate}&end=${endDate}`)
+        .then(data => {
+            updateCharts(data);
+            updateMetrics(data);
+            updateTopDomains(data.topDomains);
+        })
+        .catch(error => {
+            AdminUI.showNotification('Failed to load analytics data: ' + error.message, 'error');
+        });
+}
+
+function updateCharts(data) {
+    // Update audit volume chart
+    charts.auditVolume.data.labels = data.auditVolume.labels;
+    charts.auditVolume.data.datasets[0].data = data.auditVolume.total;
+    charts.auditVolume.data.datasets[1].data = data.auditVolume.successful;
+    charts.auditVolume.data.datasets[2].data = data.auditVolume.failed;
+    charts.auditVolume.update();
+
+    // Update tier distribution
+    charts.tierDistribution.data.datasets[0].data = [
+        data.tierDistribution.freemium,
+        data.tierDistribution.professional,
+        data.tierDistribution.enterprise
+    ];
+    charts.tierDistribution.update();
+
+    // Update revenue chart
+    charts.revenue.data.labels = data.revenue.labels;
+    charts.revenue.data.datasets[0].data = data.revenue.amounts;
+    charts.revenue.update();
+
+    // Update user growth chart
+    charts.userGrowth.data.labels = data.userGrowth.labels;
+    charts.userGrowth.data.datasets[0].data = data.userGrowth.counts;
+    charts.userGrowth.update();
+
+    // Update error analysis
+    charts.errorAnalysis.data.datasets[0].data = [
+        data.errors.timeout,
+        data.errors.network,
+        data.errors.parse,
+        data.errors.other
+    ];
+    charts.errorAnalysis.update();
+}
+
+function updateMetrics(data) {
+    document.getElementById('totalAuditsToday').textContent = data.metrics.auditsToday || 0;
+    document.getElementById('totalAuditsWeek').textContent = data.metrics.auditsWeek || 0;
+    document.getElementById('totalAuditsMonth').textContent = data.metrics.auditsMonth || 0;
+    
+    document.getElementById('avgAuditTime').textContent = data.metrics.avgAuditTime || '-';
+    document.getElementById('successRate').textContent = (data.metrics.successRate || 0) + '%';
+    document.getElementById('userSatisfaction').textContent = (data.metrics.userSatisfaction || 0) + '%';
+    document.getElementById('systemLoad').textContent = (data.metrics.systemLoad || 0) + '%';
+    
+    // Update error counts
+    document.getElementById('timeoutErrors').textContent = data.errors.timeout || 0;
+    document.getElementById('networkErrors').textContent = data.errors.network || 0;
+    document.getElementById('otherErrors').textContent = data.errors.other || 0;
+}
+
+function updateTopDomains(domains) {
+    const tbody = document.getElementById('topDomainsTable');
+    tbody.innerHTML = '';
+    
+    if (domains && domains.length > 0) {
+        domains.forEach(domain => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${domain.domain}</td>
+                <td><span class="badge bg-primary">${domain.audit_count}</span></td>
+                <td>${new Date(domain.last_audit).toLocaleDateString()}</td>
+                <td>${domain.avg_score ? domain.avg_score.toFixed(1) : '-'}</td>
+            `;
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No data available</td></tr>';
+    }
+}
+
+function loadRecentActivity() {
+    AdminUI.makeRequest(`/admin/analytics/activity?offset=${activityOffset}`)
+        .then(data => {
+            const tbody = document.getElementById('activityTable');
+            if (activityOffset === 0) {
+                tbody.innerHTML = '';
+            }
+            
+            data.activities.forEach(activity => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(activity.created_at).toLocaleString()}</td>
+                    <td><span class="badge bg-secondary">${activity.action_type}</span></td>
+                    <td>${activity.description}</td>
+                    <td>${activity.user_email || 'System'}</td>
+                    <td><span class="badge bg-${activity.status === 'success' ? 'success' : 'danger'}">${activity.status}</span></td>
+                `;
+            });
+        })
+        .catch(error => {
+            AdminUI.showNotification('Failed to load activity: ' + error.message, 'error');
+        });
+}
+
+function setTimeRange(days) {
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+    
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    
+    updateAnalytics();
+}
+
+function updateAnalytics() {
+    loadAnalyticsData();
+}
+
+function loadMoreActivity() {
+    activityOffset += 50;
+    loadRecentActivity();
+}
+
+function exportAnalytics() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.open(`/admin/analytics/export?start=${startDate}&end=${endDate}`, '_blank');
+}
+
+function exportTopDomains() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.open(`/admin/analytics/export-domains?start=${startDate}&end=${endDate}`, '_blank');
+}
+
+// Activity filter buttons
+document.querySelectorAll('[data-filter]').forEach(button => {
+    button.addEventListener('click', function() {
+        // Update active button
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Filter activity table
+        const filter = this.dataset.filter;
+        const rows = document.querySelectorAll('#activityTable tr');
+        
+        rows.forEach(row => {
+            if (filter === 'all') {
+                row.style.display = '';
+            } else {
+                const typeCell = row.querySelector('td:nth-child(2)');
+                if (typeCell && typeCell.textContent.toLowerCase().includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+
+// Refresh button
+document.getElementById('refreshData').addEventListener('click', function() {
+    this.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Refreshing...';
+    this.disabled = true;
+    
+    loadAnalyticsData();
+    activityOffset = 0;
+    loadRecentActivity();
+    
+    setTimeout(() => {
+        this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        this.disabled = false;
+    }, 2000);
+});
+</script>

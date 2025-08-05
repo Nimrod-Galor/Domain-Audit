@@ -1,0 +1,366 @@
+<!-- Admin Dashboard Main View -->
+
+<!-- Key Metrics Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card admin-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-2">Total Users</h5>
+                        <h2 class="mb-0">
+                            <%= stats.usersByTier.reduce((sum, tier) => sum + parseInt(tier.count), 0) %>
+                        </h2>
+                        <small class="opacity-75">Registered users</small>
+                    </div>
+                    <div class="fs-1 opacity-50">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card admin-card" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-2">Monthly Revenue</h5>
+                        <h2 class="mb-0">$<%= (stats.revenue.total_revenue || 0).toLocaleString() %></h2>
+                        <small class="opacity-75">Active subscriptions</small>
+                    </div>
+                    <div class="fs-1 opacity-50">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card admin-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-2">Audits Today</h5>
+                        <h2 class="mb-0"><%= stats.systemHealth.total_audits %></h2>
+                        <small class="opacity-75">
+                            <%= stats.systemHealth.running_audits %> running
+                        </small>
+                    </div>
+                    <div class="fs-1 opacity-50">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card admin-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-2">Success Rate</h5>
+                        <h2 class="mb-0">
+                            <%= stats.systemHealth.total_audits > 0 ? 
+                                Math.round((stats.systemHealth.completed_audits / stats.systemHealth.total_audits) * 100) : 
+                                0 %>%
+                        </h2>
+                        <small class="opacity-75">Last 24 hours</small>
+                    </div>
+                    <div class="fs-1 opacity-50">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Metrics Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 col-md-6 mb-3">
+        <div class="card admin-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Admin Activity (24h)</h6>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-history fa-2x text-info"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0"><%= stats.recentActivity.total_activities %></h4>
+                        <small class="text-muted">
+                            <%= stats.recentActivity.active_admins %> active admin(s)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 col-md-6 mb-3">
+        <div class="card admin-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Avg Audit Duration</h6>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-clock fa-2x text-warning"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">
+                            <%= Math.round(stats.systemHealth.avg_duration / 60) || 0 %>m
+                        </h4>
+                        <small class="text-muted">Average completion time</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card admin-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Users by Tier</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/users">View All Users</a></li>
+                        <li><a class="dropdown-item" href="/admin/analytics">Detailed Analytics</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="tierChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card admin-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Daily Usage (Last 30 Days)</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/analytics">Full Analytics</a></li>
+                        <li><a class="dropdown-item" href="/admin/audits">Audit Management</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="usageChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions and System Status -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card admin-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <a href="/admin/users" class="btn btn-outline-primary">
+                                <i class="fas fa-users me-2"></i>Manage Users
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <a href="/admin/settings" class="btn btn-outline-secondary">
+                                <i class="fas fa-cogs me-2"></i>System Settings
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <a href="/admin/analytics" class="btn btn-outline-info">
+                                <i class="fas fa-chart-bar me-2"></i>View Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">System Status</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-success me-2"></i>
+                                Database: Connected
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-success me-2"></i>
+                                Email Service: Active
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-warning me-2"></i>
+                                Queue: <%= stats.systemHealth.running_audits %> jobs running
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Recent Activity</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2 text-sm">
+                                <i class="fas fa-user-plus text-success me-2"></i>
+                                New user registrations today
+                            </li>
+                            <li class="mb-2 text-sm">
+                                <i class="fas fa-search text-info me-2"></i>
+                                <%= stats.systemHealth.total_audits %> audits completed
+                            </li>
+                            <li class="mb-2 text-sm">
+                                <i class="fas fa-dollar-sign text-success me-2"></i>
+                                <%= stats.revenue.total_subscriptions %> active subscriptions
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">Tier Distribution</h5>
+            </div>
+            <div class="card-body">
+                <% stats.usersByTier.forEach(tier => { %>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <strong class="text-capitalize"><%= tier.tier %></strong>
+                            <br>
+                            <small class="text-muted"><%= tier.count %> users</small>
+                        </div>
+                        <div class="text-end">
+                            <% 
+                                const total = stats.usersByTier.reduce((sum, t) => sum + parseInt(t.count), 0);
+                                const percentage = total > 0 ? Math.round((parseInt(tier.count) / total) * 100) : 0;
+                            %>
+                            <div class="progress" style="width: 100px; height: 8px;">
+                                <div class="progress-bar" style="width: <%= percentage %>%"></div>
+                            </div>
+                            <small class="text-muted"><%= percentage %>%</small>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tier Distribution Chart
+const tierCtx = document.getElementById('tierChart').getContext('2d');
+const tierLabels = [<%= stats.usersByTier.map(t => `"${t.tier}"`).join(',') %>];
+const tierData = [<%= stats.usersByTier.map(t => t.count).join(',') %>];
+const tierColors = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6'];
+
+new Chart(tierCtx, {
+    type: 'doughnut',
+    data: {
+        labels: tierLabels,
+        datasets: [{
+            data: tierData,
+            backgroundColor: tierColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = tierData.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? Math.round((context.parsed / total) * 100) : 0;
+                        return `${context.label}: ${context.parsed} users (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Usage Chart
+const usageCtx = document.getElementById('usageChart').getContext('2d');
+const usageLabels = [<%= stats.dailyUsage.map(d => `"${new Date(d.date).toLocaleDateString()}"`).join(',') %>];
+const auditData = [<%= stats.dailyUsage.map(d => d.audits_count).join(',') %>];
+const userDataDaily = [<%= stats.dailyUsage.map(d => d.unique_users).join(',') %>];
+
+new Chart(usageCtx, {
+    type: 'line',
+    data: {
+        labels: usageLabels,
+        datasets: [{
+            label: 'Audits',
+            data: auditData,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Unique Users',
+            data: userDataDaily,
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { 
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                }
+            },
+            x: {
+                grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        }
+    }
+});
+
+// Auto-refresh dashboard every 5 minutes
+setInterval(() => {
+    location.reload();
+}, 300000);
+</script>
