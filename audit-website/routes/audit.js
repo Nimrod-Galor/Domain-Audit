@@ -11,7 +11,9 @@ import {
   getHistoricalFullReport,
   getUserAudits,
   validateAuditRequest,
-  validateDomainParam
+  validateDomainParam,
+  downloadPDFReport,
+  downloadHistoricalPDFReport
 } from '../controllers/auditController.js';
 import { requireEmailVerification } from '../controllers/authController.js';
 
@@ -27,6 +29,9 @@ router.get('/results/:sessionId', getAuditResults);
 router.get('/simple/:domain', validateDomainParam, getSimpleReport);
 router.get('/full/:domain', validateDomainParam, getFullReport);
 
+// PDF download routes
+router.get('/pdf/:domain', validateDomainParam, downloadPDFReport);
+
 // Protected user audit routes
 router.get('/my-audits', requireEmailVerification, getUserAudits);
 
@@ -34,5 +39,6 @@ router.get('/my-audits', requireEmailVerification, getUserAudits);
 router.get('/history/:domain', requireEmailVerification, validateDomainParam, getAuditHistory);
 router.get('/history/:domain/:auditId/simple', requireEmailVerification, validateDomainParam, getHistoricalSimpleReport);
 router.get('/history/:domain/:auditId/full', requireEmailVerification, validateDomainParam, getHistoricalFullReport);
+router.get('/history/:domain/:auditId/pdf', requireEmailVerification, validateDomainParam, downloadHistoricalPDFReport);
 
 export default router;

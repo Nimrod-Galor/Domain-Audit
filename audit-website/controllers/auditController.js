@@ -8,6 +8,7 @@ import { auditLogger, webLogger, errorHandler } from '../lib/logger.js';
 import logger from '../lib/logger.js';
 import { Audit } from '../models/index.js';
 import { createNotification } from './notificationController.js';
+import pdfService from '../services/pdfService.js';
 
 // Create audit executor instance
 const auditExecutor = new AuditExecutor();
@@ -952,6 +953,150 @@ export const validateDomainParam = (req, res, next) => {
       title: 'Invalid Domain',
       user: req.session.user || null,
       error: 'Invalid domain format provided'
+    });
+  }
+};
+
+/**
+ * Download PDF report for a domain
+ */
+export const downloadPDFReport = async (req, res) => {
+  try {
+    const domain = decodeURIComponent(req.params.domain);
+    
+    // Validate domain
+    const validatedData = domainParamSchema.parse({ domain });
+    const url = validatedData.domain;
+    
+    // First, try to get existing audit from database
+    let reportData = null;
+    let auditId = null;
+    
+    try {
+      const existingAudit = await Audit.findMostRecentByDomain(url);
+      if (existingAudit && existingAudit.status === 'completed' && existingAudit.report_data) {
+        console.log(`📋 Generating PDF for existing audit: ${url} (ID: ${existingAudit.id})`);
+        reportData = existingAudit.report_data;
+        auditId = existingAudit.id;
+      }
+    } catch (dbError) {
+      console.error('❌ Error checking database for existing audit:', dbError.message);
+    }
+    
+    // If no recent audit found, run a fresh audit
+    if (!reportData) {
+      console.log(`🔄 Running fresh audit for PDF generation: ${url}`);
+      const userLimits = {
+        isRegistered: !!(req.session && req.session.user),
+        maxExternalLinks: (req.session && req.session.user) ? -1 : 20
+      };
+      
+      const result = await auditExecutor.executeAudit(url, 100, false, null, userLimits);
+      reportData = auditExecutor.generateFullReport(result.stateData);
+    }
+    
+    // Generate PDF
+    const pdfBuffer = await pdfService.generatePDFFromData(reportData, {
+      includeDetailed: true,
+      brandColor: '#007bff'
+    });
+    
+    // Clean domain name for filename
+    const cleanDomain = url.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filename = `domain-audit-${cleanDomain}-${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    // Send PDF buffer
+    res.send(pdfBuffer);
+    
+    console.log(`✅ PDF downloaded successfully for ${url}`);
+    
+  } catch (error) {
+    console.error('❌ PDF download failed:', error);
+    
+    // Return error page
+    res.status(500).render('audit/error', {
+      title: 'PDF Generation Failed',
+      user: req.session.user || null,
+      error: 'Failed to generate PDF report. Please try again later.'
+    });
+  }
+};
+
+/**
+ * Download PDF report for historical audit
+ */
+export const downloadHistoricalPDFReport = async (req, res) => {
+  try {
+    const domain = decodeURIComponent(req.params.domain);
+    const auditId = parseInt(req.params.auditId);
+    
+    // Validate parameters
+    const validatedData = domainParamSchema.parse({ domain });
+    const url = validatedData.domain;
+    
+    if (!auditId || isNaN(auditId)) {
+      return res.status(400).render('audit/error', {
+        title: 'Invalid Audit ID',
+        user: req.session.user || null,
+        error: 'Invalid audit ID provided'
+      });
+    }
+    
+    // Find the specific historical audit
+    const audit = await Audit.findByIdAndDomain(auditId, url);
+    
+    if (!audit) {
+      return res.status(404).render('audit/error', {
+        title: 'Audit Not Found',
+        user: req.session.user || null,
+        error: 'The requested audit could not be found'
+      });
+    }
+    
+    if (audit.status !== 'completed' || !audit.report_data) {
+      return res.status(400).render('audit/error', {
+        title: 'Incomplete Audit',
+        user: req.session.user || null,
+        error: 'This audit is not complete or has no report data'
+      });
+    }
+    
+    console.log(`📋 Generating PDF for historical audit: ${url} (ID: ${auditId})`);
+    
+    // Generate PDF from historical data
+    const pdfBuffer = await pdfService.generatePDFFromData(audit.report_data, {
+      includeDetailed: true,
+      brandColor: '#007bff'
+    });
+    
+    // Clean domain name for filename
+    const cleanDomain = url.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const auditDate = new Date(audit.created_at).toISOString().split('T')[0];
+    const filename = `domain-audit-${cleanDomain}-${auditDate}-${auditId}.pdf`;
+    
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    // Send PDF buffer
+    res.send(pdfBuffer);
+    
+    console.log(`✅ Historical PDF downloaded successfully for ${url} (ID: ${auditId})`);
+    
+  } catch (error) {
+    console.error('❌ Historical PDF download failed:', error);
+    
+    // Return error page
+    res.status(500).render('audit/error', {
+      title: 'PDF Generation Failed',
+      user: req.session.user || null,
+      error: 'Failed to generate PDF report. Please try again later.'
     });
   }
 };

@@ -34,9 +34,18 @@
                         </div>
                     </div>
                     <div>
-                        <a href="/audit/simple/<%= encodeURIComponent(url) %>" class="btn btn-outline-primary">
+                        <a href="/audit/simple/<%= encodeURIComponent(url) %>" class="btn btn-outline-primary me-2">
                             <i class="fas fa-bolt me-2"></i>Simple View
                         </a>
+                        <% if (typeof isHistorical !== 'undefined' && isHistorical && typeof auditId !== 'undefined') { %>
+                            <a href="/audit/history/<%= encodeURIComponent(url) %>/<%= auditId %>/pdf" class="btn btn-success me-2" title="Download Historical PDF Report">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </a>
+                        <% } else { %>
+                            <a href="/audit/pdf/<%= encodeURIComponent(url) %>" class="btn btn-success me-2" title="Download PDF Report">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </a>
+                        <% } %>
                         <a href="/audit" class="btn btn-outline-secondary">
                             <i class="fas fa-plus me-2"></i>New Audit
                         </a>
@@ -435,6 +444,15 @@
                         <a href="/audit/simple/<%= encodeURIComponent(url) %>" class="btn btn-outline-primary me-3">
                             <i class="fas fa-bolt me-2"></i>Simple Report
                         </a>
+                        <% if (typeof isHistorical !== 'undefined' && isHistorical && typeof auditId !== 'undefined') { %>
+                            <a href="/audit/history/<%= encodeURIComponent(url) %>/<%= auditId %>/pdf" class="btn btn-success me-3" title="Download Historical PDF Report">
+                                <i class="fas fa-file-pdf me-2"></i>Download PDF
+                            </a>
+                        <% } else { %>
+                            <a href="/audit/pdf/<%= encodeURIComponent(url) %>" class="btn btn-success me-3" title="Download PDF Report">
+                                <i class="fas fa-file-pdf me-2"></i>Download PDF
+                            </a>
+                        <% } %>
                         <a href="/audit" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>Audit Another Site
                         </a>
