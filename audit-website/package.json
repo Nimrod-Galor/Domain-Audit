@@ -11,7 +11,16 @@
     "session": "node scripts/session-manager.js",
     "session:clear": "node scripts/session-manager.js clear-all",
     "session:list": "node scripts/session-manager.js list",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:tier-system": "vitest run tests/tier-system.test.js",
+    "test:integration": "vitest run tests/integration.test.js",
+    "test:performance": "vitest run tests/performance.test.js",
+    "migrate:tier-system": "node scripts/migrate-tier-system.js",
+    "migrate:users": "node scripts/migrate-existing-users.js",
+    "health-check": "curl http://localhost:3000/health/ping",
+    "phase6-summary": "node scripts/phase6-summary.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -34,7 +43,10 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "@vitest/coverage-v8": "^1.6.1",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.4",
+    "vitest": "^1.6.1"
   },
   "keywords": [
     "website",
