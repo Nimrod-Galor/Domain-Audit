@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Run jobQueue integration tests",
+			"command": "npx jest audit-website/test/jobQueue.integration.test.js",
+			"group": "test"
+		}
+	]
+}

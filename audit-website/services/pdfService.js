@@ -194,24 +194,34 @@ class PDFService {
      * @returns {string} HTML content
      */
     generatePDFHTML(auditData, options = {}) {
+        // Handle different audit data structures (flat vs nested)
+        const summary = auditData.summary || auditData.simple?.summary || auditData;
+        const detailed = auditData.detailed || auditData.simple?.detailed || {};
+        
         const {
-            domain = 'Unknown Domain',
-            grade = 'N/A',
-            score = 0,
-            totalPages = 0,
-            totalLinks = 0,
-            internalLinks = 0,
-            externalLinks = 0,
-            brokenLinks = 0,
-            emails = [],
-            phoneNumbers = [],
-            pages = [],
-            analysis = {},
-            timestamp = new Date().toISOString()
-        } = auditData;
+            domain = options.domain || 'Unknown Domain',
+            grade = summary.grade || 'N/A',
+            score = summary.score || 0,
+            totalPages = summary.totalPages || 0,
+            totalLinks = summary.totalInternalLinks || summary.totalLinks || 0,
+            internalLinks = summary.totalInternalLinks || summary.internalLinks || 0,
+            externalLinks = summary.totalExternalLinks || summary.externalLinks || 0,
+            brokenLinks = summary.brokenLinks || summary.brokenExternal || 0,
+            okLinks = summary.okLinks || 0,
+            timeoutLinks = summary.timeoutLinks || 0,
+            emails = detailed.mailtoLinks || auditData.emails || [],
+            phoneNumbers = detailed.telLinks || auditData.phoneNumbers || [],
+            pages = auditData.recentPages || auditData.pages || [],
+            analysis = auditData.analysis || {},
+            timestamp = auditData.timestamp || new Date().toISOString()
+        } = {};
 
         const includeDetailed = options.includeDetailed !== false;
         const brandColor = options.brandColor || '#007bff';
+
+        // Convert emails and phone numbers to arrays if they're objects
+        const emailArray = Array.isArray(emails) ? emails : Object.keys(emails || {});
+        const phoneArray = Array.isArray(phoneNumbers) ? phoneNumbers : Object.keys(phoneNumbers || {});
 
         return `
 <!DOCTYPE html>
@@ -405,7 +415,7 @@ class PDFService {
                 <div class="stat-label">Broken Links</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">${emails.length}</div>
+                <div class="stat-number">${emailArray.length}</div>
                 <div class="stat-label">Email Addresses</div>
             </div>
         </div>
@@ -431,25 +441,25 @@ class PDFService {
             </div>
         </div>
 
-        ${emails.length > 0 ? `
+        ${emailArray.length > 0 ? `
         <!-- Email Addresses -->
         <div class="section">
-            <h2>Email Addresses Found (${emails.length})</h2>
-            ${emails.slice(0, 20).map(email => `
+            <h2>Email Addresses Found (${emailArray.length})</h2>
+            ${emailArray.slice(0, 20).map(email => `
                 <div class="list-item">${email}</div>
             `).join('')}
-            ${emails.length > 20 ? `<div class="list-item"><em>... and ${emails.length - 20} more</em></div>` : ''}
+            ${emailArray.length > 20 ? `<div class="list-item"><em>... and ${emailArray.length - 20} more</em></div>` : ''}
         </div>
         ` : ''}
 
-        ${phoneNumbers.length > 0 ? `
+        ${phoneArray.length > 0 ? `
         <!-- Phone Numbers -->
         <div class="section">
-            <h2>Phone Numbers Found (${phoneNumbers.length})</h2>
-            ${phoneNumbers.slice(0, 10).map(phone => `
+            <h2>Phone Numbers Found (${phoneArray.length})</h2>
+            ${phoneArray.slice(0, 10).map(phone => `
                 <div class="list-item">${phone}</div>
             `).join('')}
-            ${phoneNumbers.length > 10 ? `<div class="list-item"><em>... and ${phoneNumbers.length - 10} more</em></div>` : ''}
+            ${phoneArray.length > 10 ? `<div class="list-item"><em>... and ${phoneArray.length - 10} more</em></div>` : ''}
         </div>
         ` : ''}
 
