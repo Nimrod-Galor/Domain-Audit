@@ -13,7 +13,7 @@ import {
   validateAuditRequest,
   validateDomainParam
 } from '../controllers/auditController.js';
-import { requireAuth } from '../controllers/authController.js';
+import { requireEmailVerification } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -28,11 +28,11 @@ router.get('/simple/:domain', validateDomainParam, getSimpleReport);
 router.get('/full/:domain', validateDomainParam, getFullReport);
 
 // Protected user audit routes
-router.get('/my-audits', requireAuth, getUserAudits);
+router.get('/my-audits', requireEmailVerification, getUserAudits);
 
 // Protected history routes
-router.get('/history/:domain', requireAuth, validateDomainParam, getAuditHistory);
-router.get('/history/:domain/:auditId/simple', requireAuth, validateDomainParam, getHistoricalSimpleReport);
-router.get('/history/:domain/:auditId/full', requireAuth, validateDomainParam, getHistoricalFullReport);
+router.get('/history/:domain', requireEmailVerification, validateDomainParam, getAuditHistory);
+router.get('/history/:domain/:auditId/simple', requireEmailVerification, validateDomainParam, getHistoricalSimpleReport);
+router.get('/history/:domain/:auditId/full', requireEmailVerification, validateDomainParam, getHistoricalFullReport);
 
 export default router;

@@ -7,7 +7,7 @@ import {
     markAllAsRead,
     deleteNotification 
 } from '../controllers/notificationController.js';
-import { requireAuth, requireAuthAPI } from '../controllers/authController.js';
+import { requireEmailVerificationAPI } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -18,15 +18,15 @@ router.get('/badge', getNotificationBadge);
 router.get('/banner', getBannerNotifications);
 
 // Get all notifications
-router.get('/', requireAuthAPI, getNotifications);
+router.get('/', requireEmailVerificationAPI, getNotifications);
 
 // Mark specific notification as read
-router.patch('/:id/read', requireAuthAPI, markAsRead);
+router.patch('/:id/read', requireEmailVerificationAPI, markAsRead);
 
 // Mark all notifications as read
-router.patch('/read-all', requireAuthAPI, markAllAsRead);
+router.patch('/read-all', requireEmailVerificationAPI, markAllAsRead);
 
 // Delete specific notification
-router.delete('/:id', requireAuthAPI, deleteNotification);
+router.delete('/:id', requireEmailVerificationAPI, deleteNotification);
 
 export default router;

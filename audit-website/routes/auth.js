@@ -9,6 +9,7 @@ import {
   getDashboard,
   requireAuth,
   requireGuest,
+  requireEmailVerification,
   verifyEmail,
   resendVerification,
   getVerificationPage
@@ -36,6 +37,11 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/auth/login' }),
   (req, res) => {
+    // Check if email is verified for Google users too
+    if (!req.user.email_verified) {
+      return res.redirect(`/auth/verification-pending?email=${encodeURIComponent(req.user.email)}`);
+    }
+    
     // Successful authentication, set session
     req.session.user = {
       id: req.user.id,
@@ -53,6 +59,6 @@ router.get('/google/callback',
 );
 
 // Protected routes
-router.get('/dashboard', requireAuth, getDashboard);
+router.get('/dashboard', requireEmailVerification, getDashboard);
 
 export default router;

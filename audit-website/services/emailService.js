@@ -1,9 +1,9 @@
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 class EmailService {
     constructor() {
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.gmail.com',
             port: process.env.SMTP_PORT || 587,
             secure: false, // true for 465, false for other ports
@@ -162,4 +162,4 @@ class EmailService {
     }
 }
 
-module.exports = new EmailService();
+export default new EmailService();

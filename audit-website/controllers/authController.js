@@ -60,6 +60,12 @@ export const processLogin = async (req, res) => {
       });
     }
     
+    // Check if email is verified
+    if (!user.email_verified) {
+      console.log('⚠️ Login attempt with unverified email:', email);
+      return res.redirect(`/auth/verification-pending?email=${encodeURIComponent(email)}`);
+    }
+    
     // Update last login timestamp
     await User.updateLastLogin(user.id);
     
@@ -76,33 +82,6 @@ export const processLogin = async (req, res) => {
     };
     
     console.log('✅ User logged in:', email);
-    
-    // Create verification notification for unverified users
-    if (!user.email_verified) {
-      try {
-        const { createNotification } = await import('./notificationController.js');
-        
-        // Check if verification notification already exists
-        const { Notification } = await import('../models/Notification.js');
-        const existingNotifications = await Notification.getUnreadByUserId(user.id);
-        const hasVerificationNotification = existingNotifications.some(
-          notification => notification.title.includes('Email Verification Required')
-        );
-        
-        if (!hasVerificationNotification) {
-          await createNotification(
-            user.id,
-            'alert',
-            'Email Verification Required',
-            `Please verify your email address (${email}) to unlock all features and ensure account security. Check your inbox for the verification link.`
-          );
-          console.log(`🔔 Email verification notification created for logged-in user: ${email}`);
-        }
-      } catch (notificationError) {
-        console.error('❌ Error creating verification notification:', notificationError.message);
-        // Don't fail login if notification fails
-      }
-    }
     
     return res.redirect('/auth/dashboard');
     
@@ -488,5 +467,44 @@ export const requireGuest = (req, res, next) => {
   if (req.session.user) {
     return res.redirect('/auth/dashboard');
   }
+  next();
+};
+
+/**
+ * Middleware to require email verification (redirects to verification page for web requests)
+ */
+export const requireEmailVerification = (req, res, next) => {
+  if (!req.session.user) {
+    return res.redirect('/auth/login');
+  }
+  
+  if (!req.session.user.emailVerified) {
+    return res.redirect(`/auth/verification-pending?email=${encodeURIComponent(req.session.user.email)}`);
+  }
+  
+  req.user = req.session.user;
+  next();
+};
+
+/**
+ * Middleware to require email verification for API routes (returns JSON error)
+ */
+export const requireEmailVerificationAPI = (req, res, next) => {
+  if (!req.session.user) {
+    return res.status(401).json({ 
+      error: 'Authentication required',
+      success: false 
+    });
+  }
+  
+  if (!req.session.user.emailVerified) {
+    return res.status(403).json({ 
+      error: 'Email verification required',
+      success: false,
+      message: 'Please verify your email address to access this feature'
+    });
+  }
+  
+  req.user = req.session.user;
   next();
 };
