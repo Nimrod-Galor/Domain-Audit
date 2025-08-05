@@ -15,17 +15,17 @@ export const Audit = {
    * @returns {Promise<Object>} Created audit object
    */
   async create(auditData) {
-    const { userId, domain, auditType = 'simple', config = {} } = auditData;
+    const { userId, url, type = 'simple', config = {} } = auditData;
     
     try {
       const result = await query(
         `INSERT INTO audits (user_id, url, type, status) 
          VALUES ($1, $2, $3, 'pending') 
          RETURNING *`,
-        [userId, domain, auditType]
+        [userId, url, type]
       );
       
-      console.log(`✅ Audit created: ${domain} (ID: ${result.rows[0].id})`);
+      console.log(`✅ Audit created: ${url} (ID: ${result.rows[0].id})`);
       return result.rows[0];
     } catch (error) {
       console.error('❌ Error creating audit:', error.message);

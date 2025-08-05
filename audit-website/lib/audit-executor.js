@@ -182,10 +182,9 @@ export class AuditExecutor extends EventEmitter {
       this.currentAudit = null;
       delete process.env.SKIP_HTML_REPORT;
       
-      // Clean up any hanging connections to prevent the audit from keeping the process alive
-      setImmediate(() => {
-        this.cleanupConnections();
-      });
+      // Clean up any hanging connections to prevent resource leaks
+      // Don't use setImmediate in server environment as it can cause termination
+      this.cleanupConnections();
     }
   }
 
@@ -503,29 +502,56 @@ export class AuditExecutor extends EventEmitter {
 
   /**
    * Clean up any hanging connections or resources after audit completion
+   * Prevents script hanging due to keep-alive connections
    */
   cleanupConnections() {
     try {
-      // Force garbage collection of any lingering HTTP connections
-      if (global.gc) {
-        global.gc();
-      }
-
-      // Check for active handles that might be keeping the process alive
+      // Force close any hanging HTTP connections
+      // This prevents the script from hanging due to keep-alive connections
+      
+      // Get active handles and requests for debugging
       const activeHandles = process._getActiveHandles?.() || [];
       const activeRequests = process._getActiveRequests?.() || [];
       
-      // Log cleanup info for debugging
-      if (activeHandles.length > 5 || activeRequests.length > 0) {
-        console.log(`🧹 Cleanup: ${activeHandles.length} active handles, ${activeRequests.length} active requests`);
+      if (activeHandles.length > 10 || activeRequests.length > 5) {
+        console.log(`🧹 Post-audit cleanup: ${activeHandles.length} active handles, ${activeRequests.length} active requests`);
       }
 
-      // Clear any timers that might have been set by the crawling process
-      // Note: We don't force-kill everything since this is running in a web server
-      // Just let Node.js know the audit is complete
+      // Force cleanup of any hanging timers or sockets
+      // Look for HTTP sockets and close them
+      activeHandles.forEach(handle => {
+        try {
+          if (handle && typeof handle.destroy === 'function') {
+            // Close sockets that might be keeping the process alive
+            if (handle.constructor.name === 'Socket' || 
+                handle.constructor.name === 'TLSSocket' ||
+                handle.constructor.name === 'ClientRequest') {
+              handle.destroy();
+            }
+          }
+        } catch (err) {
+          // Ignore cleanup errors for individual handles
+        }
+      });
+
+      // Clear any remaining timeouts/intervals that might be holding the process
+      activeRequests.forEach(req => {
+        try {
+          if (req && typeof req.abort === 'function') {
+            req.abort();
+          }
+        } catch (err) {
+          // Ignore cleanup errors for individual requests
+        }
+      });
+
+      // Give a small delay for cleanup to complete
+      setTimeout(() => {
+        console.log('✅ Audit cleanup completed');
+      }, 50);
       
     } catch (error) {
-      console.warn('Cleanup warning:', error.message);
+      console.warn('⚠️ Cleanup warning:', error.message);
     }
   }
 }

@@ -23,20 +23,47 @@ export const initializeDatabase = () => {
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 10, // Maximum number of clients in the pool
-    idleTimeoutMillis: 0, // Keep connections alive (don't close idle clients)
-    connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection cannot be established
+    idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+    connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection cannot be established
+    acquireTimeoutMillis: 60000, // Wait up to 60 seconds for a connection from the pool
+    statement_timeout: 30000, // Cancel any query taking longer than 30 seconds
+    query_timeout: 30000, // Same as statement_timeout
     keepAlive: true,
-    keepAliveInitialDelayMillis: 10000
+    keepAliveInitialDelayMillis: 10000,
+    // Add connection validation
+    allowExitOnIdle: false, // Keep the pool alive even when no connections are active
   });
 
-  // Handle pool errors
+  // Handle pool errors with better recovery
   pool.on('error', (err) => {
     console.error('❌ Unexpected error on idle client:', err.message);
+    
+    // If it's a connection-related error, don't crash the app
+    if (err.message.includes('Connection terminated') || 
+        err.message.includes('ECONNRESET') ||
+        err.message.includes('ENOTFOUND') ||
+        err.message.includes('timeout')) {
+      console.warn('⚠️ Connection issue detected, pool will create new connections as needed');
+    }
+    
     // Don't exit the process, just log the error
   });
 
-  pool.on('connect', () => {
+  pool.on('connect', (client) => {
     console.log('✅ New client connected to database pool');
+    
+    // Handle client-specific errors
+    client.on('error', (err) => {
+      console.warn('⚠️ Client connection error:', err.message);
+    });
+  });
+
+  pool.on('acquire', () => {
+    // Connection acquired from pool
+  });
+
+  pool.on('release', () => {
+    // Connection released back to pool
   });
 
   console.log('✅ Database pool initialized');
@@ -54,75 +81,160 @@ export const getPool = () => {
 };
 
 /**
- * Execute a query with parameters
+ * Execute a query with parameters and automatic retry on connection errors
  * @param {string} text - SQL query text
  * @param {Array} params - Query parameters
+ * @param {number} maxRetries - Maximum number of retries (default: 2)
  * @returns {Promise<Object>} Query result
  */
-export const query = async (text, params = []) => {
+export const query = async (text, params = [], maxRetries = 2) => {
   const start = Date.now();
+  let lastError;
   
-  try {
-    // Check if pool is available and not ended
-    if (!pool || pool.ended) {
-      console.warn('⚠️ Database pool is not available, reinitializing...');
-      initializeDatabase();
-    }
-    
-    const result = await pool.query(text, params);
-    const duration = Date.now() - start;
-    
-    // Log slow queries (over 100ms)
-    if (duration > 100) {
-      console.warn(`🐌 Slow query (${duration}ms):`, text.substring(0, 100));
-    }
-    
-    return result;
-  } catch (error) {
-    // If it's a pool-related error, try to reinitialize
-    if (error.message.includes('pool') || error.message.includes('ended')) {
-      console.warn('⚠️ Pool error detected, attempting to reinitialize database connection...');
-      try {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Check if pool is available and not ended
+      if (!pool || pool.ended) {
+        console.warn('⚠️ Database pool is not available, reinitializing...');
         initializeDatabase();
-        // Retry the query once
-        const result = await pool.query(text, params);
-        console.log('✅ Query succeeded after pool reinitializition');
-        return result;
-      } catch (retryError) {
-        console.error('❌ Query failed even after pool reinitializition:', retryError.message);
-        throw retryError;
       }
+      
+      const result = await pool.query(text, params);
+      const duration = Date.now() - start;
+      
+      // Log slow queries (over 200ms)
+      if (duration > 200) {
+        console.warn(`🐌 Slow query (${duration}ms):`, text.substring(0, 100));
+      }
+      
+      // If we had to retry, log success
+      if (attempt > 0) {
+        console.log(`✅ Query succeeded on attempt ${attempt + 1}`);
+      }
+      
+      return result;
+    } catch (error) {
+      lastError = error;
+      
+      // Check if this is a retryable error
+      const isRetryable = error.message.includes('Connection terminated') ||
+                         error.message.includes('ECONNRESET') ||
+                         error.message.includes('ENOTFOUND') ||
+                         error.message.includes('timeout') ||
+                         error.message.includes('pool') ||
+                         error.message.includes('ended') ||
+                         error.code === 'ECONNRESET' ||
+                         error.code === 'ETIMEDOUT';
+      
+      if (isRetryable && attempt < maxRetries) {
+        console.warn(`⚠️ Retryable error on attempt ${attempt + 1}/${maxRetries + 1}: ${error.message}`);
+        
+        // Try to reinitialize pool if it's a pool-related error
+        if (error.message.includes('pool') || error.message.includes('ended')) {
+          try {
+            console.log('🔄 Reinitializing database pool...');
+            initializeDatabase();
+          } catch (initError) {
+            console.warn('⚠️ Failed to reinitialize pool:', initError.message);
+          }
+        }
+        
+        // Wait before retrying (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // Non-retryable error or max retries reached
+      console.error('❌ Database query error:', {
+        query: text.substring(0, 100),
+        params: params?.length ? '[' + params.length + ' params]' : '[]',
+        error: error.message,
+        code: error.code,
+        attempt: attempt + 1,
+        maxRetries: maxRetries + 1
+      });
+      
+      throw error;
     }
-    
-    console.error('❌ Database query error:', {
-      query: text.substring(0, 100),
-      params: params,
-      error: error.message
-    });
-    throw error;
   }
+  
+  // This should never be reached, but just in case
+  throw lastError;
 };
 
 /**
- * Execute a transaction
+ * Execute a transaction with retry on connection errors
  * @param {Function} callback - Function to execute within transaction
+ * @param {number} maxRetries - Maximum number of retries (default: 1)
  * @returns {Promise<any>} Transaction result
  */
-export const transaction = async (callback) => {
-  const client = await pool.connect();
+export const transaction = async (callback, maxRetries = 1) => {
+  let lastError;
   
-  try {
-    await client.query('BEGIN');
-    const result = await callback(client);
-    await client.query('COMMIT');
-    return result;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('❌ Transaction error:', error.message);
-    throw error;
-  } finally {
-    client.release();
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let client;
+    
+    try {
+      client = await pool.connect();
+      await client.query('BEGIN');
+      const result = await callback(client);
+      await client.query('COMMIT');
+      
+      // If we had to retry, log success
+      if (attempt > 0) {
+        console.log(`✅ Transaction succeeded on attempt ${attempt + 1}`);
+      }
+      
+      return result;
+    } catch (error) {
+      lastError = error;
+      
+      // Always try to rollback if we have a client
+      if (client) {
+        try {
+          await client.query('ROLLBACK');
+        } catch (rollbackError) {
+          console.warn('⚠️ Rollback error:', rollbackError.message);
+        }
+      }
+      
+      // Check if this is a retryable error
+      const isRetryable = error.message.includes('Connection terminated') ||
+                         error.message.includes('ECONNRESET') ||
+                         error.message.includes('timeout') ||
+                         error.code === 'ECONNRESET' ||
+                         error.code === 'ETIMEDOUT';
+      
+      if (isRetryable && attempt < maxRetries) {
+        console.warn(`⚠️ Retryable transaction error on attempt ${attempt + 1}/${maxRetries + 1}: ${error.message}`);
+        
+        // Wait before retrying
+        const delay = 1000 * (attempt + 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      console.error('❌ Transaction error:', {
+        error: error.message,
+        code: error.code,
+        attempt: attempt + 1,
+        maxRetries: maxRetries + 1
+      });
+      
+      throw error;
+    } finally {
+      if (client) {
+        try {
+          client.release();
+        } catch (releaseError) {
+          console.warn('⚠️ Error releasing client:', releaseError.message);
+        }
+      }
+    }
   }
+  
+  throw lastError;
 };
 
 /**

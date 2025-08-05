@@ -9,6 +9,7 @@ import logger from '../lib/logger.js';
 import { Audit } from '../models/index.js';
 import { createNotification } from './notificationController.js';
 import pdfService from '../services/pdfService.js';
+import jobQueue from '../lib/jobQueue.js';
 
 // Create audit executor instance
 const auditExecutor = new AuditExecutor();
@@ -245,225 +246,21 @@ export const processAudit = async (req, res) => {
       priority
     });
 
-    // Start audit in background
-    setImmediate(async () => {
-      let auditRecord = null;
-      try {
-        // Step 1: Starting
-        activeSessions.set(sessionId, {
-          ...activeSessions.get(sessionId),
-          status: 'starting',
-          progress: 5,
-          detailedStatus: 'Initializing audit...'
-        });
-
-        // Step 2: Crawling
-        // Simulate crawling progress (replace with real crawling loop if available)
-        for (let i = 1; i <= maxPages; i++) {
-          activeSessions.set(sessionId, {
-            ...activeSessions.get(sessionId),
-            status: 'crawling',
-            progress: Math.round(5 + (i / maxPages) * 35), // 5% to 40%
-            pageCount: i,
-            totalPages: maxPages,
-            externalLinksScanned: 0,
-            totalExternalLinks: 10, // Will be updated in next phase
-            currentUrl: `https://example.com/page${i}`,
-            detailedStatus: `Crawling page ${i} of ${maxPages}`
-          });
-          await new Promise(r => setTimeout(r, 50)); // Simulate async crawling
-        }
-
-        // Step 3: External Links
-        const externalLinksTotal = 10; // Simulate
-        for (let i = 1; i <= externalLinksTotal; i++) {
-          activeSessions.set(sessionId, {
-            ...activeSessions.get(sessionId),
-            status: 'external_links',
-            progress: Math.round(40 + (i / externalLinksTotal) * 20), // 40% to 60%
-            pageCount: maxPages, // Internal pages already crawled
-            totalPages: maxPages,
-            externalLinksScanned: i,
-            totalExternalLinks: externalLinksTotal,
-            currentUrl: `https://external.com/link${i}`,
-            detailedStatus: `Checking external link ${i} of ${externalLinksTotal}`
-          });
-          await new Promise(r => setTimeout(r, 50)); // Simulate async link checking
-        }
-
-        // Step 4: Analyzing
-        activeSessions.set(sessionId, {
-          ...activeSessions.get(sessionId),
-          status: 'analyzing',
-          progress: 75,
-          detailedStatus: 'Analyzing website data...'
-        });
-        await new Promise(r => setTimeout(r, 500));
-
-        // Step 5: Finalizing
-        activeSessions.set(sessionId, {
-          ...activeSessions.get(sessionId),
-          status: 'finalizing',
-          progress: 90,
-          detailedStatus: 'Generating report...'
-        });
-        await new Promise(r => setTimeout(r, 500));
-
-        // Create audit record in database
-        const currentUser = req.session?.user;
-        if (currentUser) {
-          try {
-            auditRecord = await Audit.create({
-              userId: currentUser.id,
-              domain: url,
-              auditType: reportType,
-              config: {
-                maxPages,
-                priority,
-                sessionId
-              }
-            });
-            console.log(`✅ Created audit record ${auditRecord.id} for user ${currentUser.id}`);
-            
-            // Update session with audit ID
-            const session = activeSessions.get(sessionId);
-            if (session) {
-              session.auditId = auditRecord.id;
-              activeSessions.set(sessionId, session);
-            }
-          } catch (dbError) {
-            console.error('❌ Failed to create audit record:', dbError.message);
-          }
-        }
-
-        // Determine user limits based on registration status
-        const userLimits = {
-          isRegistered: !!(req.session && req.session.user),
-          maxExternalLinks: (req.session && req.session.user) ? -1 : 10 // -1 = unlimited for registered, 10 for unregistered
-        };
-        
-        console.log(`🚀 Starting audit for ${url} with session ${sessionId}`);
-        
-        const result = await auditExecutor.executeAudit(url, maxPages, false, sessionId, userLimits);
-        
-        console.log(`✅ Audit completed for ${url}, generating report...`);
-        
-        // Generate simple report (default since form options were removed)
-        const reportData = auditExecutor.generateSimpleReport(result.stateData);
-
-        // Calculate audit metrics
-        const auditMetrics = {
-          duration: result.duration || 0,
-          pagesScanned: result.stateData?.visited?.length || 0,
-          externalLinksChecked: result.stateData?.externalLinks?.length || 0,
-          score: reportData.overview?.score || 0
-        };
-
-        console.log(`📊 Audit metrics:`, auditMetrics);
-
-        // Update audit record in database
-        if (auditRecord) {
-          try {
-            await Audit.updateStatus(auditRecord.id, 'completed', {
-              report_data: reportData,
-              score: auditMetrics.score,
-              duration_ms: auditMetrics.duration,
-              pages_scanned: auditMetrics.pagesScanned,
-              external_links_checked: auditMetrics.externalLinksChecked
-            });
-            console.log(`✅ Audit ${auditRecord.id} completed and saved to database`);
-            
-            // Create notification for user when audit completes
-            if (req.session && req.session.user) {
-              const score = auditMetrics.score;
-              let notificationType = 'message';
-              let notificationTitle = 'Audit Completed Successfully';
-              
-              if (score < 50) {
-                notificationType = 'critical';
-                notificationTitle = 'Audit Completed - Issues Found';
-              } else if (score < 70) {
-                notificationType = 'alert';
-                notificationTitle = 'Audit Completed - Needs Attention';
-              }
-              
-              try {
-                await createNotification(
-                  req.session.user.id,
-                  notificationType,
-                  notificationTitle,
-                  `Your audit for ${url} has completed with a score of ${score}%. ${auditMetrics.pagesScanned} pages scanned and ${auditMetrics.externalLinksChecked} external links checked.`
-                );
-              } catch (notificationError) {
-                console.error('❌ Failed to create notification:', notificationError.message);
-              }
-            }
-          } catch (dbError) {
-            console.error('❌ Failed to update audit record:', dbError.message);
-          }
-        }
-
-        // Store result for retrieval (keep for SSE compatibility)
-        activeSessions.set(sessionId, {
-          status: 'completed',
-          result: reportData,
-          url,
-          reportType,
-          maxPages,
-          priority,
-          auditId: auditRecord ? auditRecord.id : null,
-          timestamp: new Date().toISOString()
-        });
-
-        console.log(`✅ Audit session ${sessionId} completed and stored:`, {
-          url,
-          auditId: auditRecord ? auditRecord.id : null,
-          totalSessions: activeSessions.size
-        });
-
-        auditLogger.auditCompleted(sessionId, url, {
-          duration: auditMetrics.duration,
-          reportType,
-          auditId: auditRecord ? auditRecord.id : null,
-          success: true
-        });
-
-      } catch (error) {
-        console.error('❌ Audit execution error:', error);
-        console.error('Error stack:', error.stack);
-        
-        // Update audit record in database with error
-        if (auditRecord) {
-          try {
-            await Audit.updateStatus(auditRecord.id, 'failed', {
-              error_message: error.message
-            });
-            console.log(`❌ Audit ${auditRecord.id} failed and marked in database`);
-          } catch (dbError) {
-            console.error('❌ Failed to update audit record with error:', dbError.message);
-          }
-        }
-        
-        activeSessions.set(sessionId, {
-          status: 'error',
-          error: error.message,
-          url,
-          reportType,
-          maxPages,
-          priority,
-          auditId: auditRecord ? auditRecord.id : null,
-          timestamp: new Date().toISOString()
-        });
-
-        console.log(`❌ Audit session ${sessionId} failed and stored:`, {
-          url,
-          error: error.message,
-          totalSessions: activeSessions.size
-        });
-
-        auditLogger.auditFailed(sessionId, url, error.message);
+    // Start audit in background using jobQueue
+    jobQueue.add('runAudit', {
+      url,
+      reportType,
+      maxPages,
+      priority,
+      sessionId,
+      req,
+      userLimits: {
+        isRegistered: !!(req.session && req.session.user),
+        maxExternalLinks: (req.session && req.session.user) ? -1 : 10
       }
     });
+// Inject dependencies for jobQueue
+jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit });
 
   } catch (error) {
     if (error instanceof z.ZodError) {

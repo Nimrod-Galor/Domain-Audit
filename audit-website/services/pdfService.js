@@ -504,19 +504,32 @@ class PDFService {
     generateRecommendations(auditData) {
         const recommendations = [];
         
-        if (auditData.brokenLinks > 0) {
-            recommendations.push(`<div class="list-item status-error">Fix ${auditData.brokenLinks} broken links to improve user experience and SEO</div>`);
+        // Handle different audit data structures safely
+        const summary = auditData.summary || auditData.simple?.summary || {};
+        const detailed = auditData.detailed || auditData.simple?.detailed || {};
+        
+        const brokenLinks = summary.brokenLinks || summary.brokenExternal || 0;
+        const externalLinks = summary.totalExternalLinks || summary.externalLinks || 0;
+        const internalLinks = summary.totalInternalLinks || summary.internalLinks || summary.totalPages || 0;
+        const totalPages = summary.totalPages || 0;
+        
+        // Extract emails from various possible locations
+        const emails = detailed.mailtoLinks || auditData.emails || [];
+        const emailCount = Array.isArray(emails) ? emails.length : Object.keys(emails || {}).length;
+        
+        if (brokenLinks > 0) {
+            recommendations.push(`<div class="list-item status-error">Fix ${brokenLinks} broken links to improve user experience and SEO</div>`);
         }
         
-        if (auditData.externalLinks > auditData.internalLinks * 2) {
-            recommendations.push(`<div class="list-item status-warning">Consider balancing external links (${auditData.externalLinks}) with more internal links (${auditData.internalLinks})</div>`);
+        if (externalLinks > internalLinks * 2 && internalLinks > 0) {
+            recommendations.push(`<div class="list-item status-warning">Consider balancing external links (${externalLinks}) with more internal links (${internalLinks})</div>`);
         }
         
-        if (auditData.totalPages < 5) {
-            recommendations.push(`<div class="list-item status-warning">Website has only ${auditData.totalPages} pages. Consider adding more content for better SEO</div>`);
+        if (totalPages < 5 && totalPages > 0) {
+            recommendations.push(`<div class="list-item status-warning">Website has only ${totalPages} pages. Consider adding more content for better SEO</div>`);
         }
         
-        if (auditData.emails.length === 0) {
+        if (emailCount === 0) {
             recommendations.push(`<div class="list-item status-warning">No contact email addresses found. Consider adding contact information for better user experience</div>`);
         }
         
