@@ -193,8 +193,8 @@ class JobQueue {
   // Real audit job execution with database-first approach
   async _runAuditJob(data) {
     // Real audit logic integration
-    const { auditExecutor, activeSessions, Audit } = this;
-    const { url, reportType, maxPages, priority, sessionId, req, userLimits } = data;
+    const { auditExecutor, activeSessions, Audit, tierService } = this;
+    const { url, reportType, maxPages, priority, sessionId, req, userLimits, userId } = data;
     let auditRecord = null;
     let reportData = null;
     let auditMetrics = null;
@@ -346,6 +346,25 @@ class JobQueue {
         });
       }
       
+      // Record audit usage in tier system (for registered users)
+      if (userId && tierService && tierService.recordAuditUsage) {
+        try {
+          await tierService.recordAuditUsage(userId, {
+            auditId: auditRecord ? auditRecord.id : null,
+            pagesScanned: auditMetrics.pagesScanned,
+            externalLinksChecked: auditMetrics.externalLinksChecked,
+            score: auditMetrics.score,
+            url,
+            reportType,
+            duration: auditMetrics.duration
+          });
+          console.log(`📊 Recorded audit usage for user ${userId} - ${auditMetrics.pagesScanned} pages, ${auditMetrics.externalLinksChecked} links`);
+        } catch (tierError) {
+          console.error('❌ Failed to record audit usage in tier system:', tierError.message);
+          // Don't fail the audit if tier tracking fails
+        }
+      }
+      
       // Update activeSessions with final result
       this._updateSession(activeSessions, sessionId, {
         status: 'completed',
@@ -420,10 +439,11 @@ let activeSessionsInstance = null;
 let AuditModel = null;
 
 const jobQueue = new JobQueue();
-jobQueue.injectDependencies = ({ auditExecutor, activeSessions, Audit }) => {
+jobQueue.injectDependencies = ({ auditExecutor, activeSessions, Audit, tierService }) => {
   jobQueue.auditExecutor = auditExecutor;
   jobQueue.activeSessions = activeSessions;
   jobQueue.Audit = Audit;
+  jobQueue.tierService = tierService;
 };
 
 export default jobQueue;

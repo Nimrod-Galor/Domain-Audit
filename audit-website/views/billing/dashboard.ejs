@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SiteScope</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .tier-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+        }
+        .tier-freemium { background-color: #6c757d; }
+        .tier-starter { background-color: #28a745; }
+        .tier-professional { background-color: #007bff; }
+        .tier-enterprise { background-color: #6f42c1; }
+        
+        .usage-progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .feature-check {
+            color: #28a745;
+        }
+        
+        .feature-cross {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-search me-2"></i>SiteScope
+            </a>
+            <div class="navbar-nav ms-auto">
+                <% if (user) { %>
+                    <span class="navbar-text me-3">Hello, <%= user.email %></span>
+                    <a class="nav-link" href="/auth/logout">Logout</a>
+                <% } else { %>
+                    <a class="nav-link" href="/auth/login">Login</a>
+                <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-credit-card me-2"></i><%= title %></h1>
+                    <span class="tier-badge tier-<%= currentTier %> text-white">
+                        <i class="fas fa-star me-1"></i><%= currentTier.charAt(0).toUpperCase() + currentTier.slice(1) %> Plan
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Plan Overview -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Current Plan Usage</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Audits Usage -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><strong>Monthly Audits</strong></span>
+                                <span><%= usageStats.auditsThisMonth %>/<%= userLimits.auditsPerMonth === -1 ? 'Unlimited' : userLimits.auditsPerMonth %></span>
+                            </div>
+                            <% if (userLimits.auditsPerMonth !== -1) { %>
+                                <div class="progress usage-progress">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: <%= Math.min(100, (usageStats.auditsThisMonth / userLimits.auditsPerMonth) * 100) %>%"
+                                         aria-valuenow="<%= usageStats.auditsThisMonth %>"
+                                         aria-valuemin="0" aria-valuemax="<%= userLimits.auditsPerMonth %>">
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="text-success"><i class="fas fa-infinity me-1"></i>Unlimited</div>
+                            <% } %>
+                        </div>
+
+                        <!-- Pages Scanned -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><strong>Pages per Audit</strong></span>
+                                <span>Up to <%= userLimits.maxPagesPerAudit === -1 ? 'Unlimited' : userLimits.maxPagesPerAudit %></span>
+                            </div>
+                        </div>
+
+                        <!-- External Links -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><strong>External Links Checked</strong></span>
+                                <span><%= userLimits.maxExternalLinks === -1 ? 'Unlimited' : userLimits.maxExternalLinks %> per audit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-features me-2"></i>Plan Features</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-<%= userLimits.canAccessFullReports ? 'check feature-check' : 'times feature-cross' %> me-2"></i>
+                                Full Reports
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-<%= userLimits.canExportPDF ? 'check feature-check' : 'times feature-cross' %> me-2"></i>
+                                PDF Export
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-<%= userLimits.canScheduleAudits ? 'check feature-check' : 'times feature-cross' %> me-2"></i>
+                                Scheduled Audits
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-<%= userLimits.hasAPIAccess ? 'check feature-check' : 'times feature-cross' %> me-2"></i>
+                                API Access
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            <% if (currentTier === 'freemium' || currentTier === 'starter') { %>
+                                <a href="/billing/upgrade" class="btn btn-primary">
+                                    <i class="fas fa-arrow-up me-1"></i>Upgrade Plan
+                                </a>
+                            <% } %>
+                            
+                            <% if (subscription && subscription.status === 'active') { %>
+                                <button class="btn btn-outline-secondary" onclick="updatePaymentMethod()">
+                                    <i class="fas fa-credit-card me-1"></i>Update Payment Method
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="cancelSubscription()">
+                                    <i class="fas fa-times me-1"></i>Cancel Subscription
+                                </button>
+                            <% } %>
+                            
+                            <a href="/billing/history" class="btn btn-outline-info">
+                                <i class="fas fa-history me-1"></i>Billing History
+                            </a>
+                            
+                            <a href="/audit/user-audits" class="btn btn-outline-primary">
+                                <i class="fas fa-chart-line me-1"></i>My Audits
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscription Details -->
+        <% if (subscription) { %>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Subscription Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Status:</strong> 
+                                    <span class="badge bg-<%= subscription.status === 'active' ? 'success' : subscription.status === 'past_due' ? 'warning' : 'danger' %>">
+                                        <%= subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) %>
+                                    </span>
+                                </p>
+                                <p><strong>Plan:</strong> <%= subscription.tierName.charAt(0).toUpperCase() + subscription.tierName.slice(1) %></p>
+                                <p><strong>Price:</strong> $<%= subscription.amount / 100 %>/month</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Start Date:</strong> <%= new Date(subscription.startDate).toLocaleDateString() %></p>
+                                <p><strong>Current Period:</strong> <%= new Date(subscription.currentPeriodStart).toLocaleDateString() %> - <%= new Date(subscription.currentPeriodEnd).toLocaleDateString() %></p>
+                                <% if (upcomingInvoice) { %>
+                                    <p><strong>Next Payment:</strong> $<%= upcomingInvoice.amount_due / 100 %> on <%= new Date(upcomingInvoice.next_payment_attempt * 1000).toLocaleDateString() %></p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Back to Dashboard -->
+        <div class="row">
+            <div class="col-md-12">
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function updatePaymentMethod() {
+            try {
+                const response = await fetch('/billing/update-payment-method', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.portalUrl) {
+                    window.location.href = data.portalUrl;
+                } else {
+                    alert('Error accessing payment settings. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error accessing payment settings. Please try again.');
+            }
+        }
+
+        async function cancelSubscription() {
+            if (!confirm('Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/billing/cancel-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Subscription cancelled successfully. You will retain access until the end of your current billing period.');
+                    location.reload();
+                } else {
+                    alert('Error cancelling subscription: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error cancelling subscription. Please contact support.');
+            }
+        }
+    </script>
+</body>
+</html>

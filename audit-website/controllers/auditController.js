@@ -10,6 +10,7 @@ import { Audit } from '../models/index.js';
 import { createNotification } from './notificationController.js';
 import pdfService from '../services/pdfService.js';
 import jobQueue from '../lib/jobQueue.js';
+import tierService from '../services/tierService.js';
 
 // Create audit executor instance
 const auditExecutor = new AuditExecutor();
@@ -141,19 +142,48 @@ export const processAudit = async (req, res) => {
     const validatedData = auditRequestSchema.parse(req.body);
     const { url } = validatedData;
     
+    // Get user information
+    const userId = req.session?.user?.id || null;
+    const userEmail = req.session?.user?.email || null;
+    
+    // Get user tier limits and check permissions
+    const userLimits = await tierService.getUserTierLimits(userId);
+    
+    // Check if user can perform audit
+    const canPerformAudit = await tierService.canPerformAudit(userId);
+    
+    if (!canPerformAudit.allowed) {
+      const upgradeMessage = userId ? 
+        'You have reached your audit limit. Please upgrade your plan or wait for your limit to reset.' :
+        'Free limit reached. Please sign up for more audits.';
+        
+      return res.render('audit/form', {
+        title: 'Website Audit',
+        user: req.session.user || null,
+        error: canPerformAudit.reason || upgradeMessage,
+        url,
+        userLimits: {
+          current: canPerformAudit.currentUsage,
+          max: canPerformAudit.limit,
+          tierName: userLimits.tierName
+        }
+      });
+    }
+    
     // Log successful validation
     auditLogger.userAction('form_submitted', req.session.user, {
       domain: url,
-      ip: req.ip
+      ip: req.ip,
+      tierName: userLimits.tierName
     });
     
     // Set default values since form options were removed
     const reportType = 'simple'; // Default to simple report
-    const maxPages = 50; // Default max pages
-    const priority = 'balanced'; // Default priority
+    const maxPages = Math.min(50, userLimits.maxPagesPerAudit); // Respect tier limits
+    const priority = userId ? 'high' : 'normal'; // Registered users get higher priority
 
     // For unregistered users, check if we have a recent audit for this domain
-    if (!req.session.user) {
+    if (!userId) {
       try {
         // Look for the most recent completed audit for this domain
         const existingAudit = await Audit.findMostRecentByDomain(url);
@@ -191,8 +221,8 @@ export const processAudit = async (req, res) => {
       }
     }
 
-    // Check rate limits for free users
-    if (!req.session.user) {
+    // Legacy rate limiting for backwards compatibility (to be removed)
+    if (!userId) {
       const userAudits = req.session.audits || 0;
       
       if (userAudits >= 3) {
@@ -205,7 +235,7 @@ export const processAudit = async (req, res) => {
       }
       req.session.audits = userAudits + 1;
     } else {
-      console.log(`Logged-in user: ${req.session.user.email}`);
+      console.log(`Logged-in user: ${userEmail} (Tier: ${userLimits.tierName})`);
     }
 
     // Generate unique session ID for this audit
@@ -226,13 +256,17 @@ export const processAudit = async (req, res) => {
     console.log(`🚀 Created session ${sessionId} for ${url}:`, {
       status: 'running',
       totalSessions: activeSessions.size,
-      isRegistered: !!(req.session && req.session.user)
+      isRegistered: !!userId,
+      tierName: userLimits.tierName,
+      maxPages: maxPages
     });
 
     auditLogger.auditStarted(sessionId, url, {
       reportType,
       maxPages,
-      auditId: null
+      auditId: null,
+      tierName: userLimits.tierName,
+      userId
     });
     
     // Show loading page with progress
@@ -243,7 +277,12 @@ export const processAudit = async (req, res) => {
       reportType,
       sessionId,
       maxPages,
-      priority
+      priority,
+      userLimits: {
+        tierName: userLimits.tierName,
+        maxPagesPerAudit: userLimits.maxPagesPerAudit,
+        maxExternalLinks: userLimits.maxExternalLinks
+      }
     });
 
     // Start audit in background using jobQueue
@@ -254,13 +293,16 @@ export const processAudit = async (req, res) => {
       priority,
       sessionId,
       req,
+      userId,
       userLimits: {
-        isRegistered: !!(req.session && req.session.user),
-        maxExternalLinks: (req.session && req.session.user) ? -1 : 10
+        isRegistered: !!userId,
+        maxExternalLinks: userLimits.maxExternalLinks,
+        maxPagesPerAudit: userLimits.maxPagesPerAudit,
+        tierName: userLimits.tierName
       }
     });
 // Inject dependencies for jobQueue
-jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit });
+jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit, tierService });
 
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -572,6 +614,10 @@ export const getSimpleReport = async (req, res) => {
     const validatedData = domainParamSchema.parse({ domain });
     const url = validatedData.domain;
     
+    // Get user information and tier limits
+    const userId = req.session?.user?.id || null;
+    const userLimits = await tierService.getUserTierLimits(userId);
+    
     // First, try to get existing audit from database
     let reportData = null;
     let fromDatabase = false;
@@ -594,14 +640,43 @@ export const getSimpleReport = async (req, res) => {
     
     // If no recent audit found, run a fresh audit
     if (!reportData) {
-      console.log(`🔄 Running fresh simple audit for ${url}`);
-      const userLimits = {
-        isRegistered: !!(req.session && req.session.user),
-        maxExternalLinks: (req.session && req.session.user) ? -1 : 10
-      };
+      // Check if user can perform a new audit
+      const canPerformAudit = await tierService.canPerformAudit(userId);
       
-      const result = await auditExecutor.executeAudit(url, 50, false, null, userLimits);
+      if (!canPerformAudit.allowed) {
+        return res.render('audit/error', {
+          title: 'Audit Limit Reached',
+          user: req.session.user || null,
+          error: canPerformAudit.reason || 'You have reached your audit limit. Please upgrade your plan.'
+        });
+      }
+      
+      console.log(`🔄 Running fresh simple audit for ${url}`);
+      const maxPages = Math.min(50, userLimits.maxPagesPerAudit);
+      
+      const result = await auditExecutor.executeAudit(url, maxPages, false, null, {
+        isRegistered: !!userId,
+        maxExternalLinks: userLimits.maxExternalLinks,
+        maxPagesPerAudit: userLimits.maxPagesPerAudit,
+        tierName: userLimits.tierName
+      });
       reportData = auditExecutor.generateSimpleReport(result.stateData);
+      
+      // Record usage for registered users
+      if (userId) {
+        try {
+          await tierService.recordAuditUsage(userId, {
+            pagesScanned: result.stateData?.visited?.length || 0,
+            externalLinksChecked: Object.keys(result.stateData?.externalLinks || {}).length,
+            score: reportData.summary?.score || reportData.overview?.score || 0,
+            url,
+            reportType: 'simple',
+            duration: result.executionTime || 0
+          });
+        } catch (tierError) {
+          console.error('❌ Failed to record audit usage:', tierError.message);
+        }
+      }
     }
     
     res.render('audit/results-simple', {
@@ -611,7 +686,12 @@ export const getSimpleReport = async (req, res) => {
       data: reportData,
       timestamp,
       fromDatabase,
-      auditId
+      auditId,
+      userLimits: {
+        tierName: userLimits.tierName,
+        maxPagesPerAudit: userLimits.maxPagesPerAudit,
+        maxExternalLinks: userLimits.maxExternalLinks
+      }
     });
     
   } catch (error) {
@@ -635,6 +715,19 @@ export const getFullReport = async (req, res) => {
     const validatedData = domainParamSchema.parse({ domain });
     const url = validatedData.domain;
     
+    // Get user information and tier limits
+    const userId = req.session?.user?.id || null;
+    const userLimits = await tierService.getUserTierLimits(userId);
+    
+    // Check if user has access to full reports
+    if (!userLimits.canAccessFullReports) {
+      return res.render('audit/error', {
+        title: 'Upgrade Required',
+        user: req.session.user || null,
+        error: `Full reports are only available for ${userLimits.tierName === 'freemium' ? 'paid' : 'higher tier'} plans. Please upgrade to access detailed reports.`
+      });
+    }
+    
     // First, try to get existing audit from database
     let reportData = null;
     let fromDatabase = false;
@@ -657,14 +750,43 @@ export const getFullReport = async (req, res) => {
     
     // If no recent audit found, run a fresh audit
     if (!reportData) {
-      console.log(`🔄 Running fresh full audit for ${url}`);
-      const userLimits = {
-        isRegistered: !!(req.session && req.session.user),
-        maxExternalLinks: (req.session && req.session.user) ? -1 : 10
-      };
+      // Check if user can perform a new audit
+      const canPerformAudit = await tierService.canPerformAudit(userId);
       
-      const result = await auditExecutor.executeAudit(url, 50, true, null, userLimits);
+      if (!canPerformAudit.allowed) {
+        return res.render('audit/error', {
+          title: 'Audit Limit Reached',
+          user: req.session.user || null,
+          error: canPerformAudit.reason || 'You have reached your audit limit. Please upgrade your plan.'
+        });
+      }
+      
+      console.log(`🔄 Running fresh full audit for ${url}`);
+      const maxPages = Math.min(100, userLimits.maxPagesPerAudit); // Full reports can scan more pages
+      
+      const result = await auditExecutor.executeAudit(url, maxPages, true, null, {
+        isRegistered: !!userId,
+        maxExternalLinks: userLimits.maxExternalLinks,
+        maxPagesPerAudit: userLimits.maxPagesPerAudit,
+        tierName: userLimits.tierName
+      });
       reportData = auditExecutor.generateDetailedReport(result.stateData);
+      
+      // Record usage for registered users
+      if (userId) {
+        try {
+          await tierService.recordAuditUsage(userId, {
+            pagesScanned: result.stateData?.visited?.length || 0,
+            externalLinksChecked: Object.keys(result.stateData?.externalLinks || {}).length,
+            score: reportData.summary?.score || reportData.overview?.score || 0,
+            url,
+            reportType: 'full',
+            duration: result.executionTime || 0
+          });
+        } catch (tierError) {
+          console.error('❌ Failed to record audit usage:', tierError.message);
+        }
+      }
     }
     
     res.render('audit/results-full', {
@@ -674,7 +796,12 @@ export const getFullReport = async (req, res) => {
       data: reportData,
       timestamp,
       fromDatabase,
-      auditId
+      auditId,
+      userLimits: {
+        tierName: userLimits.tierName,
+        maxPagesPerAudit: userLimits.maxPagesPerAudit,
+        maxExternalLinks: userLimits.maxExternalLinks
+      }
     });
     
   } catch (error) {
