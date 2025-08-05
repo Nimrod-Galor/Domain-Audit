@@ -114,9 +114,20 @@
                             <div class="d-flex align-items-center mb-2">
                                 <i class="fas fa-link text-primary me-2"></i>
                                 <strong id="urlLabel">Current URL:</strong>
+                                <span class="badge ms-2" id="phaseIndicator" style="display: none;"></span>
                             </div>
-                            <div class="bg-light p-2 rounded">
-                                <code id="currentUrl" class="text-primary">Waiting for URL...</code>
+                            <div class="bg-light p-3 rounded border">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <code id="currentUrl" class="text-primary d-block mb-1">Waiting for URL...</code>
+                                        <small class="text-muted" id="urlDetails">Preparing to start...</small>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="fas fa-spinner fa-spin text-info" id="urlActivityIcon" style="display: none;"></i>
+                                        <i class="fas fa-check-circle text-success" id="urlSuccessIcon" style="display: none;"></i>
+                                        <i class="fas fa-exclamation-triangle text-warning" id="urlWarningIcon" style="display: none;"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -173,8 +184,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // URL display elements
     const urlDisplay = document.getElementById('urlDisplay');
     const currentUrlElement = document.getElementById('currentUrl');
+    const urlDetails = document.getElementById('urlDetails');
     const pageCounter = document.getElementById('pageCounter');
     const urlLabel = document.getElementById('urlLabel');
+    const phaseIndicator = document.getElementById('phaseIndicator');
+    const urlActivityIcon = document.getElementById('urlActivityIcon');
+    const urlSuccessIcon = document.getElementById('urlSuccessIcon');
+    const urlWarningIcon = document.getElementById('urlWarningIcon');
     
     // Show progress card
     progressCard.style.display = 'block';
@@ -295,14 +311,84 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Update current URL
+        // Update current URL with enhanced display
         if (data.currentUrl) {
             currentUrlElement.textContent = data.currentUrl;
-            // Truncate long URLs for better display
-            if (data.currentUrl.length > 50) {
-                const truncated = data.currentUrl.substring(0, 25) + '...' + data.currentUrl.substring(data.currentUrl.length - 20);
-                currentUrlElement.textContent = truncated;
-                currentUrlElement.title = data.currentUrl; // Full URL on hover
+            
+            // Extract domain for URL details
+            try {
+                const urlObj = new URL(data.currentUrl);
+                const domain = urlObj.hostname;
+                const path = urlObj.pathname;
+                
+                // Truncate long URLs for better display
+                if (data.currentUrl.length > 60) {
+                    const truncated = domain + (path.length > 25 ? path.substring(0, 25) + '...' : path);
+                    currentUrlElement.textContent = truncated;
+                    currentUrlElement.title = data.currentUrl; // Full URL on hover
+                }
+                
+                // Update URL details based on phase
+                if (data.phase) {
+                    const phaseDetails = {
+                        'queueing': `Queued for processing on ${domain}`,
+                        'downloading': `Downloading content from ${domain}`,
+                        'analyzing': `Analyzing page content and structure`,
+                        'external_validation': `Validating external link to ${domain}`,
+                        'external_result': `Completed validation of ${domain}`
+                    };
+                    
+                    urlDetails.textContent = phaseDetails[data.phase] || `Processing ${domain}`;
+                } else {
+                    urlDetails.textContent = `Processing ${domain}`;
+                }
+                
+            } catch (e) {
+                // Fallback for invalid URLs
+                urlDetails.textContent = 'Processing URL...';
+            }
+        }
+        
+        // Update phase indicator badge
+        if (data.phase && phaseIndicator) {
+            const phaseLabels = {
+                'queueing': { text: 'QUEUED', class: 'bg-secondary' },
+                'downloading': { text: 'DOWNLOADING', class: 'bg-info' },
+                'analyzing': { text: 'ANALYZING', class: 'bg-success' },
+                'external_validation': { text: 'VALIDATING', class: 'bg-warning' },
+                'external_result': { text: 'VALIDATED', class: 'bg-success' },
+                'external_init': { text: 'STARTING', class: 'bg-primary' }
+            };
+            
+            const phaseInfo = phaseLabels[data.phase];
+            if (phaseInfo) {
+                phaseIndicator.textContent = phaseInfo.text;
+                phaseIndicator.className = `badge ms-2 ${phaseInfo.class}`;
+                phaseIndicator.style.display = 'inline-block';
+            }
+        }
+        
+        // Update activity icons based on phase
+        function hideAllIcons() {
+            urlActivityIcon.style.display = 'none';
+            urlSuccessIcon.style.display = 'none';
+            urlWarningIcon.style.display = 'none';
+        }
+        
+        if (data.phase) {
+            hideAllIcons();
+            
+            if (['downloading', 'analyzing', 'external_validation'].includes(data.phase)) {
+                urlActivityIcon.style.display = 'inline-block';
+            } else if (data.phase === 'external_result') {
+                // Show appropriate icon based on result
+                if (data.detailedStatus && data.detailedStatus.includes('OK')) {
+                    urlSuccessIcon.style.display = 'inline-block';
+                } else if (data.detailedStatus && (data.detailedStatus.includes('FAILED') || data.detailedStatus.includes('TIMEOUT'))) {
+                    urlWarningIcon.style.display = 'inline-block';
+                } else {
+                    urlSuccessIcon.style.display = 'inline-block'; // Default to success
+                }
             }
         }
         
@@ -311,7 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
             detailedStatus.textContent = data.detailedStatus;
             
             // Show spinner for active operations
-            if (['Downloading', 'Analyzing', 'Processing collected data', 'Compiling results', 'Validating external link'].includes(data.detailedStatus)) {
+            if (['Downloading', 'Analyzing', 'Processing collected data', 'Compiling results', 'Validating external link'].includes(data.detailedStatus) ||
+                data.detailedStatus.includes('Downloading') || data.detailedStatus.includes('Analyzing') || data.detailedStatus.includes('Validating')) {
                 activitySpinner.style.display = 'inline-block';
             } else {
                 activitySpinner.style.display = 'none';
@@ -334,98 +421,241 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Setup Server-Sent Events
-    const eventSource = new EventSource(`/audit/progress/${sessionId}`);
+    // Setup Server-Sent Events with retry mechanism
+    let eventSource = null;
+    let retryCount = 0;
+    const maxRetries = 5;
+    let reconnectDelay = 1000; // Start with 1 second
+    let isConnected = false;
+    let lastProgressTime = Date.now();
+    let lastProgressData = null; // Store last progress data to prevent duplicates
+    let lastProgressTimestamp = 0; // Track timing of last progress
+    const DUPLICATE_THRESHOLD = 500; // 500ms minimum between similar events (reduced from 1000ms)
     
-    eventSource.onmessage = function(event) {
-        try {
-            const data = JSON.parse(event.data);
-            console.log('Progress update:', data);
-            
-            // Update progress information
-            if (data.message) {
-                currentMessage.textContent = data.message;
-            }
-            
-            if (data.progress !== undefined) {
-                const progress = Math.round(data.progress);
-                mainProgressBar.style.width = progress + '%';
-                progressText.textContent = progress + '% Complete';
-                progressDetails.textContent = `Progress: ${progress}%`;
-            }
-            
-            // Update unified progress display
-            updateUnifiedProgress(data);
-            
-            // Update step visualization with minimum duration logic
-            if (data.status && stepMapping[data.status]) {
-                const stepInfo = stepMapping[data.status];
-                const targetStep = stepInfo.step;
-                
-                // Special handling for steps with minimum duration requirements
-                if (minimumDurationSteps.includes(targetStep)) {
-                    if (targetStep > currentStep) {
-                        // New step - transition immediately and start timer
-                        handleStepTransition(targetStep, stepInfo.color);
-                    }
-                } else if (minimumDurationSteps.includes(currentStep) && targetStep > currentStep) {
-                    // We're trying to move from a minimum duration step to the next step
-                    if (canProceedToNextStep(currentStep)) {
-                        handleStepTransition(targetStep, stepInfo.color);
-                    } else {
-                        // Store for delayed execution
-                        pendingCompletion = { step: targetStep, color: stepInfo.color };
-                        handleDelayedCompletion();
-                    }
-                } else {
-                    // Normal step transition
-                    handleStepTransition(targetStep, stepInfo.color);
-                }
-            }
-            
-            // Handle completion with delay logic
-            if (data.status === 'completed') {
-                const completionStep = stepMapping['completed'];
-                
-                if (minimumDurationSteps.includes(currentStep) && !canProceedToNextStep(currentStep)) {
-                    // Store completion for delayed execution
-                    pendingCompletion = { 
-                        step: completionStep.step, 
-                        color: completionStep.color,
-                        isCompletion: true 
-                    };
-                    handleDelayedCompletion();
-                } else {
-                    // Can complete immediately
-                    handleStepTransition(completionStep.step, completionStep.color);
-                    setTimeout(() => {
-                        window.location.href = `/audit/results/${sessionId}`;
-                    }, 2000);
-                }
-            }
-            
-            // Handle errors
-            if (data.status === 'error') {
-                showError(data.error || 'An error occurred during the audit');
-                eventSource.close();
-            }
-            
-        } catch (e) {
-            console.error('Error parsing progress data:', e);
+    function createEventSource() {
+        if (eventSource) {
+            eventSource.close();
         }
-    };
+        
+        console.log(`📡 Creating EventSource connection (attempt ${retryCount + 1}/${maxRetries + 1})`);
+        eventSource = new EventSource(`/audit/progress/${sessionId}`);
+        
+        eventSource.onopen = function(event) {
+            console.log('✅ EventSource connected successfully');
+            isConnected = true;
+            retryCount = 0;
+            reconnectDelay = 1000; // Reset delay on successful connection
+            lastProgressTime = Date.now();
+        };
+        
+        eventSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                const now = Date.now();
+                
+                // Update last progress time
+                lastProgressTime = now;
+                
+                // Skip heartbeat messages
+                if (data.type === 'connected') {
+                    console.log('📡 SSE connection confirmed');
+                    return;
+                }
+                
+                // Create a unique key for this progress event to detect duplicates
+                const progressKey = `${data.status}_${data.phase}_${data.progress}_${data.currentUrl}_${data.detailedStatus}`;
+                
+                // Skip duplicate progress events with timing consideration
+                if (lastProgressData && lastProgressData === progressKey) {
+                    const timeSinceLastProgress = now - lastProgressTimestamp;
+                    if (timeSinceLastProgress < DUPLICATE_THRESHOLD) {
+                        console.log(`🔄 Skipping duplicate progress event (${timeSinceLastProgress}ms ago):`, progressKey);
+                        return;
+                    }
+                }
+                
+                // Store the current progress key and timestamp
+                lastProgressData = progressKey;
+                lastProgressTimestamp = now;
+                
+                console.log('Progress update:', data);
+                
+                // Update progress information
+                if (data.message) {
+                    currentMessage.textContent = data.message;
+                }
+                
+                if (data.progress !== undefined) {
+                    const progress = Math.round(data.progress);
+                    mainProgressBar.style.width = progress + '%';
+                    progressText.textContent = progress + '% Complete';
+                    progressDetails.textContent = `Progress: ${progress}%`;
+                }
+                
+                // Update unified progress display
+                updateUnifiedProgress(data);
+                
+                // Update step visualization with minimum duration logic
+                if (data.status && stepMapping[data.status]) {
+                    const stepInfo = stepMapping[data.status];
+                    const targetStep = stepInfo.step;
+                    
+                    // Special handling for steps with minimum duration requirements
+                    if (minimumDurationSteps.includes(targetStep)) {
+                        if (targetStep > currentStep) {
+                            // New step - transition immediately and start timer
+                            handleStepTransition(targetStep, stepInfo.color);
+                        }
+                    } else if (minimumDurationSteps.includes(currentStep) && targetStep > currentStep) {
+                        // We're trying to move from a minimum duration step to the next step
+                        if (canProceedToNextStep(currentStep)) {
+                            handleStepTransition(targetStep, stepInfo.color);
+                        } else {
+                            // Store for delayed execution
+                            pendingCompletion = { step: targetStep, color: stepInfo.color };
+                            handleDelayedCompletion();
+                        }
+                    } else {
+                        // Normal step transition
+                        handleStepTransition(targetStep, stepInfo.color);
+                    }
+                }
+                
+                // Handle completion with delay logic
+                if (data.status === 'completed') {
+                    const completionStep = stepMapping['completed'];
+                    
+                    if (minimumDurationSteps.includes(currentStep) && !canProceedToNextStep(currentStep)) {
+                        // Store completion for delayed execution
+                        pendingCompletion = { 
+                            step: completionStep.step, 
+                            color: completionStep.color,
+                            isCompletion: true 
+                        };
+                        handleDelayedCompletion();
+                    } else {
+                        // Can complete immediately
+                        handleStepTransition(completionStep.step, completionStep.color);
+                        setTimeout(() => {
+                            window.location.href = `/audit/results/${sessionId}`;
+                        }, 2000);
+                    }
+                }
+                
+                // Handle errors
+                if (data.status === 'error') {
+                    showError(data.error || 'An error occurred during the audit');
+                    if (eventSource) {
+                        eventSource.close();
+                    }
+                }
+                
+            } catch (e) {
+                console.error('Error parsing progress data:', e);
+            }
+        };
+        
+        eventSource.onerror = function(event) {
+            console.warn(`⚠️ EventSource error (state: ${eventSource.readyState})`, event);
+            isConnected = false;
+            
+            // Check if this is a connection error vs. a server error
+            if (eventSource.readyState === EventSource.CLOSED || eventSource.readyState === EventSource.CONNECTING) {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`🔄 Retrying EventSource connection in ${reconnectDelay}ms (attempt ${retryCount}/${maxRetries})`);
+                    
+                    setTimeout(() => {
+                        createEventSource();
+                    }, reconnectDelay);
+                    
+                    // Exponential backoff
+                    reconnectDelay = Math.min(reconnectDelay * 2, 10000); // Max 10 seconds
+                } else {
+                    console.error('❌ Max EventSource retries exceeded, falling back to polling');
+                    fallbackToPolling();
+                }
+            }
+        };
+    }
     
-    eventSource.onerror = function(event) {
-        console.error('EventSource failed:', event);
-        // Fallback: poll for results after a delay
+    // Fallback polling mechanism
+    function fallbackToPolling() {
+        console.log('📊 Switching to fallback polling mode');
+        showConnectionIssue();
+        
+        const pollInterval = setInterval(() => {
+            fetch(`/audit/status/${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        window.location.href = `/audit/results/${sessionId}`;
+                    } else if (data.status === 'error') {
+                        clearInterval(pollInterval);
+                        showError(data.error || 'Audit failed');
+                    }
+                    // Update progress if available
+                    if (data.progress !== undefined) {
+                        const progress = Math.round(data.progress);
+                        mainProgressBar.style.width = progress + '%';
+                        progressText.textContent = progress + '% Complete';
+                    }
+                })
+                .catch(error => {
+                    console.warn('⚠️ Polling error:', error);
+                });
+        }, 5000); // Poll every 5 seconds
+        
+        // Fallback timeout
         setTimeout(() => {
+            clearInterval(pollInterval);
             window.location.href = `/audit/results/${sessionId}`;
+        }, 300000); // 5 minutes maximum
+    }
+    
+    // Show connection issue notification
+    function showConnectionIssue() {
+        const connectionAlert = document.createElement('div');
+        connectionAlert.className = 'alert alert-warning mt-3';
+        connectionAlert.innerHTML = `
+            <i class="fas fa-wifi me-2"></i>
+            <strong>Connection Issue:</strong> Real-time updates temporarily unavailable. 
+            Using fallback polling mode...
+        `;
+        progressCard.appendChild(connectionAlert);
+        
+        // Remove after 10 seconds
+        setTimeout(() => {
+            if (connectionAlert.parentNode) {
+                connectionAlert.remove();
+            }
         }, 10000);
-    };
+    }
+    
+    // Connection health check
+    function checkConnectionHealth() {
+        const timeSinceLastProgress = Date.now() - lastProgressTime;
+        
+        // If no progress updates for 60 seconds, assume connection issues
+        if (isConnected && timeSinceLastProgress > 60000) {
+            console.warn('⚠️ No progress updates for 60 seconds, reconnecting...');
+            createEventSource();
+        }
+    }
+    
+    // Initialize EventSource
+    createEventSource();
+    
+    // Health check every 30 seconds
+    const healthCheck = setInterval(checkConnectionHealth, 30000);
     
     // Close EventSource when page unloads
     window.addEventListener('beforeunload', () => {
-        eventSource.close();
+        if (eventSource) {
+            eventSource.close();
+        }
+        clearInterval(healthCheck);
     });
     
     function updateStepProgress(targetStep, color) {
@@ -535,6 +765,74 @@ setTimeout(checkResults, 5000);
 
 .progress-bar {
     transition: width 0.3s ease;
+}
+
+/* Enhanced URL display styling */
+#urlDisplay {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#currentUrl {
+    word-break: break-all;
+    font-size: 0.9em;
+    line-height: 1.3;
+}
+
+#urlDetails {
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+#phaseIndicator {
+    font-size: 0.7em;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Activity icons styling */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Progress card animation */
+#progressCard {
+    transition: all 0.3s ease;
+}
+
+#progressCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Badge animations */
+.badge {
+    transition: all 0.2s ease;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* URL container styling */
+.bg-light {
+    transition: background-color 0.3s ease;
+}
+
+#urlDisplay .bg-light:hover {
+    background-color: #f8f9fa !important;
 }
 </style>
 

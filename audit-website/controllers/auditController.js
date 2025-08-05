@@ -297,19 +297,77 @@ jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit });
  */
 export const getAuditProgress = (req, res) => {
   const { sessionId } = req.params;
+  
+  // Set SSE headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control',
+    'X-Accel-Buffering': 'no' // Disable Nginx buffering
   });
-  res.write('data: {"type": "connected"}\n\n');
+
+  let connectionClosed = false;
+  let intervalId = null;
+  let heartbeatId = null;
+
+  // Helper function to safely write to SSE stream
+  const safeWrite = (data) => {
+    if (connectionClosed || res.destroyed || res.headersSent === false) {
+      return false;
+    }
+    
+    try {
+      return res.write(data);
+    } catch (error) {
+      console.warn(`⚠️ SSE write error for session ${sessionId}:`, error.message);
+      cleanup();
+      return false;
+    }
+  };
+
+  // Cleanup function
+  const cleanup = () => {
+    if (connectionClosed) return;
+    
+    connectionClosed = true;
+    
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    
+    if (heartbeatId) {
+      clearInterval(heartbeatId);
+      heartbeatId = null;
+    }
+    
+    try {
+      if (!res.destroyed) {
+        res.end();
+      }
+    } catch (error) {
+      console.warn(`⚠️ SSE cleanup error for session ${sessionId}:`, error.message);
+    }
+  };
+
+  // Send initial connection message
+  if (!safeWrite('data: {"type": "connected"}\n\n')) {
+    cleanup();
+    return;
+  }
 
   const checkProgress = () => {
+    if (connectionClosed) {
+      cleanup();
+      return;
+    }
+
     const session = activeSessions.get(sessionId);
     if (!session) {
-      res.write('data: {"type": "error", "message": "Session not found or expired. Please try again."}\n\n');
-      res.end();
+      safeWrite('data: {"type": "error", "message": "Session not found or expired. Please try again."}\n\n');
+      cleanup();
       return;
     }
 
@@ -321,35 +379,104 @@ export const getAuditProgress = (req, res) => {
       pageCount: session.pageCount || null,
       totalPages: session.totalPages || null,
       currentUrl: session.currentUrl || null,
-      detailedStatus: session.detailedStatus || null
+      detailedStatus: session.detailedStatus || null,
+      phase: session.phase || null
     };
 
     if (session.status === 'completed') {
-      res.write(`data: ${JSON.stringify({ ...progressData, type: 'completed', redirectUrl: `/audit/results/${sessionId}` })}\n\n`);
-      res.end();
+      safeWrite(`data: ${JSON.stringify({ ...progressData, type: 'completed', redirectUrl: `/audit/results/${sessionId}` })}\n\n`);
+      cleanup();
       return;
     }
+    
     if (session.status === 'error') {
-      res.write(`data: ${JSON.stringify({ ...progressData, type: 'error', message: session.error })}\n\n`);
-      res.end();
+      safeWrite(`data: ${JSON.stringify({ ...progressData, type: 'error', message: session.error })}\n\n`);
+      cleanup();
       return;
     }
+    
     // Send progress update
-    res.write(`data: ${JSON.stringify(progressData)}\n\n`);
+    safeWrite(`data: ${JSON.stringify(progressData)}\n\n`);
   };
 
+  // Send heartbeat to keep connection alive
+  const sendHeartbeat = () => {
+    if (connectionClosed) return;
+    safeWrite(': heartbeat\n\n');
+  };
+
+  // Initial progress check
   checkProgress();
-  const interval = setInterval(checkProgress, 2000);
+  
+  // Set up intervals
+  intervalId = setInterval(checkProgress, 2000);
+  heartbeatId = setInterval(sendHeartbeat, 30000); // Heartbeat every 30 seconds
+
+  // Handle client disconnect
   req.on('close', () => {
-    clearInterval(interval);
-    // Do NOT delete completed session here. Let results page handle cleanup or let periodic cleanup remove expired sessions.
-    // const session = activeSessions.get(sessionId);
-    // if (session && session.status === 'completed') {
-    //   activeSessions.delete(sessionId);
-    //   console.log(`[DEBUG] Session deleted after SSE disconnect: ${sessionId}. Total sessions: ${activeSessions.size}`);
-    //   console.log(`🧹 Cleaned up completed session ${sessionId} after SSE disconnect`);
-    // }
+    console.log(`🔌 SSE client disconnected for session: ${sessionId}`);
+    cleanup();
   });
+
+  // Handle request abort
+  req.on('aborted', () => {
+    console.log(`🚫 SSE request aborted for session: ${sessionId}`);
+    cleanup();
+  });
+
+  // Handle response errors
+  res.on('error', (error) => {
+    console.warn(`⚠️ SSE response error for session ${sessionId}:`, error.message);
+    cleanup();
+  });
+
+  // Handle response close
+  res.on('close', () => {
+    console.log(`📡 SSE response closed for session: ${sessionId}`);
+    cleanup();
+  });
+};
+
+/**
+ * Get audit status (fallback for when SSE fails)
+ */
+export const getAuditStatus = (req, res) => {
+  const { sessionId } = req.params;
+  
+  try {
+    const session = activeSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({
+        error: 'Session not found or expired',
+        status: 'not_found'
+      });
+    }
+
+    const statusData = {
+      status: session.status,
+      message: session.status === 'completed' ? 'Audit complete!' : 
+               session.status === 'error' ? session.error : 'Audit in progress...',
+      progress: session.progress || (session.status === 'completed' ? 100 : session.status === 'error' ? 0 : 10),
+      pageCount: session.pageCount || null,
+      totalPages: session.totalPages || null,
+      currentUrl: session.currentUrl || null,
+      detailedStatus: session.detailedStatus || null,
+      phase: session.phase || null,
+      timestamp: new Date().toISOString()
+    };
+
+    if (session.status === 'error') {
+      statusData.error = session.error;
+    }
+
+    res.json(statusData);
+  } catch (error) {
+    console.error('Error getting audit status:', error);
+    res.status(500).json({
+      error: 'Failed to get audit status',
+      status: 'error'
+    });
+  }
 };
 
 /**

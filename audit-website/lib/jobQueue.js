@@ -200,19 +200,36 @@ class JobQueue {
     let auditMetrics = null;
     let progressHandler = null;
     let timeoutId = null;
+    let lastProgressKey = null; // Track last progress to prevent duplicates
     
     try {
       // Set up progress forwarding from auditExecutor to activeSessions
       progressHandler = (progressData) => {
         try {
           if (progressData.sessionId === sessionId) {
+            // Create a unique key for this progress event to detect duplicates
+            const progressKey = `${progressData.status}_${progressData.phase}_${progressData.progress}_${progressData.currentUrl}_${progressData.detailedStatus}`;
+            
+            // Skip exact duplicate progress events at the server level (but be less aggressive)
+            if (lastProgressKey === progressKey) {
+              // Only skip if it's the same event within a very short time window
+              console.log(`🔄 Server: Skipping exact duplicate progress event for ${sessionId}:`, progressKey);
+              return;
+            }
+            
+            // Store the current progress key
+            lastProgressKey = progressKey;
+            
             // Use atomic update to prevent race conditions
             this._updateSession(activeSessions, sessionId, {
               status: progressData.status || 'running',
               message: progressData.message || 'Processing...',
               progress: Math.min(100, Math.max(0, progressData.progress || 0)),
               currentUrl: progressData.currentUrl || null,
-              detailedStatus: progressData.detailedStatus || null
+              detailedStatus: progressData.detailedStatus || null,
+              pageCount: progressData.pageCount || null,
+              totalPages: progressData.totalPages || null,
+              phase: progressData.phase || null
             });
           }
         } catch (err) {

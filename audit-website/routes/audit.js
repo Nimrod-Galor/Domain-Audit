@@ -3,6 +3,7 @@ import {
   getAuditForm,
   processAudit,
   getAuditProgress,
+  getAuditStatus,
   getAuditResults,
   getSimpleReport,
   getFullReport,
@@ -23,6 +24,7 @@ const router = express.Router();
 router.get('/', getAuditForm);
 router.post('/analyze', validateAuditRequest, processAudit);
 router.get('/progress/:sessionId', getAuditProgress);
+router.get('/status/:sessionId', getAuditStatus);
 router.get('/results/:sessionId', getAuditResults);
 
 // Report routes
