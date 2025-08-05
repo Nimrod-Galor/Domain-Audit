@@ -21,6 +21,7 @@ import auditRouter from './routes/audit.js';
 import authRouter from './routes/auth.js';
 import notificationRouter from './routes/notifications.js';
 import billingRouter from './routes/billing.js';
+import dashboardRouter from './routes/dashboard.js';
 
 // ES6 module compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -85,6 +86,7 @@ app.use('/audit', auditLimiter, rateLimitLogger, auditRouter);
 app.use('/auth', authRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/billing', billingRouter);
+app.use('/dashboard', dashboardRouter);
 
 // Error handling middleware
 app.use(errorLogger);

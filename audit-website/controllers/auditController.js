@@ -221,19 +221,34 @@ export const processAudit = async (req, res) => {
       }
     }
 
-    // Legacy rate limiting for backwards compatibility (to be removed)
+    // Daily limit checking for unregistered users (Freemium)
     if (!userId) {
-      const userAudits = req.session.audits || 0;
+      const today = new Date().toDateString();
+      const dailyAudits = req.session.dailyAudits || {};
+      const todayAudits = dailyAudits[today] || 0;
       
-      if (userAudits >= 3) {
+      if (todayAudits >= 1) {
         return res.render('audit/form', {
           title: 'Website Audit',
           user: req.session.user || null,
-          error: 'Free limit reached. Please sign up for more audits.',
-          url
+          error: 'Daily limit reached (1 audit per day for unregistered users). Sign up for 3 audits per month!',
+          url,
+          showSignUpPrompt: true
         });
       }
-      req.session.audits = userAudits + 1;
+      
+      // Track today's audit
+      dailyAudits[today] = todayAudits + 1;
+      req.session.dailyAudits = dailyAudits;
+      
+      // Clean up old entries (keep only last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      Object.keys(dailyAudits).forEach(date => {
+        if (new Date(date) < sevenDaysAgo) {
+          delete dailyAudits[date];
+        }
+      });
     } else {
       console.log(`Logged-in user: ${userEmail} (Tier: ${userLimits.tierName})`);
     }
@@ -269,10 +284,16 @@ export const processAudit = async (req, res) => {
       userId
     });
     
+    // Get tier information for rendering
+    const userTier = await tierService.getUserTier(userId);
+    const userUsage = userId ? await tierService.getCurrentUsage(userId) : null;
+    
     // Show loading page with progress
     res.render('audit/loading', {
       title: 'Analyzing Website...',
       user: req.session.user || null,
+      userTier,
+      userUsage,
       url,
       reportType,
       sessionId,
@@ -528,6 +549,9 @@ export const getAuditResults = async (req, res) => {
   const { sessionId } = req.params;
   const session = activeSessions.get(sessionId);
 
+  // Get user information for tier data
+  const userId = req.session?.user?.id || null;
+
   console.log(`🔍 Checking session ${sessionId}:`, {
     sessionExists: !!session,
     sessionStatus: session?.status,
@@ -583,9 +607,15 @@ export const getAuditResults = async (req, res) => {
       console.log(`🧹 Cleaned up cache session ${sessionId}`);
     }, 1000); // Small delay to ensure response is sent
     
+    // Get tier information for rendering
+    const userTier = await tierService.getUserTier(userId);
+    const userUsage = userId ? await tierService.getCurrentUsage(userId) : null;
+    
     return res.render('audit/results-simple', {
       title: `Simple Report - ${session.url}`,
       user: req.session.user || null,
+      userTier,
+      userUsage,
       data: session.result,
       url: session.url,
       fromCache: true,
@@ -679,9 +709,15 @@ export const getSimpleReport = async (req, res) => {
       }
     }
     
+    // Get tier information for rendering
+    const userTier = await tierService.getUserTier(userId);
+    const userUsage = userId ? await tierService.getCurrentUsage(userId) : null;
+    
     res.render('audit/results-simple', {
       title: `Simple Report - ${url}`,
       user: req.session.user || null,
+      userTier,
+      userUsage,
       url,
       data: reportData,
       timestamp,
@@ -718,6 +754,10 @@ export const getFullReport = async (req, res) => {
     // Get user information and tier limits
     const userId = req.session?.user?.id || null;
     const userLimits = await tierService.getUserTierLimits(userId);
+    
+    // Get tier information for rendering
+    const userTier = await tierService.getUserTier(userId);
+    const userUsage = userId ? await tierService.getCurrentUsage(userId) : null;
     
     // Check if user has access to full reports
     if (!userLimits.canAccessFullReports) {
@@ -792,6 +832,8 @@ export const getFullReport = async (req, res) => {
     res.render('audit/results-full', {
       title: `Full Report - ${url}`,
       user: req.session.user || null,
+      userTier,
+      userUsage,
       url,
       data: reportData,
       timestamp,
@@ -938,6 +980,11 @@ export const getHistoricalSimpleReport = async (req, res) => {
   try {
     const domain = decodeURIComponent(req.params.domain);
     const auditId = parseInt(req.params.auditId);
+    const userId = req.session?.user?.id;
+
+    // Get tier information for rendering
+    const userTier = await tierService.getUserTier(userId);
+    const userUsage = userId ? await tierService.getCurrentUsage(userId) : null;
     
     if (!auditId || isNaN(auditId)) {
       return res.render('audit/error', {
@@ -979,6 +1026,8 @@ export const getHistoricalSimpleReport = async (req, res) => {
     res.render('audit/results-simple', {
       title: `Historical Simple Report - ${domain}`,
       user: req.session.user || null,
+      userTier,
+      userUsage,
       url: auditRecord.url || auditRecord.domain,
       data: auditRecord.report_data,
       timestamp: auditRecord.created_at,
@@ -1004,6 +1053,11 @@ export const getHistoricalFullReport = async (req, res) => {
   try {
     const domain = decodeURIComponent(req.params.domain);
     const auditId = parseInt(req.params.auditId);
+    const userId = req.session?.user?.id;
+
+    // Get tier information for rendering
+    const userTier = await tierService.getUserTier(userId);
+    const userUsage = userId ? await tierService.getCurrentUsage(userId) : null;
     
     if (!auditId || isNaN(auditId)) {
       return res.render('audit/error', {
@@ -1045,6 +1099,8 @@ export const getHistoricalFullReport = async (req, res) => {
     res.render('audit/results-full', {
       title: `Historical Full Report - ${domain}`,
       user: req.session.user || null,
+      userTier,
+      userUsage,
       url: auditRecord.url || auditRecord.domain,
       data: auditRecord.report_data,
       timestamp: auditRecord.created_at,

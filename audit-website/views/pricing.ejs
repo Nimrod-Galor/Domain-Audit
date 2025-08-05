@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SiteScope</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .pricing-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+        }
+        
+        .pricing-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .pricing-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 10px 30px rgba(0,123,255,0.1);
+            transform: translateY(-5px);
+        }
+        
+        .pricing-card.featured {
+            border-color: #007bff;
+            position: relative;
+            transform: scale(1.05);
+        }
+        
+        .featured-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #007bff;
+        }
+        
+        .price-period {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: normal;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-check {
+            color: #28a745;
+            margin-right: 0.5rem;
+        }
+        
+        .feature-cross {
+            color: #dc3545;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-tier {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-top: auto;
+        }
+        
+        .billing-toggle {
+            background: #f8f9fa;
+            border-radius: 50px;
+            padding: 0.5rem;
+            display: inline-flex;
+            margin: 2rem 0;
+        }
+        
+        .billing-option {
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .billing-option.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .tier-freemium { background: linear-gradient(45deg, #6c757d, #495057); }
+        .tier-starter { background: linear-gradient(45deg, #28a745, #20c997); }
+        .tier-professional { background: linear-gradient(45deg, #007bff, #0056b3); }
+        .tier-enterprise { background: linear-gradient(45deg, #6f42c1, #495057); }
+        
+        .savings-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .pricing-card.featured {
+                transform: none;
+                margin-top: 1rem;
+            }
+            
+            .pricing-header {
+                padding: 2rem 0;
+            }
+            
+            .price {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-search me-2"></i>SiteScope
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/pricing">Pricing</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <% if (user) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <%= user.email %>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/billing/dashboard">Billing Dashboard</a></li>
+                                <li><a class="dropdown-item" href="/audit/user-audits">My Audits</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+                            </ul>
+                        </li>
+                    <% } else { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/register">Sign Up</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Pricing Header -->
+    <section class="pricing-header text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">Choose Your Perfect Plan</h1>
+            <p class="lead mb-4">Scale your website auditing with our flexible pricing options</p>
+            
+            <!-- Billing Toggle -->
+            <div class="billing-toggle">
+                <button class="billing-option active" data-billing="monthly">
+                    Monthly
+                </button>
+                <button class="billing-option" data-billing="annual">
+                    Annual <span class="savings-badge">Save 20%</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Free Trial for Unregistered Users -->
+    <% if (!user) { %>
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <div class="card border-primary shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="tier-freemium text-white p-3 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-gift fa-lg"></i>
+                            </div>
+                            <h4 class="fw-bold text-primary mb-3">Try Before You Sign Up</h4>
+                            <p class="text-muted mb-3">
+                                Get started immediately with our free trial - no registration required!
+                            </p>
+                            <div class="row text-center mb-3">
+                                <div class="col-md-4">
+                                    <i class="fas fa-clock text-primary mb-2"></i>
+                                    <div><strong>1 Audit/Day</strong></div>
+                                    <small class="text-muted">Free forever</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-file-alt text-primary mb-2"></i>
+                                    <div><strong>25 Pages</strong></div>
+                                    <small class="text-muted">Per audit</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-link text-primary mb-2"></i>
+                                    <div><strong>10 External Links</strong></div>
+                                    <small class="text-muted">Checked</small>
+                                </div>
+                            </div>
+                            <a href="/audit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-rocket me-2"></i>Start Free Audit Now
+                            </a>
+                            <div class="mt-3">
+                                <small class="text-muted">Want more? Sign up below for our Starter plan!</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <% } %>
+
+    <!-- Pricing Cards -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Starter Tier - FREE for registered users -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card pricing-card h-100">
+                        <div class="card-header bg-light text-center py-4">
+                            <div class="tier-starter text-white p-3 rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                            <h3 class="fw-bold">Starter</h3>
+                            <div class="price monthly-price">$0<span class="price-period">/month</span></div>
+                            <div class="price annual-price d-none">$0<span class="price-period">/year</span></div>
+                            <p class="text-muted">For small businesses</p>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check feature-check"></i>3 audits per month</li>
+                                <li><i class="fas fa-check feature-check"></i>Up to 100 pages per audit</li>
+                                <li><i class="fas fa-check feature-check"></i>50 external links checked</li>
+                                <li><i class="fas fa-check feature-check"></i>30-day result retention</li>
+                                <li><i class="fas fa-check feature-check"></i>Full audit reports</li>
+                                <li><i class="fas fa-check feature-check"></i>PDF export</li>
+                                <li><i class="fas fa-check feature-check"></i>Email alerts</li>
+                                <li><i class="fas fa-check feature-check"></i>Basic competitor insights</li>
+                                <li><i class="fas fa-times feature-cross"></i>API access</li>
+                                <li><i class="fas fa-times feature-cross"></i>Scheduled audits</li>
+                            </ul>
+                            <% if (user && currentTier === 'starter') { %>
+                                <button class="btn btn-outline-secondary btn-tier mt-3" disabled>
+                                    <i class="fas fa-check me-1"></i>Current Plan
+                                </button>
+                            <% } else if (user) { %>
+                                <button class="btn btn-success btn-tier mt-3" onclick="upgradeTo('starter')">
+                                    <i class="fas fa-arrow-up me-1"></i>Upgrade to Starter
+                                </button>
+                            <% } else { %>
+                                <a href="/auth/register" class="btn btn-success btn-tier mt-3">
+                                    <i class="fas fa-rocket me-1"></i>Start Free Trial
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Tier - FEATURED -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card pricing-card featured h-100">
+                        <div class="featured-badge">Most Popular</div>
+                        <div class="card-header bg-primary text-white text-center py-4">
+                            <div class="tier-professional bg-white text-primary p-3 rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-crown fa-2x"></i>
+                            </div>
+                            <h3 class="fw-bold">Professional</h3>
+                            <div class="price text-white monthly-price">$39<span class="price-period">/month</span></div>
+                            <div class="price text-white annual-price d-none">$29<span class="price-period">/month</span><span class="savings-badge">26% off</span></div>
+                            <p class="text-white-50">For agencies & consultants</p>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check feature-check"></i>Unlimited audits</li>
+                                <li><i class="fas fa-check feature-check"></i>Up to 1,000 pages per audit</li>
+                                <li><i class="fas fa-check feature-check"></i>200 external links checked</li>
+                                <li><i class="fas fa-check feature-check"></i>1-year result retention</li>
+                                <li><i class="fas fa-check feature-check"></i>Full detailed reports</li>
+                                <li><i class="fas fa-check feature-check"></i>PDF export</li>
+                                <li><i class="fas fa-check feature-check"></i>API access</li>
+                                <li><i class="fas fa-check feature-check"></i>Scheduled audits</li>
+                                <li><i class="fas fa-check feature-check"></i>White-label reports</li>
+                                <li><i class="fas fa-check feature-check"></i>Competitor tracking (3 sites)</li>
+                                <li><i class="fas fa-check feature-check"></i>Priority email support</li>
+                            </ul>
+                            <% if (user && currentTier === 'professional') { %>
+                                <button class="btn btn-outline-secondary btn-tier mt-3" disabled>
+                                    <i class="fas fa-check me-1"></i>Current Plan
+                                </button>
+                            <% } else if (user) { %>
+                                <button class="btn btn-primary btn-tier mt-3" onclick="upgradeTo('professional')">
+                                    <i class="fas fa-arrow-up me-1"></i>Upgrade to Professional
+                                </button>
+                            <% } else { %>
+                                <a href="/auth/register" class="btn btn-primary btn-tier mt-3">
+                                    <i class="fas fa-star me-1"></i>Start Professional
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enterprise Tier -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card pricing-card h-100">
+                        <div class="card-header bg-light text-center py-4">
+                            <div class="tier-enterprise text-white p-3 rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-building fa-2x"></i>
+                            </div>
+                            <h3 class="fw-bold">Enterprise</h3>
+                            <div class="price monthly-price">$99<span class="price-period">/month</span></div>
+                            <div class="price annual-price d-none">$79<span class="price-period">/month</span><span class="savings-badge">20% off</span></div>
+                            <p class="text-muted">For large agencies & teams</p>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check feature-check"></i>Unlimited audits</li>
+                                <li><i class="fas fa-check feature-check"></i>Unlimited pages per audit</li>
+                                <li><i class="fas fa-check feature-check"></i>Unlimited external links</li>
+                                <li><i class="fas fa-check feature-check"></i>2-year result retention</li>
+                                <li><i class="fas fa-check feature-check"></i>Full detailed reports</li>
+                                <li><i class="fas fa-check feature-check"></i>PDF export</li>
+                                <li><i class="fas fa-check feature-check"></i>Full API access</li>
+                                <li><i class="fas fa-check feature-check"></i>Advanced scheduling</li>
+                                <li><i class="fas fa-check feature-check"></i>Multi-user team access (10 users)</li>
+                                <li><i class="fas fa-check feature-check"></i>Custom domain integration</li>
+                                <li><i class="fas fa-check feature-check"></i>Dedicated account manager</li>
+                                <li><i class="fas fa-check feature-check"></i>Phone + priority support</li>
+                            </ul>
+                            <% if (user && currentTier === 'enterprise') { %>
+                                <button class="btn btn-outline-secondary btn-tier mt-3" disabled>
+                                    <i class="fas fa-check me-1"></i>Current Plan
+                                </button>
+                            <% } else if (user) { %>
+                                <button class="btn btn-dark btn-tier mt-3" onclick="upgradeTo('enterprise')">
+                                    <i class="fas fa-arrow-up me-1"></i>Upgrade to Enterprise
+                                </button>
+                            <% } else { %>
+                                <a href="/auth/register" class="btn btn-dark btn-tier mt-3">
+                                    <i class="fas fa-building me-1"></i>Contact Sales
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    What's included in the audit reports?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Our audit reports include comprehensive analysis of SEO metrics, performance scores, accessibility issues, broken links, meta tag analysis, and technical SEO recommendations. Professional plans include detailed white-label reports.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    Can I upgrade or downgrade my plan anytime?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes, you can upgrade your plan anytime and the changes take effect immediately. For downgrades, please contact our support team to ensure a smooth transition.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    Is there an API available?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes, our Professional and Enterprise plans include full API access with comprehensive documentation, allowing you to integrate auditing into your existing workflows.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq4">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                                    What payment methods do you accept?
+                                </button>
+                            </h2>
+                            <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and ACH transfers for Enterprise plans. All payments are processed securely through Stripe.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 SiteScope. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="/privacy" class="text-white-50 me-3">Privacy Policy</a>
+                    <a href="/terms" class="text-white-50">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Billing toggle functionality
+        document.querySelectorAll('.billing-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove active class from all options
+                document.querySelectorAll('.billing-option').forEach(opt => opt.classList.remove('active'));
+                
+                // Add active class to clicked option
+                this.classList.add('active');
+                
+                // Toggle price display
+                const isAnnual = this.dataset.billing === 'annual';
+                document.querySelectorAll('.monthly-price').forEach(price => {
+                    price.classList.toggle('d-none', isAnnual);
+                });
+                document.querySelectorAll('.annual-price').forEach(price => {
+                    price.classList.toggle('d-none', !isAnnual);
+                });
+            });
+        });
+
+        // Upgrade functionality
+        async function upgradeTo(tierName) {
+            try {
+                const response = await fetch('/billing/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tierName })
+                });
+                
+                const data = await response.json();
+                
+                if (data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                } else {
+                    alert('Error creating checkout session: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error processing upgrade. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

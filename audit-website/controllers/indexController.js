@@ -2,6 +2,7 @@
  * Index Controller
  * Handles homepage and general application routes
  */
+import tierService from '../services/tierService.js';
 
 /**
  * Display the landing page
@@ -68,71 +69,28 @@ export const getAboutPage = (req, res) => {
 /**
  * Display the pricing page
  */
-export const getPricingPage = (req, res) => {
-  res.render('pricing', {
-    title: 'Pricing - SiteScope',
-    user: req.session.user || null,
-    plans: [
-      {
-        name: 'Free Tier',
-        price: 0,
-        period: 'month',
-        description: 'Perfect for getting started',
-        features: [
-          '3 website audits per month',
-          'Basic performance metrics',
-          'Simple reports',
-          'Email support'
-        ],
-        limitations: [
-          'Limited to 10 external links per audit',
-          'Basic reporting only'
-        ],
-        ctaText: 'Get Started Free',
-        ctaClass: 'btn-outline-primary',
-        popular: false
-      },
-      {
-        name: 'Professional',
-        price: 15,
-        period: 'month',
-        description: 'For serious website optimization',
-        features: [
-          '50 website audits per month',
-          'Unlimited external link checking',
-          'Advanced performance metrics',
-          'Detailed SEO analysis',
-          'PDF report exports',
-          'Priority email support',
-          'Historical data tracking'
-        ],
-        limitations: [],
-        ctaText: 'Start Professional',
-        ctaClass: 'btn-primary',
-        popular: true
-      },
-      {
-        name: 'Business',
-        price: 35,
-        period: 'month',
-        description: 'For agencies and large websites',
-        features: [
-          '200 website audits per month',
-          'Unlimited external link checking',
-          'Batch processing',
-          'API access',
-          'White-label reports',
-          'Custom branding',
-          'Priority phone support',
-          'Team collaboration tools'
-        ],
-        limitations: [],
-        ctaText: 'Contact Sales',
-        ctaClass: 'btn-dark',
-        popular: false
-      }
-    ]
-  });
+export const getPricingPage = async (req, res) => {
+  try {
+    // Get user's current tier if logged in
+    let currentTier = null;
+    if (req.session?.user?.id) {
+      const userLimits = await tierService.getUserTierLimits(req.session.user.id);
+      currentTier = userLimits.tierName;
+    }
+
+    res.render('pricing', {
+      title: 'Pricing - Choose Your Plan',
+      user: req.session.user || null,
+      currentTier: currentTier || 'none'
+    });
+  } catch (error) {
+    console.error('Error loading pricing page:', error);
+    res.render('pricing', {
+      title: 'Pricing - Choose Your Plan',
+      user: req.session.user || null,
+      currentTier: 'none'
+    });
+  }
 };
 
 /**

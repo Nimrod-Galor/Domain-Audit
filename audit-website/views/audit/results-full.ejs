@@ -51,6 +51,71 @@
                         </a>
                     </div>
                 </div>
+
+                <!-- Tier-aware Information Section -->
+                <% if (user && userTier) { %>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-<%= userTier.name === 'Enterprise' ? 'success' : userTier.name === 'Professional' ? 'primary' : userTier.name === 'Starter' ? 'warning' : 'info' %> border-0 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-<%= userTier.name === 'Enterprise' ? 'crown' : userTier.name === 'Professional' ? 'star' : userTier.name === 'Starter' ? 'rocket' : 'user' %> me-3 fa-lg"></i>
+                                        <div>
+                                            <h6 class="mb-1"><%= userTier.name %> Plan Full Analysis</h6>
+                                            <small>
+                                                <% if (userTier.name === 'Freemium') { %>
+                                                    Complete analysis with <%= userTier.limits.external_links_per_audit %> external links checked
+                                                <% } else if (userTier.name === 'Starter') { %>
+                                                    Enhanced analysis with up to <%= userTier.limits.external_links_per_audit %> external links
+                                                <% } else if (userTier.name === 'Professional') { %>
+                                                    Professional full analysis with up to <%= userTier.limits.external_links_per_audit %> external links
+                                                <% } else { %>
+                                                    Complete unlimited analysis with advanced features
+                                                <% } %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <% if (userUsage && userTier.name !== 'Enterprise') { %>
+                                            <small class="text-muted me-3">
+                                                <%= userUsage.auditsThisMonth %> / <%= userTier.limits.audits_per_month %> audits this month
+                                            </small>
+                                        <% } %>
+                                        <% if (userTier.name !== 'Enterprise') { %>
+                                            <a href="/pricing" class="btn btn-sm btn-outline-<%= userTier.name === 'Professional' ? 'success' : 'primary' %>">
+                                                <i class="fas fa-arrow-up me-1"></i>Upgrade
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% } else if (!user) { %>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info border-0 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-info-circle me-3 fa-lg"></i>
+                                        <div>
+                                            <h6 class="mb-1">Limited Guest Analysis</h6>
+                                            <small>Sign up for comprehensive audits and advanced features</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <a href="/auth/register" class="btn btn-sm btn-primary me-2">
+                                            <i class="fas fa-user-plus me-1"></i>Sign Up
+                                        </a>
+                                        <a href="/pricing" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>View Plans
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
             </div>
         </div>
 
