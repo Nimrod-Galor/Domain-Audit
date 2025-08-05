@@ -1,0 +1,346 @@
+<%- include('../partials/header', { title: 'Dashboard - SiteScope', user: user }) %>
+
+<section class="py-5">
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold">Dashboard</h1>
+                        <p class="lead text-muted mb-0">Welcome back, <%= user.name %>!</p>
+                        <small class="text-muted">
+                            <i class="fas fa-crown me-1"></i>Plan: <%= user.plan.charAt(0).toUpperCase() + user.plan.slice(1) %>
+                        </small>
+                    </div>
+                    <div>
+                        <a href="/audit" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>New Audit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Verification Banner -->
+        <% if (!user.emailVerified) { %>
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div class="flex-grow-1">
+                                <h5 class="alert-heading mb-1">Email Verification Required</h5>
+                                <p class="mb-2">Please verify your email address to unlock all features and ensure account security.</p>
+                                <small class="text-muted">
+                                    <strong>Verification email sent to:</strong> <%= user.email %>
+                                </small>
+                            </div>
+                            <div class="ms-3">
+                                <button id="resendVerificationBtn" class="btn btn-warning btn-sm me-2">
+                                    <i class="fas fa-paper-plane me-1"></i>Resend Email
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <div id="verificationMessage" style="display: none;"></div>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-2x mb-3"></i>
+                        <h4 class="mb-1"><%= stats.totalAudits %></h4>
+                        <p class="mb-0">Total Audits</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle fa-2x mb-3"></i>
+                        <h4 class="mb-1"><%= stats.completedAudits %></h4>
+                        <p class="mb-0">Completed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-star fa-2x mb-3"></i>
+                        <h4 class="mb-1"><%= stats.averageScore %></h4>
+                        <p class="mb-0">Average Score</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-alt fa-2x mb-3"></i>
+                        <h4 class="mb-1"><%= stats.thisMonth %></h4>
+                        <p class="mb-0">This Month</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Audits -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Audits
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (audits && audits.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Website</th>
+                                            <th>Type</th>
+                                            <th>Score</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% audits.forEach(function(audit) { %>
+                                            <tr>
+                                                <td>
+                                                    <a href="<%= audit.url %>" target="_blank" class="text-decoration-none">
+                                                        <%= audit.url %>
+                                                        <i class="fas fa-external-link-alt ms-1 text-muted small"></i>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge <%= audit.type === 'full' ? 'bg-primary' : 'bg-secondary' %>">
+                                                        <%= audit.type.charAt(0).toUpperCase() + audit.type.slice(1) %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <% if (audit.score) { %>
+                                                        <% 
+                                                            let scoreClass = 'text-danger';
+                                                            if (audit.score >= 80) scoreClass = 'text-success';
+                                                            else if (audit.score >= 60) scoreClass = 'text-warning';
+                                                        %>
+                                                        <span class="<%= scoreClass %> fw-bold"><%= audit.score %></span>
+                                                    <% } else { %>
+                                                        <span class="text-muted">-</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <%= audit.date.toLocaleDateString() %>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <% 
+                                                        let statusClass = 'bg-secondary';
+                                                        if (audit.status === 'completed') statusClass = 'bg-success';
+                                                        else if (audit.status === 'pending') statusClass = 'bg-warning';
+                                                        else if (audit.status === 'failed') statusClass = 'bg-danger';
+                                                    %>
+                                                    <span class="badge <%= statusClass %>">
+                                                        <%= audit.status.charAt(0).toUpperCase() + audit.status.slice(1) %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <% if (audit.status === 'completed') { %>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <a href="/audit/simple/<%= encodeURIComponent(audit.url) %>" 
+                                                               class="btn btn-outline-primary btn-sm">
+                                                                Simple
+                                                            </a>
+                                                            <a href="/audit/full/<%= encodeURIComponent(audit.url) %>" 
+                                                               class="btn btn-outline-secondary btn-sm">
+                                                                Full
+                                                            </a>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <span class="text-muted small">-</span>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-5">
+                                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No audits yet</h5>
+                                <p class="text-muted mb-4">Start by running your first website audit</p>
+                                <a href="/audit" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Run Your First Audit
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Benefits -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-crown me-2"></i>Your Plan Benefits
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (user.plan === 'free') { %>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">What you get:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i>3 audits per month</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Basic performance metrics</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Simple reports</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Email support</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Upgrade for more:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-star text-warning me-2"></i>Unlimited external link checking</li>
+                                        <li><i class="fas fa-star text-warning me-2"></i>Advanced analytics</li>
+                                        <li><i class="fas fa-star text-warning me-2"></i>PDF exports</li>
+                                        <li><i class="fas fa-star text-warning me-2"></i>Historical data</li>
+                                    </ul>
+                                    <a href="/pricing" class="btn btn-warning">
+                                        <i class="fas fa-arrow-up me-2"></i>Upgrade Plan
+                                    </a>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="alert alert-success">
+                                <i class="fas fa-crown me-2"></i>
+                                <strong>Premium User!</strong> You have access to all features including unlimited external link checking, advanced reports, and priority support.
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<% if (!user.emailVerified) { %>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const resendBtn = document.getElementById('resendVerificationBtn');
+        if (resendBtn) {
+            resendBtn.addEventListener('click', async function() {
+                const btn = this;
+                const messageDiv = document.getElementById('verificationMessage');
+                const email = '<%= user.email %>';
+                
+                // Disable button and show loading
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+                
+                try {
+                    const response = await fetch('/auth/resend-verification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        messageDiv.className = 'alert alert-success alert-dismissible fade show';
+                        messageDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + result.message + 
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                    } else {
+                        messageDiv.className = 'alert alert-danger alert-dismissible fade show';
+                        messageDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + result.message +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                    }
+                    
+                    messageDiv.style.display = 'block';
+                    
+                } catch (error) {
+                    messageDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    messageDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Network error. Please try again.' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                    messageDiv.style.display = 'block';
+                }
+                
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Resend Email';
+            });
+        }
+    });
+</script>
+<% } %>
+
+    </div>
+</section>
+
+<% if (!user.emailVerified) { %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resendBtn = document.getElementById('resendVerificationBtn');
+    const messageDiv = document.getElementById('verificationMessage');
+    
+    if (resendBtn) {
+        resendBtn.addEventListener('click', async function() {
+            // Disable button and show loading
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+            
+            try {
+                const response = await fetch('/auth/resend-verification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: '<%= user.email %>' })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    messageDiv.className = 'alert alert-success alert-dismissible fade show';
+                    messageDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + result.message +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                } else {
+                    messageDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    messageDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + result.message +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                }
+                
+                messageDiv.style.display = 'block';
+                
+            } catch (error) {
+                messageDiv.className = 'alert alert-danger';
+                messageDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Network error. Please try again.';
+                messageDiv.style.display = 'block';
+            }
+            
+            // Re-enable button
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Resend Email';
+        });
+    }
+});
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,448 @@
+<%- include('../partials/header', { title: 'Full Report - ' + url + ' - SiteScope', user: user }) %>
+
+<!-- Results Section -->
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-lg-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold">Comprehensive Audit Report</h1>
+                        <p class="lead text-muted mb-0">
+                            <i class="fas fa-globe me-2"></i><%= url %>
+                        </p>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>Generated: <%= new Date(timestamp).toLocaleString() %>
+                            </small>
+                            <% if (typeof fromDatabase !== 'undefined' && fromDatabase) { %>
+                                <span class="badge bg-info">
+                                    <i class="fas fa-database me-1"></i>From Database
+                                </span>
+                            <% } %>
+                            <% if (typeof fromCache !== 'undefined' && fromCache) { %>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-bolt me-1"></i>Cached Result
+                                </span>
+                            <% } %>
+                            <% if (typeof isHistorical !== 'undefined' && isHistorical) { %>
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-history me-1"></i>Historical Report
+                                </span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/audit/simple/<%= encodeURIComponent(url) %>" class="btn btn-outline-primary">
+                            <i class="fas fa-bolt me-2"></i>Simple View
+                        </a>
+                        <a href="/audit" class="btn btn-outline-secondary">
+                            <i class="fas fa-plus me-2"></i>New Audit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats (same as simple) -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-alt fa-2x mb-3"></i>
+                        <h3 class="mb-2"><%= data.simple.summary.totalPages %></h3>
+                        <p class="mb-0">Pages Analyzed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-link fa-2x mb-3"></i>
+                        <h3 class="mb-2"><%= data.simple.summary.totalInternalLinks %></h3>
+                        <p class="mb-0">Internal Links</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-external-link-alt fa-2x mb-3"></i>
+                        <h3 class="mb-2"><%= data.simple.summary.totalExternalLinks %></h3>
+                        <p class="mb-0">External Links</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-<%= data.simple.summary.brokenLinks > 0 ? 'danger' : 'success' %> text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-<%= data.simple.summary.brokenLinks > 0 ? 'exclamation-triangle' : 'check-circle' %> fa-2x mb-3"></i>
+                        <h3 class="mb-2"><%= data.simple.summary.brokenLinks %></h3>
+                        <p class="mb-0">Broken Links</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-4" id="reportTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                    <i class="fas fa-chart-pie me-2"></i>Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internal" type="button">
+                    <i class="fas fa-link me-2"></i>Internal Links
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#external" type="button">
+                    <i class="fas fa-external-link-alt me-2"></i>External Links
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="issues-tab" data-bs-toggle="tab" data-bs-target="#issues" type="button">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Issues
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button">
+                    <i class="fas fa-envelope me-2"></i>Contact Info
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="reportTabsContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Link Status Chart -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">External Link Status Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span><i class="fas fa-check-circle text-success me-2"></i>Working</span>
+                                        <strong><%= data.simple.summary.okLinks %></strong>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 12px;">
+                                        <div class="progress-bar bg-success" style="width: <% if(data.simple.summary.totalExternalLinks > 0) { %><%= (data.simple.summary.okLinks / data.simple.summary.totalExternalLinks * 100).toFixed(1) %><% } else { %>0<% } %>%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span><i class="fas fa-times-circle text-danger me-2"></i>Broken</span>
+                                        <strong><%= data.simple.summary.brokenExternal %></strong>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 12px;">
+                                        <div class="progress-bar bg-danger" style="width: <% if(data.simple.summary.totalExternalLinks > 0) { %><%= (data.simple.summary.brokenExternal / data.simple.summary.totalExternalLinks * 100).toFixed(1) %><% } else { %>0<% } %>%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span><i class="fas fa-clock text-warning me-2"></i>Timeout</span>
+                                        <strong><%= data.simple.summary.timeoutLinks %></strong>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 12px;">
+                                        <div class="progress-bar bg-warning" style="width: <% if(data.simple.summary.totalExternalLinks > 0) { %><%= (data.simple.summary.timeoutLinks / data.simple.summary.totalExternalLinks * 100).toFixed(1) %><% } else { %>0<% } %>%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Issues -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Priority Issues</h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (data.simple.topIssues && data.simple.topIssues.length > 0) { %>
+                                    <% data.simple.topIssues.slice(0, 5).forEach(function(issue, index) { %>
+                                        <div class="alert alert-<%= issue.severity === 'high' ? 'danger' : 'warning' %> py-2 mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-<%= issue.type === 'broken_internal' ? 'unlink' : 'external-link-alt' %> me-2"></i>
+                                                <div class="flex-grow-1">
+                                                    <strong class="small"><%= issue.type === 'broken_internal' ? 'Broken Internal' : 'Broken External' %></strong>
+                                                    <div class="small text-muted">Status: <%= issue.status %></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                                        <p>No critical issues found!</p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Internal Links Tab -->
+            <div class="tab-pane fade" id="internal" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Internal Links Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (data.detailed.allStats && Object.keys(data.detailed.allStats).length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>URL</th>
+                                            <th>Occurrences</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% Object.entries(data.detailed.allStats).slice(0, 50).forEach(function([url, linkData]) { %>
+                                            <tr>
+                                                <td>
+                                                    <a href="<%= url %>" target="_blank" class="text-decoration-none">
+                                                        <%= url.length > 60 ? url.substring(0, 60) + '...' : url %>
+                                                    </a>
+                                                </td>
+                                                <td><span class="badge bg-info"><%= linkData.count %></span></td>
+                                                <td><span class="badge bg-success">OK</span></td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <% if (Object.keys(data.detailed.allStats).length > 50) { %>
+                                <div class="text-center mt-3">
+                                    <small class="text-muted">Showing first 50 of <%= Object.keys(data.detailed.allStats).length %> internal links</small>
+                                </div>
+                            <% } %>
+                        <% } else { %>
+                            <p class="text-muted">No internal links found.</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- External Links Tab -->
+            <div class="tab-pane fade" id="external" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">External Links Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- User Limit Notice for Unregistered Users -->
+                        <% if (!user) { %>
+                        <div class="alert alert-warning mb-3" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Limited Analysis:</strong> Only 10 external links were checked (unregistered user limit). 
+                            <a href="/auth/register" class="alert-link">Register</a> for unlimited external link analysis.
+                        </div>
+                        <% } %>
+                        
+                        <% if (data.detailed.allExternalLinks && Object.keys(data.detailed.allExternalLinks).length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>URL</th>
+                                            <th>Status</th>
+                                            <th>Response Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% Object.entries(data.detailed.allExternalLinks).forEach(function([url, linkData]) { %>
+                                            <tr>
+                                                <td>
+                                                    <a href="<%= url %>" target="_blank" class="text-decoration-none">
+                                                        <%= url.length > 60 ? url.substring(0, 60) + '...' : url %>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <% if (typeof linkData.status === 'number' && linkData.status >= 200 && linkData.status < 300) { %>
+                                                        <span class="badge bg-success"><%= linkData.status %></span>
+                                                    <% } else if (linkData.status === 'TIMEOUT') { %>
+                                                        <span class="badge bg-warning">TIMEOUT</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-danger"><%= linkData.status %></span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <% if (linkData.responseTime) { %>
+                                                        <%= linkData.responseTime %>ms
+                                                    <% } else { %>
+                                                        <span class="text-muted">-</span>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <p class="text-muted">No external links found.</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues Tab -->
+            <div class="tab-pane fade" id="issues" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Broken Internal Links -->
+                    <% if (data.detailed.allBadRequests && Object.keys(data.detailed.allBadRequests).length > 0) { %>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-unlink me-2"></i>Broken Internal Links
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>URL</th>
+                                                    <th>Status</th>
+                                                    <th>Linked From</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% Object.entries(data.detailed.allBadRequests).forEach(function([url, linkData]) { %>
+                                                    <tr>
+                                                        <td>
+                                                            <a href="<%= url %>" target="_blank" class="text-decoration-none">
+                                                                <%= url.length > 50 ? url.substring(0, 50) + '...' : url %>
+                                                            </a>
+                                                        </td>
+                                                        <td><span class="badge bg-danger"><%= linkData.status %></span></td>
+                                                        <td>
+                                                            <% if (linkData.sources && linkData.sources.size > 0) { %>
+                                                                <% const sources = Array.from(linkData.sources).slice(0, 3); %>
+                                                                <% sources.forEach(function(source, index) { %>
+                                                                    <a href="<%= source %>" target="_blank" class="text-decoration-none small">
+                                                                        <%= source.length > 30 ? source.substring(0, 30) + '...' : source %>
+                                                                    </a>
+                                                                    <% if (index < sources.length - 1) { %>, <% } %>
+                                                                <% }); %>
+                                                                <% if (Array.from(linkData.sources).length > 3) { %>
+                                                                    <small class="text-muted">+<%= Array.from(linkData.sources).length - 3 %> more</small>
+                                                                <% } %>
+                                                            <% } else { %>
+                                                                <span class="text-muted">Unknown</span>
+                                                            <% } %>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Contact Info Tab -->
+            <div class="tab-pane fade" id="contact" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Email Links -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-envelope me-2"></i>Email Links Found
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (data.detailed.mailtoLinks && Object.keys(data.detailed.mailtoLinks).length > 0) { %>
+                                    <% Object.entries(data.detailed.mailtoLinks).forEach(function([email, linkData]) { %>
+                                        <div class="mb-3 pb-3 border-bottom">
+                                            <a href="<%= email %>" class="text-decoration-none">
+                                                <i class="fas fa-envelope me-2"></i><%= email.replace('mailto:', '') %>
+                                            </a>
+                                            <% if (linkData.sources && linkData.sources.size > 0) { %>
+                                                <div class="small text-muted mt-1">
+                                                    Found on: <%= Array.from(linkData.sources).slice(0, 2).join(', ') %>
+                                                    <% if (Array.from(linkData.sources).length > 2) { %>
+                                                        +<%= Array.from(linkData.sources).length - 2 %> more
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <p class="text-muted">No email links found.</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phone Links -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-phone me-2"></i>Phone Links Found
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (data.detailed.telLinks && Object.keys(data.detailed.telLinks).length > 0) { %>
+                                    <% Object.entries(data.detailed.telLinks).forEach(function([tel, linkData]) { %>
+                                        <div class="mb-3 pb-3 border-bottom">
+                                            <a href="<%= tel %>" class="text-decoration-none">
+                                                <i class="fas fa-phone me-2"></i><%= tel.replace('tel:', '') %>
+                                            </a>
+                                            <% if (linkData.sources && linkData.sources.size > 0) { %>
+                                                <div class="small text-muted mt-1">
+                                                    Found on: <%= Array.from(linkData.sources).slice(0, 2).join(', ') %>
+                                                    <% if (Array.from(linkData.sources).length > 2) { %>
+                                                        +<%= Array.from(linkData.sources).length - 2 %> more
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <p class="text-muted">No phone links found.</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Need a Different Analysis?</h5>
+                        <p class="card-text">Try a simple report for a quick overview or audit a different website.</p>
+                        <a href="/audit/simple/<%= encodeURIComponent(url) %>" class="btn btn-outline-primary me-3">
+                            <i class="fas fa-bolt me-2"></i>Simple Report
+                        </a>
+                        <a href="/audit" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Audit Another Site
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<%- include('../partials/footer') %>

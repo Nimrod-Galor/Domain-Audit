@@ -1,0 +1,20 @@
+lets update simple report look and functionality.
+at the top of the pahe is the summery section. summery should disply easy to read quick summery of the report.
+sumerry is divided to 4 sections: internal links, eternal links, emails and telephone.
+internal links should specify links scanned, links found and links with errors.
+external links should specify links scanned, links found and links with errors.
+emails should specify number of emails found.
+tel should specific number of telephone numbers found.
+every section should link to the relevant detail section.
+next is the detail sections.
+detail section is a complete list of the relevent data inside a div with max height 250px and auto scroll.
+
+internal links section is divided to two, a list of scaned internal links and a list of internal links with error.
+internal link should be a link element with target _blank. next to every internal link display the status code, the number of occurrences, list of anchor tags and list of places the link was found.
+both anchor and found list should be in a collapabel element default close and a title that specify the number of anchors, found respectevly.
+the collapabel system should be tied between these two field, so click on one of them should efect both ( open/close).
+in case there are some links that where found but not scaned display a message note that mention the number of internal ,links found but not scaned and the reason. (free tier limit or scan limit).
+
+external links should follow the same patern with wxternal links data.
+
+next are the emails and telephones lists. with the number of occurrences and where they where found.

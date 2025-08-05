@@ -1,0 +1,143 @@
+<%- include('../partials/header', { title: title, user: user }) %>
+
+<!-- Audit History Section -->
+<section class="py-5">
+  <div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-1">
+              <i class="fas fa-clock-history text-primary"></i>
+              Audit History
+            </h2>
+            <p class="text-muted mb-0">
+              <i class="fas fa-globe"></i>
+              <strong><%= domain %></strong>
+            </p>
+          </div>
+          <div>
+            <a href="/audit" class="btn btn-outline-primary">
+              <i class="fas fa-plus"></i>
+              New Audit
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if (message) { %>
+      <!-- No Audits Message -->
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <%= message %>
+          </div>
+          <div class="text-center mt-4">
+            <a href="/audit" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              Run Your First Audit
+            </a>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- Audits List -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-list"></i>
+                Available Audits (<%= audits.length %>)
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th><i class="fas fa-calendar"></i> Date & Time</th>
+                      <th><i class="fas fa-tag"></i> Audit ID</th>
+                      <th><i class="fas fa-eye"></i> Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% audits.forEach(audit => { %>
+                      <tr>
+                        <td>
+                          <div class="d-flex flex-column">
+                            <span class="fw-medium"><%= audit.formatted.split(',')[0] %></span>
+                            <small class="text-muted"><%= audit.formatted.split(',')[1] %></small>
+                          </div>
+                        </td>
+                        <td>
+                          <code class="bg-light px-2 py-1 rounded"><%= audit.id %></code>
+                        </td>
+                        <td>
+                          <div class="btn-group" role="group">
+                            <a href="/audit/history/<%= domain %>/<%= audit.id %>/simple" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="Simple Report">
+                              <i class="fas fa-file-text"></i>
+                              Simple
+                            </a>
+                            <a href="/audit/history/<%= domain %>/<%= audit.id %>/full" 
+                               class="btn btn-sm btn-outline-secondary" 
+                               title="Full Report">
+                              <i class="fas fa-file-alt"></i>
+                              Full
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Back Link -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <a href="/audit" class="btn btn-light">
+          <i class="fas fa-arrow-left"></i>
+          Back to Audit Form
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+
+<!-- Custom Styles -->
+<style>
+  .card {
+    border: none;
+  }
+  
+  .table th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+  }
+  
+  .btn-group .btn {
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+  
+  .btn-group .btn:last-child {
+    margin-right: 0;
+  }
+  
+  code {
+    font-size: 0.9em;
+  }
+</style>

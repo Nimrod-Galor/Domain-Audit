@@ -13,6 +13,15 @@
                     </p>
                 </div>
 
+                <!-- Error Display -->
+                <% if (error) { %>
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <% } %>
+
                 <!-- Audit Form -->
                 <div class="card shadow-lg">
                     <div class="card-body p-5">
@@ -39,85 +48,6 @@
                                 </div>
                             </div>
 
-                            <!-- Audit Options -->
-                            <div class="mb-4">
-                                <label class="form-label h6">Audit Options</label>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="options" value="performance" id="performance" checked>
-                                            <label class="form-check-label" for="performance">
-                                                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
-                                                Performance Analysis
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="options" value="seo" id="seo" checked>
-                                            <label class="form-check-label" for="seo">
-                                                <i class="fas fa-search me-2 text-success"></i>
-                                                SEO Analysis
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="options" value="accessibility" id="accessibility" checked>
-                                            <label class="form-check-label" for="accessibility">
-                                                <i class="fas fa-universal-access me-2 text-info"></i>
-                                                Accessibility Check
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="options" value="security" id="security" checked>
-                                            <label class="form-check-label" for="security">
-                                                <i class="fas fa-shield-alt me-2 text-warning"></i>
-                                                Security Scan
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Advanced Options (collapsed by default) -->
-                            <div class="mb-4">
-                                <button 
-                                    class="btn btn-link p-0 text-decoration-none" 
-                                    type="button" 
-                                    data-bs-toggle="collapse" 
-                                    data-bs-target="#advancedOptions"
-                                >
-                                    <i class="fas fa-cog me-2"></i>Advanced Options
-                                    <i class="fas fa-chevron-down ms-1"></i>
-                                </button>
-                                
-                                <div class="collapse mt-3" id="advancedOptions">
-                                    <div class="card card-body bg-light">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label for="device" class="form-label">Device Type</label>
-                                                <select class="form-select" name="device" id="device">
-                                                    <option value="desktop">Desktop</option>
-                                                    <option value="mobile">Mobile</option>
-                                                    <option value="both" selected>Both</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="depth" class="form-label">Crawl Depth</label>
-                                                <select class="form-select" name="depth" id="depth">
-                                                    <option value="1" selected>Homepage Only</option>
-                                                    <option value="2">2 Levels Deep</option>
-                                                    <option value="3">3 Levels Deep</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Submit Button -->
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
@@ -126,6 +56,124 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- Features Highlights -->
+                <div class="mt-5">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold">Comprehensive Website Analysis</h3>
+                        <p class="text-muted">Get detailed insights into every aspect of your website</p>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-tachometer-alt fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Performance Analysis</h6>
+                                    <small class="text-muted">Page load times, optimization opportunities, and Core Web Vitals assessment</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-search fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">SEO Optimization</h6>
+                                    <small class="text-muted">Meta tags, headings, keywords, and search engine visibility checks</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-info bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-universal-access fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Accessibility Check</h6>
+                                    <small class="text-muted">WCAG compliance, alt text, and user experience for all abilities</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-warning bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-shield-alt fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Security Scan</h6>
+                                    <small class="text-muted">SSL certificates, security headers, and vulnerability detection</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-danger bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-link fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Broken Link Detection</h6>
+                                    <small class="text-muted">Identify dead links, 404 errors, and redirect chains across your site</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-secondary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-mobile-alt fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Mobile Responsiveness</h6>
+                                    <small class="text-muted">Mobile-first design analysis and responsive layout testing</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-dark bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-code fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Technical Audit</h6>
+                                    <small class="text-muted">HTML validation, structured data, and technical SEO factors</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-purple bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #6f42c1 !important;">
+                                        <i class="fas fa-chart-bar fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Detailed Reports</h6>
+                                    <small class="text-muted">Comprehensive analytics with actionable recommendations and priority fixes</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-bolt fa-lg"></i>
+                                    </div>
+                                    <h6 class="fw-bold">Real-time Analysis</h6>
+                                    <small class="text-muted">Live crawling with instant feedback and progress tracking</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

@@ -1,0 +1,24 @@
+we have 4 tiers.
+unregistered user:
+    free for all.
+    scan depeth is limited to 50 internal and 20 external links.
+    simple report only.
+    no history
+
+regitered user:
+    free for all.
+    one Domain limit.
+    scan depeth is limited to 50 internal and 20 external links.
+    simple report and detailed reports.
+
+professional:
+    15$ Monthly.
+    one Domain limit.
+    scan depeth is limited to 999 internal and 400 external links.
+    simple report and detailed reports.
+
+Business:
+    35$ Monthly.
+    unlimited Domains.
+    scan depeth is limited to 999 internal and 400 external links.
+    simple report and detailed reports.

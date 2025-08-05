@@ -32,6 +32,18 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/audit">Audit Tool</a>
                     </li>
+                    <% if (user) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="fas fa-history me-1"></i>History
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="showHistoryModal()">
+                                    <i class="fas fa-search me-2"></i>View Audit History
+                                </a></li>
+                            </ul>
+                        </li>
+                    <% } %>
                     <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>
                     </li>
@@ -42,6 +54,16 @@
                 
                 <ul class="navbar-nav">
                     <% if (user) { %>
+                        <!-- Notification Badge -->
+                        <li class="nav-item me-3">
+                            <a href="#" class="nav-link position-relative" id="notificationBadge" data-bs-toggle="modal" data-bs-target="#notificationModal">
+                                <i class="fas fa-bell"></i>
+                                <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary d-none">
+                                    0
+                                </span>
+                            </a>
+                        </li>
+                        
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                                 <i class="fas fa-user me-1"></i><%= user.name %>
@@ -72,6 +94,11 @@
             </div>
         </div>
     </nav>
+
+    <!-- Notification Banners -->
+    <div id="notification-banners" class="notification-banners">
+        <!-- Banners will be loaded here via JavaScript -->
+    </div>
 
     <!-- Main Content -->
     <main>

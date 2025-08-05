@@ -172,3 +172,117 @@ footer a:hover {
     border-radius: 50%;
     animation: spin 1s ease-in-out infinite;
 }
+
+/* Notification System Styles */
+.notification-item {
+    transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa;
+}
+
+.notification-unread {
+    background-color: #e3f2fd;
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification-unread:hover {
+    background-color: #bbdefb;
+}
+
+#notificationBadge {
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+#notificationBadge:hover {
+    transform: scale(1.1);
+}
+
+#notificationCount {
+    font-size: 0.65rem;
+    min-width: 18px;
+    height: 18px;
+    line-height: 1.2;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Notification Modal Improvements */
+.modal-lg {
+    max-width: 600px;
+}
+
+.notification-item .btn {
+    font-size: 0.8rem;
+}
+
+.notification-item h6 {
+    font-size: 0.95rem;
+}
+
+.notification-item p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Banner Notification Styles */
+.notification-banners {
+    position: relative;
+    z-index: 1030; /* Above normal content but below modals */
+}
+
+.notification-banners .alert {
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.notification-banners .alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.notification-banners .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+    color: #856404;
+}
+
+.notification-banners .btn-close {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.notification-banners .btn-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Adjust main content margin when banners are present */
+body:has(.notification-banners .alert) main {
+    margin-top: 0;
+}

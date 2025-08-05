@@ -69,17 +69,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Auto-hide alerts after 5 seconds
+    // Manual close for alerts - only close when clicked
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
     alerts.forEach(alert => {
-        setTimeout(() => {
-            if (alert.parentNode) {
+        // Add close button if it doesn't exist
+        if (!alert.querySelector('.btn-close')) {
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'btn-close';
+            closeBtn.setAttribute('aria-label', 'Close');
+            closeBtn.addEventListener('click', () => {
                 alert.style.opacity = '0';
                 setTimeout(() => {
                     alert.remove();
                 }, 300);
-            }
-        }, 5000);
+            });
+            alert.appendChild(closeBtn);
+        }
     });
 
     // Form validation

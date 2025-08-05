@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Notification Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Banner Notification Test</h1>
+        <p>Click the button below to test banner notifications:</p>
+        
+        <button class="btn btn-primary" onclick="testBannerNotifications()">Create Test Banner Notifications</button>
+        <button class="btn btn-secondary ms-2" onclick="checkBanners()">Check Current Banners</button>
+        
+        <div id="result" class="mt-3"></div>
+        
+        <!-- Test banner area -->
+        <div id="notification-banners" class="notification-banners mt-4">
+            <!-- Banners will appear here -->
+        </div>
+    </div>
+
+    <script>
+        async function testBannerNotifications() {
+            try {
+                const response = await fetch('/api/notifications/test-banners', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                const resultDiv = document.getElementById('result');
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>Test notifications created successfully!</h5>
+                            <p>Critical: ${data.notifications.critical.title}</p>
+                            <p>Alert: ${data.notifications.alert.title}</p>
+                            <p>Message: ${data.notifications.message.title}</p>
+                        </div>
+                    `;
+                    checkBanners();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function checkBanners() {
+            try {
+                const response = await fetch('/api/notifications/banner');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayBannerNotifications(data.notifications);
+                }
+            } catch (error) {
+                console.error('Error checking banners:', error);
+            }
+        }
+        
+        function displayBannerNotifications(notifications) {
+            const container = document.getElementById('notification-banners');
+            
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No banner notifications found</div>';
+                return;
+            }
+            
+            const bannersHtml = notifications.map(notification => {
+                const alertClass = notification.type === 'critical' ? 'alert-danger' : 'alert-warning';
+                const icon = notification.type === 'critical' ? 'fas fa-exclamation-triangle' : 'fas fa-exclamation-circle';
+                
+                return `
+                    <div class="alert ${alertClass} alert-dismissible mb-2" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="${icon} me-2"></i>
+                            <div class="flex-grow-1">
+                                <strong>${escapeHtml(notification.title)}</strong>
+                                <div class="small">${escapeHtml(notification.message)}</div>
+                            </div>
+                            <button type="button" class="btn-close" onclick="dismissBannerNotification(${notification.id})" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = bannersHtml;
+        }
+        
+        async function dismissBannerNotification(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    checkBanners();
+                }
+            } catch (error) {
+                console.error('Error dismissing banner notification:', error);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Load banners on page load
+        document.addEventListener('DOMContentLoaded', checkBanners);
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+</html>
