@@ -115,7 +115,7 @@
                           <div class="d-flex align-items-center">
                             <i class="fas fa-globe text-primary me-2"></i>
                             <div>
-                              <div class="fw-medium"><%= audit.domain || audit.url %></div>
+                              <div class="fw-medium"><%= audit.url %></div>
                               <small class="text-muted">#<%= audit.id %></small>
                             </div>
                           </div>
@@ -148,11 +148,11 @@
                         <td>
                           <div class="btn-group btn-group-sm" role="group">
                             <% if (audit.status === 'completed') { %>
-                              <a href="/audit/history/<%= encodeURIComponent(audit.domain || audit.url) %>/<%= audit.id %>/simple" 
+                              <a href="/audit/history/<%= encodeURIComponent(audit.url) %>/<%= audit.id %>/simple" 
                                  class="btn btn-outline-primary" title="View Simple Report">
                                 <i class="fas fa-eye"></i>
                               </a>
-                              <a href="/audit/history/<%= encodeURIComponent(audit.domain || audit.url) %>/<%= audit.id %>/full" 
+                              <a href="/audit/history/<%= encodeURIComponent(audit.url) %>/<%= audit.id %>/full" 
                                  class="btn btn-outline-success" title="View Full Report">
                                 <i class="fas fa-chart-bar"></i>
                               </a>
@@ -161,7 +161,7 @@
                                 <i class="fas fa-eye-slash"></i>
                               </button>
                             <% } %>
-                            <a href="/audit/history/<%= encodeURIComponent(audit.domain || audit.url) %>" 
+                            <a href="/audit/history/<%= encodeURIComponent(audit.url) %>" 
                                class="btn btn-outline-info" title="View Domain History">
                               <i class="fas fa-history"></i>
                             </a>

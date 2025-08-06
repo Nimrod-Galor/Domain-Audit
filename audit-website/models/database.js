@@ -32,6 +32,10 @@ export const initializeDatabase = () => {
     keepAliveInitialDelayMillis: 10000,
     // Add connection validation
     allowExitOnIdle: false, // Keep the pool alive even when no connections are active
+    // Enhanced error recovery
+    application_name: 'sitescope_audit_server',
+    // Connection validation settings
+    idleInTransactionSessionTimeout: 30000,
   });
 
   // Handle pool errors with better recovery
@@ -42,7 +46,9 @@ export const initializeDatabase = () => {
     if (err.message.includes('Connection terminated') || 
         err.message.includes('ECONNRESET') ||
         err.message.includes('ENOTFOUND') ||
-        err.message.includes('timeout')) {
+        err.message.includes('timeout') ||
+        err.code === 'EBADF' ||
+        err.message.includes('write EBADF')) {
       console.warn('⚠️ Connection issue detected, pool will create new connections as needed');
     }
     
@@ -124,7 +130,9 @@ export const query = async (text, params = [], maxRetries = 2) => {
                          error.message.includes('pool') ||
                          error.message.includes('ended') ||
                          error.code === 'ECONNRESET' ||
-                         error.code === 'ETIMEDOUT';
+                         error.code === 'ETIMEDOUT' ||
+                         error.code === 'EBADF' ||
+                         error.message.includes('write EBADF');
       
       if (isRetryable && attempt < maxRetries) {
         console.warn(`⚠️ Retryable error on attempt ${attempt + 1}/${maxRetries + 1}: ${error.message}`);

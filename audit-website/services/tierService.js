@@ -339,7 +339,7 @@ export class TierService {
   /**
    * Record audit usage
    * @param {number} userId - User ID
-   * @param {number} pagesScanned - Number of pages scanned
+   * @param {number|Object} pagesScanned - Number of pages scanned OR usage data object
    * @param {number} externalLinksChecked - Number of external links checked
    * @returns {Promise<boolean>} Success status
    */
@@ -348,28 +348,66 @@ export class TierService {
       return true; // Anonymous users don't track usage
     }
 
-    try {
-      const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
-
-      await query(`
-        INSERT INTO usage_tracking (
-          user_id, month_year, audits_used, internal_pages_scanned, external_links_checked
-        )
-        VALUES ($1, $2, 1, $3, $4)
-        ON CONFLICT (user_id, month_year) 
-        DO UPDATE SET
-          audits_used = usage_tracking.audits_used + 1,
-          internal_pages_scanned = usage_tracking.internal_pages_scanned + EXCLUDED.internal_pages_scanned,
-          external_links_checked = usage_tracking.external_links_checked + EXCLUDED.external_links_checked,
-          updated_at = CURRENT_TIMESTAMP
-      `, [userId, currentMonth, pagesScanned, externalLinksChecked]);
-
-      console.log(`📊 Usage recorded for user ${userId}: +1 audit, +${pagesScanned} pages, +${externalLinksChecked} links`);
-      return true;
-    } catch (error) {
-      console.error('❌ Error recording audit usage:', error.message);
-      return false;
+    // Handle object parameter (new calling pattern)
+    let actualPagesScanned = pagesScanned;
+    let actualLinksChecked = externalLinksChecked;
+    
+    if (typeof pagesScanned === 'object') {
+      actualPagesScanned = pagesScanned.pagesScanned || 0;
+      actualLinksChecked = pagesScanned.externalLinksChecked || 0;
     }
+
+    const maxRetries = 3;
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
+
+        await query(`
+          INSERT INTO usage_tracking (
+            user_id, month_year, audits_used, internal_pages_scanned, external_links_checked
+          )
+          VALUES ($1, $2, 1, $3, $4)
+          ON CONFLICT (user_id, month_year) 
+          DO UPDATE SET
+            audits_used = usage_tracking.audits_used + 1,
+            internal_pages_scanned = usage_tracking.internal_pages_scanned + EXCLUDED.internal_pages_scanned,
+            external_links_checked = usage_tracking.external_links_checked + EXCLUDED.external_links_checked,
+            updated_at = CURRENT_TIMESTAMP
+        `, [userId, currentMonth, actualPagesScanned, actualLinksChecked]);
+
+        console.log(`📊 Usage recorded for user ${userId}: +1 audit, +${actualPagesScanned} pages, +${actualLinksChecked} links`);
+        return true;
+      } catch (error) {
+        lastError = error;
+        
+        // Check if this is a retryable connection error
+        const isRetryable = error.code === 'EBADF' ||
+                           error.code === 'ECONNRESET' ||
+                           error.code === 'ETIMEDOUT' ||
+                           error.message.includes('Connection terminated') ||
+                           error.message.includes('write EBADF') ||
+                           error.message.includes('pool');
+
+        if (isRetryable && attempt < maxRetries) {
+          console.warn(`⚠️ Connection error recording usage (attempt ${attempt}/${maxRetries}): ${error.message}`);
+          
+          // Wait before retrying with exponential backoff
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Non-retryable error or max retries reached
+        console.error('❌ Error recording audit usage:', error.message);
+        break;
+      }
+    }
+
+    // If we get here, all retries failed - but don't fail the entire audit process
+    console.warn(`⚠️ Failed to record usage after ${maxRetries} attempts, continuing audit process`);
+    return false;
   }
 
   /**

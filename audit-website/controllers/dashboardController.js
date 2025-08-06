@@ -67,7 +67,8 @@ async function getUserUsageStats(userId) {
     });
 
     const currentMonthAudits = audits.audits.filter(audit => {
-      return audit.created_at.startsWith(currentMonth);
+      const createdAt = audit.created_at instanceof Date ? audit.created_at.toISOString() : audit.created_at;
+      return createdAt.startsWith(currentMonth);
     });
 
     const completedAudits = currentMonthAudits.filter(audit => audit.status === 'completed');

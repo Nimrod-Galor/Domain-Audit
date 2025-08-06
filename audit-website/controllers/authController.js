@@ -219,8 +219,7 @@ export const getDashboard = async (req, res) => {
     // Format audits for display
     const formattedAudits = auditResults.audits.map(audit => ({
       id: audit.id,
-      url: `https://${audit.domain}`,
-      domain: audit.domain,
+      url: audit.url,
       date: audit.created_at,
       score: audit.score,
       status: audit.status,
