@@ -1,0 +1,245 @@
+<%- include('./partials/header', { title: 'Upgrade Required - SiteScope', user: user }) %>
+
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-lock fa-4x text-warning mb-3"></i>
+                    <h1 class="display-5 fw-bold">Upgrade Required</h1>
+                    <p class="lead text-muted">
+                        <% if (feature === 'full-reports') { %>
+                            Full detailed reports are available for Professional and Enterprise plans
+                        <% } else if (feature === 'api-access') { %>
+                            API access is available for Professional and Enterprise plans
+                        <% } else { %>
+                            This feature is available for higher tier plans
+                        <% } %>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current vs Required Plan -->
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="card border-secondary">
+                    <div class="card-header bg-secondary text-white text-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>Your Current Plan
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <h3 class="text-secondary">
+                            <%= userTier.charAt(0).toUpperCase() + userTier.slice(1) %>
+                        </h3>
+                        <p class="text-muted">What you currently have access to</p>
+                        <ul class="list-unstyled">
+                            <% if (userTier === 'freemium') { %>
+                                <li><i class="fas fa-check text-success me-2"></i>1 audit per day</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Basic audit report</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Core SEO insights</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>No history/tracking</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Watermarked results</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Limited data export</li>
+                            <% } else if (userTier === 'starter') { %>
+                                <li><i class="fas fa-check text-success me-2"></i>3 audits per month</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Full audit reports</li>
+                                <li><i class="fas fa-check text-success me-2"></i>30-day history tracking</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Email alerts</li>
+                                <li><i class="fas fa-check text-success me-2"></i>PDF export</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>No API access</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>No scheduled audits</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star me-2"></i>Recommended Plan
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <h3 class="text-primary">Professional</h3>
+                        <div class="mb-2">
+                            <span class="h4 text-primary">$39</span>
+                            <span class="text-muted">/month</span>
+                            <small class="d-block text-muted">or $29/month annually</small>
+                        </div>
+                        <p class="text-muted">Everything you need for professional auditing</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Unlimited audits</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Full detailed reports</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Scheduled automated audits</li>
+                            <li><i class="fas fa-check text-success me-2"></i>API access</li>
+                            <li><i class="fas fa-check text-success me-2"></i>White-label reports</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Priority email support</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Advanced SEO recommendations</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Historical trend analysis</li>
+                        </ul>
+                        <div class="mt-4">
+                            <a href="/pricing" class="btn btn-primary btn-lg">
+                                <i class="fas fa-arrow-up me-2"></i>Upgrade Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Comparison Table -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-compare me-2"></i>Plan Comparison
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th class="text-center">Freemium</th>
+                                        <th class="text-center">Starter</th>
+                                        <th class="text-center">Professional</th>
+                                        <th class="text-center">Enterprise</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Price</strong></td>
+                                        <td class="text-center">Free</td>
+                                        <td class="text-center">Free</td>
+                                        <td class="text-center">$39/mo</td>
+                                        <td class="text-center">$99/mo</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Audits</strong></td>
+                                        <td class="text-center">1/day</td>
+                                        <td class="text-center">3/month</td>
+                                        <td class="text-center">Unlimited</td>
+                                        <td class="text-center">Unlimited</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Internal Pages</strong></td>
+                                        <td class="text-center">25 max</td>
+                                        <td class="text-center">100 max</td>
+                                        <td class="text-center">1,000 max</td>
+                                        <td class="text-center">Unlimited</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>External Links</strong></td>
+                                        <td class="text-center">10 max</td>
+                                        <td class="text-center">50 max</td>
+                                        <td class="text-center">200 max</td>
+                                        <td class="text-center">Unlimited</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>History</strong></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center">30 days</td>
+                                        <td class="text-center">1 year</td>
+                                        <td class="text-center">2 years</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Basic Reports</strong></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                    </tr>
+                                    <tr class="<%= feature === 'full-reports' ? 'table-warning' : '' %>">
+                                        <td><strong>Full Detailed Reports</strong></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PDF Exports</strong></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                    </tr>
+                                    <tr class="<%= feature === 'api-access' ? 'table-warning' : '' %>">
+                                        <td><strong>API Access</strong></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Scheduled Audits</strong></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>White-Label Reports</strong></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-times text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check text-success"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Team Members</strong></td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-center">10</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Support</strong></td>
+                                        <td class="text-center">Community</td>
+                                        <td class="text-center">Email</td>
+                                        <td class="text-center">Priority Email</td>
+                                        <td class="text-center">Phone + Dedicated</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="card bg-light">
+                    <div class="card-body py-5">
+                        <h3 class="mb-3">Ready to unlock more features?</h3>
+                        <p class="text-muted mb-4">
+                            Upgrade to Professional and get access to detailed reports, advanced analytics, and more
+                        </p>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="/pricing" class="btn btn-primary btn-lg">
+                                <i class="fas fa-star me-2"></i>View Pricing Plans
+                            </a>
+                            <% if (user) { %>
+                                <a href="/auth/dashboard" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                </a>
+                            <% } else { %>
+                                <a href="/" class="btn btn-outline-secondary">
+                                    <i class="fas fa-home me-2"></i>Back to Home
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<%- include('./partials/footer') %>

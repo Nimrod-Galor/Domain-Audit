@@ -7,6 +7,35 @@ import { Audit } from '../models/index.js';
 import { query } from '../models/database.js';
 
 /**
+ * Display upgrade required page
+ */
+export const getUpgradeRequired = async (req, res) => {
+  try {
+    const feature = req.query.feature || 'full-reports';
+    const userId = req.session?.user?.id || null;
+    
+    // Get user tier information
+    const userTier = userId ? await tierService.getUserTier(userId) : 'freemium';
+    
+    res.render('upgrade-required', {
+      title: 'Upgrade Required',
+      user: req.session.user || null,
+      feature,
+      userTier
+    });
+    
+  } catch (error) {
+    console.error('Upgrade required page error:', error);
+    res.render('upgrade-required', {
+      title: 'Upgrade Required',
+      user: req.session.user || null,
+      feature: 'full-reports',
+      userTier: 'freemium'
+    });
+  }
+};
+
+/**
  * Display user dashboard
  */
 export const getDashboard = async (req, res) => {
@@ -303,6 +332,7 @@ export const revokeApiKey = async (req, res) => {
 };
 
 export default {
+  getUpgradeRequired,
   getDashboard,
   getDashboardData,
   getSettings,

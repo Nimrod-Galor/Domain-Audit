@@ -3,7 +3,7 @@
  * Handles user dashboard and settings routes
  */
 import express from 'express';
-import { getDashboard, getDashboardData, getSettings, getApiPage, generateApiKey, regenerateApiKey, revokeApiKey } from '../controllers/dashboardController.js';
+import { getUpgradeRequired, getDashboard, getDashboardData, getSettings, getApiPage, generateApiKey, regenerateApiKey, revokeApiKey } from '../controllers/dashboardController.js';
 
 const router = express.Router();
 
@@ -19,6 +19,7 @@ const requireAuth = (req, res, next) => {
 router.get('/', requireAuth, getDashboard);
 router.get('/data', requireAuth, getDashboardData);
 router.get('/settings', requireAuth, getSettings);
+router.get('/upgrade-required', getUpgradeRequired); // No auth required for upgrade page
 
 // API management routes
 router.get('/api', requireAuth, getApiPage);

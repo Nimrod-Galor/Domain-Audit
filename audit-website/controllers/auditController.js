@@ -761,11 +761,7 @@ export const getFullReport = async (req, res) => {
     
     // Check if user has access to full reports
     if (!userLimits.canAccessFullReports) {
-      return res.render('audit/error', {
-        title: 'Upgrade Required',
-        user: req.session.user || null,
-        error: `Full reports are only available for ${userLimits.tierName === 'freemium' ? 'paid' : 'higher tier'} plans. Please upgrade to access detailed reports.`
-      });
+      return res.redirect('/dashboard/upgrade-required?feature=full-reports');
     }
     
     // First, try to get existing audit from database
@@ -1054,6 +1050,14 @@ export const getHistoricalFullReport = async (req, res) => {
     const domain = decodeURIComponent(req.params.domain);
     const auditId = parseInt(req.params.auditId);
     const userId = req.session?.user?.id;
+
+    // Get user information and tier limits
+    const userLimits = await tierService.getUserTierLimits(userId);
+    
+    // Check if user has access to full reports
+    if (!userLimits.canAccessFullReports) {
+      return res.redirect('/dashboard/upgrade-required?feature=full-reports');
+    }
 
     // Get tier information for rendering
     const userTier = await tierService.getUserTier(userId);

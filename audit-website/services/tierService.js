@@ -60,22 +60,31 @@ export class TierService {
       return {
         userId,
         tier: userLimits.tier,
+        tierName: userLimits.tier,
         subscription_status: userLimits.subscription_status,
         stripe_customer_id: userLimits.stripe_customer_id,
         api_key: userLimits.api_key,
         display_name: userLimits.display_name,
         price_monthly: parseFloat(userLimits.price_monthly) || 0,
         price_annual: parseFloat(userLimits.price_annual) || 0,
+        auditsPerMonth: parseInt(userLimits.audits_per_month),
         audits_per_month: parseInt(userLimits.audits_per_month),
+        maxPagesPerAudit: parseInt(userLimits.max_internal_pages),
         max_internal_pages: parseInt(userLimits.max_internal_pages),
+        maxExternalLinks: parseInt(userLimits.max_external_links),
         max_external_links: parseInt(userLimits.max_external_links),
         max_domains: parseInt(userLimits.max_domains),
+        hasAPIAccess: userLimits.api_access,
         api_access: userLimits.api_access,
         white_label: userLimits.white_label,
         scheduled_audits: userLimits.scheduled_audits,
         team_members: parseInt(userLimits.team_members),
         priority_support: userLimits.priority_support,
-        data_retention_days: parseInt(userLimits.data_retention_days)
+        data_retention_days: parseInt(userLimits.data_retention_days),
+        // Feature permissions based on tier
+        canAccessFullReports: ['starter', 'professional', 'enterprise'].includes(userLimits.tier),
+        canExportPDF: ['starter', 'professional', 'enterprise'].includes(userLimits.tier),
+        canScheduleAudits: userLimits.scheduled_audits
       };
     } catch (error) {
       console.error('❌ Error getting user tier limits:', error.message);
@@ -168,67 +177,99 @@ export class TierService {
     const defaults = {
       freemium: {
         tier: 'freemium',
+        tierName: 'freemium',
         display_name: 'Freemium',
         price_monthly: 0,
         price_annual: 0,
         audits_per_month: 1,
+        auditsPerMonth: 1,
         max_internal_pages: 25,
+        maxPagesPerAudit: 25,
         max_external_links: 10,
+        maxExternalLinks: 10,
         max_domains: 1,
         api_access: false,
+        hasAPIAccess: false,
         white_label: false,
         scheduled_audits: false,
         team_members: 1,
         priority_support: false,
-        data_retention_days: 7
+        data_retention_days: 7,
+        canAccessFullReports: false,
+        canExportPDF: false,
+        canScheduleAudits: false
       },
       starter: {
         tier: 'starter',
+        tierName: 'starter',
         display_name: 'Starter',
         price_monthly: 0,
         price_annual: 0,
         audits_per_month: 3,
+        auditsPerMonth: 3,
         max_internal_pages: 100,
+        maxPagesPerAudit: 100,
         max_external_links: 50,
+        maxExternalLinks: 50,
         max_domains: 1,
         api_access: false,
+        hasAPIAccess: false,
         white_label: false,
         scheduled_audits: false,
         team_members: 1,
         priority_support: false,
-        data_retention_days: 30
+        data_retention_days: 30,
+        canAccessFullReports: true,
+        canExportPDF: true,
+        canScheduleAudits: false
       },
       professional: {
         tier: 'professional',
+        tierName: 'professional',
         display_name: 'Professional',
         price_monthly: 39,
         price_annual: 29,
         audits_per_month: -1, // unlimited
+        auditsPerMonth: -1,
         max_internal_pages: 1000,
+        maxPagesPerAudit: 1000,
         max_external_links: 200,
+        maxExternalLinks: 200,
         max_domains: 1,
         api_access: true,
+        hasAPIAccess: true,
         white_label: true,
         scheduled_audits: true,
         team_members: 1,
         priority_support: true,
-        data_retention_days: 365
+        data_retention_days: 365,
+        canAccessFullReports: true,
+        canExportPDF: true,
+        canScheduleAudits: true
       },
       enterprise: {
         tier: 'enterprise',
+        tierName: 'enterprise',
         display_name: 'Enterprise',
         price_monthly: 99,
         price_annual: 79,
         audits_per_month: -1, // unlimited
+        auditsPerMonth: -1,
         max_internal_pages: -1, // unlimited
+        maxPagesPerAudit: -1,
         max_external_links: -1, // unlimited
+        maxExternalLinks: -1,
         max_domains: -1, // unlimited
         api_access: true,
+        hasAPIAccess: true,
         white_label: true,
         scheduled_audits: true,
         team_members: 10,
         priority_support: true,
-        data_retention_days: 730
+        data_retention_days: 730,
+        canAccessFullReports: true,
+        canExportPDF: true,
+        canScheduleAudits: true
       }
     };
 
