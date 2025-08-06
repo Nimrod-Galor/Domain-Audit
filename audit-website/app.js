@@ -140,6 +140,7 @@ async function startServer() {
       console.log(`🚀 SiteScope Audit Server running on port ${PORT}`);
       console.log(`📱 Open http://localhost:${PORT} in your browser`);
       console.log(`💾 Database: PostgreSQL (${process.env.DATABASE_URL ? 'Connected' : 'Waiting for connection string'})`);
+      console.log(`✅ All systems initialized successfully - Server ready to accept requests!`);
     });
     
     return app; // Return app instance for testing
@@ -163,6 +164,10 @@ async function getApp() {
 export default getApp;
 
 // Start server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Convert Windows path to file URL for comparison
+const currentFileUrl = import.meta.url;
+const mainFileUrl = new URL(`file:///${process.argv[1].replace(/\\/g, '/')}`).href;
+
+if (currentFileUrl === mainFileUrl) {
   startServer();
 }

@@ -84,6 +84,82 @@ export class TierService {
   }
 
   /**
+   * Get user's current tier information (simpler version for display)
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} User tier information
+   */
+  async getUserTier(userId) {
+    try {
+      const limits = await this.getUserTierLimits(userId);
+      return {
+        tier: limits.tier,
+        name: limits.display_name, // Add name property for template compatibility
+        display_name: limits.display_name,
+        price_monthly: limits.price_monthly,
+        price_annual: limits.price_annual,
+        subscription_status: limits.subscription_status,
+        limits: {
+          audits_per_month: limits.audits_per_month,
+          max_internal_pages: limits.max_internal_pages,
+          max_external_links: limits.max_external_links,
+          max_domains: limits.max_domains
+        }
+      };
+    } catch (error) {
+      console.error('❌ Error getting user tier:', error.message);
+      return {
+        tier: 'freemium',
+        name: 'Freemium',
+        display_name: 'Freemium',
+        price_monthly: 0,
+        price_annual: 0,
+        subscription_status: 'inactive',
+        limits: {
+          audits_per_month: 1,
+          max_internal_pages: 25,
+          max_external_links: 10,
+          max_domains: 1
+        }
+      };
+    }
+  }
+
+  /**
+   * Get current usage for display purposes
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} Current usage statistics
+   */
+  async getCurrentUsage(userId) {
+    try {
+      const usage = await this.getCurrentMonthUsage(userId);
+      const limits = await this.getUserTierLimits(userId);
+      
+      return {
+        audits_used: usage.audits_used,
+        auditsThisMonth: usage.audits_used, // Add template compatibility property
+        audits_limit: limits.audits_per_month,
+        internal_pages_scanned: usage.internal_pages_scanned,
+        external_links_checked: usage.external_links_checked,
+        api_calls_used: usage.api_calls_used,
+        tier: limits.tier,
+        remaining_audits: limits.audits_per_month === -1 ? -1 : Math.max(0, limits.audits_per_month - usage.audits_used)
+      };
+    } catch (error) {
+      console.error('❌ Error getting current usage:', error.message);
+      return {
+        audits_used: 0,
+        auditsThisMonth: 0, // Add template compatibility property
+        audits_limit: 1,
+        internal_pages_scanned: 0,
+        external_links_checked: 0,
+        api_calls_used: 0,
+        tier: 'freemium',
+        remaining_audits: 1
+      };
+    }
+  }
+
+  /**
    * Get default limits for a tier (used for anonymous users or fallback)
    * @param {string} tier - Tier name
    * @returns {Object} Default tier limits

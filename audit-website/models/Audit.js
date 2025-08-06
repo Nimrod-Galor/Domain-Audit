@@ -157,6 +157,11 @@ export const Audit = {
       sortOrder = 'DESC'
     } = options;
     
+    // Validate sortBy field to prevent SQL injection
+    const allowedSortFields = ['created_at', 'score', 'url', 'status', 'audit_type'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const validSortOrder = ['ASC', 'DESC'].includes(sortOrder) ? sortOrder : 'DESC';
+    
     try {
       const offset = (page - 1) * limit;
       
@@ -179,10 +184,10 @@ export const Audit = {
       
       // Get paginated results
       const auditsResult = await query(
-        `SELECT id, domain, audit_type, status, score, created_at, completed_at 
+        `SELECT id, url, audit_type, status, score, created_at, completed_at 
          FROM audits 
          ${whereClause} 
-         ORDER BY ${sortBy} ${sortOrder} 
+         ORDER BY ${validSortBy} ${validSortOrder} 
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...params, limit, offset]
       );
@@ -212,7 +217,7 @@ export const Audit = {
   async getRecentAudits(limit = 50) {
     try {
       const result = await query(
-        `SELECT a.id, a.domain, a.audit_type, a.status, a.score, a.created_at, a.completed_at,
+        `SELECT a.id, a.url, a.audit_type, a.status, a.score, a.created_at, a.completed_at,
                 u.email as user_email
          FROM audits a 
          LEFT JOIN users u ON a.user_id = u.id 
@@ -252,7 +257,7 @@ export const Audit = {
            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_audits,
            COUNT(CASE WHEN status = 'running' THEN 1 END) as running_audits,
            AVG(CASE WHEN score IS NOT NULL THEN score END)::INTEGER as average_score,
-           COUNT(DISTINCT domain) as unique_domains
+           COUNT(DISTINCT url) as unique_domains
          FROM audits 
          ${whereClause}`,
         params
@@ -406,10 +411,15 @@ export const Audit = {
       sortOrder = 'DESC'
     } = options;
     
+    // Validate sortBy field to prevent SQL injection
+    const allowedSortFields = ['created_at', 'score', 'url', 'status', 'audit_type'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const validSortOrder = ['ASC', 'DESC'].includes(sortOrder) ? sortOrder : 'DESC';
+    
     try {
       const offset = (page - 1) * limit;
       
-      let whereClause = 'WHERE (url = $1 OR domain = $1)';
+      let whereClause = 'WHERE url = $1';
       let params = [domain];
       let paramIndex = 2;
       
@@ -434,10 +444,10 @@ export const Audit = {
       
       // Get paginated results
       const auditsResult = await query(
-        `SELECT id, url, domain, audit_type, status, score, created_at, completed_at, user_id
+        `SELECT id, url, audit_type, status, score, created_at, completed_at, user_id
          FROM audits 
          ${whereClause} 
-         ORDER BY ${sortBy} ${sortOrder} 
+         ORDER BY ${validSortBy} ${validSortOrder} 
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...params, limit, offset]
       );
