@@ -806,7 +806,7 @@ export const getFullReport = async (req, res) => {
         maxPagesPerAudit: userLimits.maxPagesPerAudit,
         tierName: userLimits.tierName
       });
-      reportData = auditExecutor.generateDetailedReport(result.stateData);
+      reportData = auditExecutor.generateFullReport(result.stateData);
       
       // Record usage for registered users
       if (userId) {
@@ -825,26 +825,31 @@ export const getFullReport = async (req, res) => {
       }
     }
     
-    res.render('audit/results-full', {
-      title: `Full Report - ${url}`,
-      user: req.session.user || null,
-      userTier,
-      userUsage,
-      url,
-      data: reportData,
-      timestamp,
-      fromDatabase,
-      auditId,
-      userLimits: {
-        tierName: userLimits.tierName,
-        maxPagesPerAudit: userLimits.maxPagesPerAudit,
-        maxExternalLinks: userLimits.maxExternalLinks
-      }
-    });
+    try {
+      res.render('audit/results-full', {
+        title: `Full Report - ${url}`,
+        user: req.session.user || null,
+        userTier,
+        userUsage,
+        url,
+        data: reportData,
+        timestamp,
+        fromDatabase,
+        auditId,
+        userLimits: {
+          tierName: userLimits.tierName,
+          maxPagesPerAudit: userLimits.maxPagesPerAudit,
+          maxExternalLinks: userLimits.maxExternalLinks
+        }
+      });
+    } catch (renderError) {
+      console.error('❌ Template rendering error:', renderError);
+      throw renderError; // Re-throw to be caught by main catch block
+    }
     
   } catch (error) {
     console.error('Full report error:', error);
-    res.render('audit/error', {
+    res.status(500).render('audit/error', {
       title: 'Report Error',
       user: req.session.user || null,
       error: 'Unable to generate report. Please try again.'
