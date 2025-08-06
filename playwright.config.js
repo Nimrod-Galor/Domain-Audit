@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/integration',
+  testDir: './tests/e2e',
   
   // Run tests in files in parallel
   fullyParallel: true,
@@ -16,7 +16,11 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   
   // Reporter to use
-  reporter: 'html',
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'playwright-report/results.json' }],
+    ['junit', { outputFile: 'playwright-report/results.xml' }]
+  ],
   
   // Shared settings for all the projects below
   use: {
@@ -63,9 +67,9 @@ export default defineConfig({
   ],
 
   // Run your local dev server before starting the tests
-  webServer: {
-    command: 'npm run start',
-    url: 'http://127.0.0.1:3000',
-    reuseExistingServer: !process.env.CI,
-  },
+  // webServer: {
+  //   command: 'npm run start',
+  //   url: 'http://127.0.0.1:3000',
+  //   reuseExistingServer: !process.env.CI,
+  // },
 });

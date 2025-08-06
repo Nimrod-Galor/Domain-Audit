@@ -1,0 +1,22 @@
+<testsuites id="" name="" tests="7" failures="0" skipped="0" errors="0" time="1.216875">
+<testsuite name="smoke.spec.js" timestamp="2025-08-06T12:25:35.361Z" hostname="chromium" tests="7" failures="0" skipped="0" time="2.133" errors="0">
+<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0.254">
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0.298">
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0.326">
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0.284">
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0.328">
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0.36">
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0.283">
+<system-out>
+<![CDATA[Testing on chromium
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

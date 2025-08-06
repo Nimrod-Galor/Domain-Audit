@@ -1,44 +1,93 @@
 {
   "name": "domain-audit",
   "version": "2.0.0",
-  "description": "Advanced domain audit tool with AI intelligence and comprehensive analysis",
+  "description": "Advanced domain audit tool with AI intelligence, web dashboard, and comprehensive analysis",
   "main": "lib/crawler.js",
+  "type": "module",
   "bin": {
     "domain-audit": "bin/domain-audit.js",
     "data-analyzer": "bin/data-analyzer.js"
   },
-  "type": "module",
   "scripts": {
     "dev": "node bin/domain-audit.js audit stefanbakery.com",
     "start": "node bin/domain-audit.js",
     "analyze": "node bin/data-analyzer.js",
+
+    "web:start": "node web/app.js",
+    "web:dev": "NODE_ENV=development nodemon web/app.js",
+    "web:dev:win": "$env:NODE_ENV='development'; nodemon web/app.js",
+    "web:health": "curl http://localhost:3000/health/ping",
+
+    "session": "node web/scripts/session-manager.js",
+    "session:clear": "node web/scripts/session-manager.js clear-all",
+    "session:list": "node web/scripts/session-manager.js list",
+
+    "migrate:tier-system": "node web/scripts/migrate-tier-system.js",
+    "migrate:users": "node web/scripts/migrate-existing-users.js",
+
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:coverage": "COLLECT_COVERAGE=true node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/unit",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/integration",
-    "test:playwright": "playwright test",
-    "test:all": "npm run test && npm run test:playwright",
-    "test:setup": "playwright install"
+    "test:performance": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/performance",
+    "test:e2e": "playwright test",
+    "test:web": "vitest run web/tests",
+    "test:web:watch": "vitest web/tests",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:web && npm run test:e2e",
+    "test:setup": "playwright install",
+    "test:quick": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests --silent",
+    "test:ci": "npm run test:coverage && npm run test:integration && npm run test:e2e"
   },
   "keywords": [
     "seo",
     "link-audit",
     "web-crawling",
     "ai-analysis",
-    "performance"
+    "performance",
+    "website-audit",
+    "domain-analysis",
+    "dashboard"
   ],
   "author": "Nimrod Galor",
-  "AI assistant": "Claude Sonnet 4",
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
     "cheerio": "^1.1.2",
-    "node-fetch": "^3.3.2"
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.5",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.16.3",
+    "puppeteer": "^24.15.0",
+    "stripe": "^18.4.0",
+    "validator": "^13.15.15",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@jest/globals": "^30.0.5",
     "@playwright/test": "^1.54.2",
+    "@vitest/coverage-v8": "^1.6.1",
     "jest": "^30.0.5",
-    "playwright": "^1.54.2"
+    "nodemon": "^3.0.1",
+    "playwright": "^1.54.2",
+    "supertest": "^7.1.4",
+    "vitest": "^1.6.1"
+  },
+  "workspaces": ["web"],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
