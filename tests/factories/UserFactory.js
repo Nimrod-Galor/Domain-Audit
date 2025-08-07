@@ -14,16 +14,17 @@ export class UserFactory {
     return {
       id: randomId,
       email: `test${randomId}@example.com`,
-      password: '$2a$10$hashedPasswordExample',
-      verified: true,
-      tier_id: 1,
+      password_hash: '$2a$10$hashedPasswordExample',
+      first_name: 'Test',
+      last_name: 'User',
+      tier: 'starter',
+      email_verified: true,
       created_at: timestamp,
       updated_at: timestamp,
       last_login: timestamp,
       google_id: null,
       stripe_customer_id: null,
-      subscription_id: null,
-      subscription_status: null,
+      subscription_status: 'active',
       ...overrides
     };
   }

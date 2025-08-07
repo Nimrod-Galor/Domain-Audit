@@ -324,17 +324,20 @@ export class TestHelpers {
 
   // Database Testing Helpers
   static async setupTestDatabase() {
-    // Implementation for test database setup
+    const { testDatabase } = await import('./TestDatabase.js');
+    await testDatabase.setup();
     console.log('Setting up test database...');
   }
 
   static async teardownTestDatabase() {
-    // Implementation for test database teardown
+    const { testDatabase } = await import('./TestDatabase.js');
+    await testDatabase.teardown();
     console.log('Tearing down test database...');
   }
 
   static async clearDatabase() {
-    // Implementation for clearing test database
+    const { testDatabase } = await import('./TestDatabase.js');
+    await testDatabase.reset();
     console.log('Clearing test database...');
   }
 

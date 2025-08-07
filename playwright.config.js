@@ -3,6 +3,13 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   
+  // Output directory for test results
+  outputDir: './test-results',
+  
+  // Global setup and teardown
+  globalSetup: './tests/e2e/global-setup.js',
+  globalTeardown: './tests/e2e/global-teardown.js',
+  
   // Run tests in files in parallel
   fullyParallel: true,
   
@@ -17,15 +24,16 @@ export default defineConfig({
   
   // Reporter to use
   reporter: [
-    ['html'],
+    ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'playwright-report/results.json' }],
-    ['junit', { outputFile: 'playwright-report/results.xml' }]
+    ['junit', { outputFile: 'playwright-report/results.xml' }],
+    ['list'] // Console output for development
   ],
   
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: process.env.E2E_BASE_URL || 'http://127.0.0.1:3000',
     
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -34,7 +42,13 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     
     // Record video on failure
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
+    
+    // Global timeout for actions
+    actionTimeout: 10000,
+    
+    // Navigation timeout
+    navigationTimeout: 30000
   },
 
   // Configure projects for major browsers

@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
-import app from '../../../audit-website/app.js';
+import app from '../../../web/app.js';
 import { TestHelpers } from '../../helpers/TestHelpers.js';
 import { UserFactory } from '../../factories/UserFactory.js';
 import { AuditFactory } from '../../factories/AuditFactory.js';

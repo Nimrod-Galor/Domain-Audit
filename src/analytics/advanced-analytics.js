@@ -163,7 +163,7 @@ export class AdvancedAnalytics {
         analysisTime: Date.now() - analysisStart,
         metadata: {
           analysisTimestamp: new Date().toISOString(),
-          pageUrl: pageData.url,
+          pageUrl: pageData?.url || 'unknown',
           analysisType: 'failed'
         }
       };

@@ -4,20 +4,20 @@
     "rootDir": "C:/Users/Nimrod/Documents/javascript/domain audit/tests/e2e",
     "forbidOnly": false,
     "fullyParallel": true,
-    "globalSetup": null,
-    "globalTeardown": null,
+    "globalSetup": "C:\\Users\\Nimrod\\Documents\\javascript\\domain audit\\tests\\e2e\\global-setup.js",
+    "globalTeardown": "C:\\Users\\Nimrod\\Documents\\javascript\\domain audit\\tests\\e2e\\global-teardown.js",
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 7
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "reporter": [
       [
         "html",
-        null
+        {
+          "outputFolder": "playwright-report"
+        }
       ],
       [
         "json",
@@ -30,6 +30,10 @@
         {
           "outputFile": "playwright-report/results.xml"
         }
+      ],
+      [
+        "list",
+        null
       ]
     ],
     "reportSlowTests": {
@@ -42,9 +46,7 @@
         "outputDir": "C:/Users/Nimrod/Documents/javascript/domain audit/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 7
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "C:/Users/Nimrod/Documents/javascript/domain audit/tests/e2e",
@@ -58,9 +60,7 @@
         "outputDir": "C:/Users/Nimrod/Documents/javascript/domain audit/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 7
-        },
+        "metadata": {},
         "id": "firefox",
         "name": "firefox",
         "testDir": "C:/Users/Nimrod/Documents/javascript/domain audit/tests/e2e",
@@ -74,9 +74,7 @@
         "outputDir": "C:/Users/Nimrod/Documents/javascript/domain audit/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 7
-        },
+        "metadata": {},
         "id": "webkit",
         "name": "webkit",
         "testDir": "C:/Users/Nimrod/Documents/javascript/domain audit/tests/e2e",
@@ -90,9 +88,7 @@
         "outputDir": "C:/Users/Nimrod/Documents/javascript/domain audit/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 7
-        },
+        "metadata": {},
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "C:/Users/Nimrod/Documents/javascript/domain audit/tests/e2e",
@@ -106,9 +102,7 @@
         "outputDir": "C:/Users/Nimrod/Documents/javascript/domain audit/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 7
-        },
+        "metadata": {},
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "C:/Users/Nimrod/Documents/javascript/domain audit/tests/e2e",
@@ -151,22 +145,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 254,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.962Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-5222350d3a5b67f2ee27",
@@ -185,22 +165,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 298,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.963Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-5dae8246259b1bf2eafd",
@@ -219,22 +185,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 326,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.979Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-0713def31fb60d14600e",
@@ -253,22 +205,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 284,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.962Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-2411d24d053da4897b5c",
@@ -287,22 +225,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 4,
-                      "parallelIndex": 4,
-                      "status": "passed",
-                      "duration": 328,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.963Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-ca8e959761fbf6ae7d11",
@@ -321,22 +245,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 5,
-                      "parallelIndex": 5,
-                      "status": "passed",
-                      "duration": 360,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.963Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-76bad1d6b232572c2052",
@@ -355,29 +265,571 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 6,
-                      "parallelIndex": 6,
-                      "status": "passed",
-                      "duration": 283,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "Testing on chromium\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-06T12:25:35.978Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "2c14808d47b386fba9eb-9a765bb51f6f5082ef8b",
+              "file": "smoke.spec.js",
+              "line": 200,
+              "column": 3
+            },
+            {
+              "title": "should handle static HTML content",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-a05e58099bc759bb189c",
+              "file": "smoke.spec.js",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "should handle user interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-a391b42cf1f81ec08da9",
+              "file": "smoke.spec.js",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "should handle form interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-3de155722dc400e3eac2",
+              "file": "smoke.spec.js",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "should capture basic performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-62bfe9ff3aab869cbb0b",
+              "file": "smoke.spec.js",
+              "line": 112,
+              "column": 3
+            },
+            {
+              "title": "should work across different viewports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-df412b6d17744436211e",
+              "file": "smoke.spec.js",
+              "line": 139,
+              "column": 3
+            },
+            {
+              "title": "should handle JavaScript execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-b5e9e5dd964c92ec851c",
+              "file": "smoke.spec.js",
+              "line": 178,
+              "column": 3
+            },
+            {
+              "title": "should verify browser capabilities",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-8d38462b87f0e5e800c2",
+              "file": "smoke.spec.js",
+              "line": 200,
+              "column": 3
+            },
+            {
+              "title": "should handle static HTML content",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-e32ff991c176640ffdab",
+              "file": "smoke.spec.js",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "should handle user interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-ab29796a4ae02788c6b2",
+              "file": "smoke.spec.js",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "should handle form interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-83533f671a328a334b19",
+              "file": "smoke.spec.js",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "should capture basic performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-1e449e0c0afc0d52c55b",
+              "file": "smoke.spec.js",
+              "line": 112,
+              "column": 3
+            },
+            {
+              "title": "should work across different viewports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-ec4a07741a470f58a7d3",
+              "file": "smoke.spec.js",
+              "line": 139,
+              "column": 3
+            },
+            {
+              "title": "should handle JavaScript execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-ef9ceba4c00882216576",
+              "file": "smoke.spec.js",
+              "line": 178,
+              "column": 3
+            },
+            {
+              "title": "should verify browser capabilities",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-ade56bc28f5acd351bf0",
+              "file": "smoke.spec.js",
+              "line": 200,
+              "column": 3
+            },
+            {
+              "title": "should handle static HTML content",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-bf6d76bdfb3e61e7a2f8",
+              "file": "smoke.spec.js",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "should handle user interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-a5d09b52883991608444",
+              "file": "smoke.spec.js",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "should handle form interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-e319e96fcaf3887ca88c",
+              "file": "smoke.spec.js",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "should capture basic performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-1217eb1517063696bdb3",
+              "file": "smoke.spec.js",
+              "line": 112,
+              "column": 3
+            },
+            {
+              "title": "should work across different viewports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-f0ea4143536cc11cce43",
+              "file": "smoke.spec.js",
+              "line": 139,
+              "column": 3
+            },
+            {
+              "title": "should handle JavaScript execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-0e0e884db73c884d5195",
+              "file": "smoke.spec.js",
+              "line": 178,
+              "column": 3
+            },
+            {
+              "title": "should verify browser capabilities",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-907b614329b04f1eff0c",
+              "file": "smoke.spec.js",
+              "line": 200,
+              "column": 3
+            },
+            {
+              "title": "should handle static HTML content",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-11a225f549d9b1a20570",
+              "file": "smoke.spec.js",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "should handle user interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-7f4b267287f32d756fd5",
+              "file": "smoke.spec.js",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "should handle form interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-875f85543fb217c1e0b2",
+              "file": "smoke.spec.js",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "should capture basic performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-24829323ac1d5cdc9d09",
+              "file": "smoke.spec.js",
+              "line": 112,
+              "column": 3
+            },
+            {
+              "title": "should work across different viewports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-39987a9a46a7200b1513",
+              "file": "smoke.spec.js",
+              "line": 139,
+              "column": 3
+            },
+            {
+              "title": "should handle JavaScript execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-ba8faeaa99336e3a1959",
+              "file": "smoke.spec.js",
+              "line": 178,
+              "column": 3
+            },
+            {
+              "title": "should verify browser capabilities",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c14808d47b386fba9eb-c70aea9d4d94ac57a059",
               "file": "smoke.spec.js",
               "line": 200,
               "column": 3
@@ -389,10 +841,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-08-06T12:25:35.237Z",
-    "duration": 1216.875,
-    "expected": 7,
-    "skipped": 0,
+    "startTime": "2025-08-07T06:59:45.299Z",
+    "duration": 21.739000000000033,
+    "expected": 0,
+    "skipped": 35,
     "unexpected": 0,
     "flaky": 0
   }

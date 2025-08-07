@@ -9,8 +9,14 @@ export default {
   // Test file patterns
   testMatch: [
     '**/tests/**/*.test.js',
-    '**/tests/**/*.spec.js',
     '**/__tests__/**/*.js'
+  ],
+  
+  // Ignore Playwright tests (run separately)
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/e2e/',
+    '\\.spec\\.js$' // Playwright specs
   ],
   
   // Coverage configuration

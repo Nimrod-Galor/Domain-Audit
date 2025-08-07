@@ -16,7 +16,7 @@ import {
   recordExternalLink,
   logFailedUrl,
   isFunctionalLink,
-  isFetchableLink
+  isNonFetchableLink
 } from '../../src/utils/core-utils.js';
 
 describe('Core Utils', () => {
@@ -81,28 +81,23 @@ describe('Core Utils', () => {
     });
   });
 
-  describe('isFetchableLink', () => {
-    test('should identify fetchable protocols', () => {
-      expect(isFetchableLink('https://example.com')).toBe(true);
-      expect(isFetchableLink('http://example.com')).toBe(true);
-    });
-
+  describe('isNonFetchableLink', () => {
     test('should identify non-fetchable protocols', () => {
-      expect(isFetchableLink('mailto:test@example.com')).toBe(false);
-      expect(isFetchableLink('tel:+1234567890')).toBe(false);
-      expect(isFetchableLink('ftp://files.example.com')).toBe(false);
-      expect(isFetchableLink('javascript:void(0)')).toBe(false);
+      expect(isNonFetchableLink('javascript:void(0)')).toBe(true);
+      expect(isNonFetchableLink('ftp://files.example.com')).toBe(true);
+      expect(isNonFetchableLink('file:///local/file.txt')).toBe(true);
     });
 
-    test('should handle relative URLs and anchors', () => {
-      expect(isFetchableLink('/relative/path')).toBe(true);
-      expect(isFetchableLink('#anchor')).toBe(false);
-      expect(isFetchableLink('?query=value')).toBe(false);
+    test('should allow fetchable protocols', () => {
+      expect(isNonFetchableLink('https://example.com')).toBe(false);
+      expect(isNonFetchableLink('http://example.com')).toBe(false);
+      expect(isNonFetchableLink('mailto:test@example.com')).toBe(false);
+      expect(isNonFetchableLink('tel:+1234567890')).toBe(false);
     });
 
-    test('should be case insensitive', () => {
-      expect(isFetchableLink('HTTPS://example.com')).toBe(true);
-      expect(isFetchableLink('MAILTO:test@example.com')).toBe(false);
+    test('should handle case variations', () => {
+      expect(isNonFetchableLink('JAVASCRIPT:void(0)')).toBe(true);
+      expect(isNonFetchableLink('FTP://files.example.com')).toBe(true);
     });
   });
 

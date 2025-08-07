@@ -1,22 +1,152 @@
-<testsuites id="" name="" tests="7" failures="0" skipped="0" errors="0" time="1.216875">
-<testsuite name="smoke.spec.js" timestamp="2025-08-06T12:25:35.361Z" hostname="chromium" tests="7" failures="0" skipped="0" time="2.133" errors="0">
-<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0.254">
+<testsuites id="" name="" tests="35" failures="0" skipped="35" errors="0" time="0.021739000000000033">
+<testsuite name="smoke.spec.js" timestamp="2025-08-07T06:59:45.317Z" hostname="chromium" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
-<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0.298">
+<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
-<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0.326">
+<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
-<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0.284">
+<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
-<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0.328">
+<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
-<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0.36">
+<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
-<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0.283">
-<system-out>
-<![CDATA[Testing on chromium
-]]>
-</system-out>
+<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="smoke.spec.js" timestamp="2025-08-07T06:59:45.317Z" hostname="firefox" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="smoke.spec.js" timestamp="2025-08-07T06:59:45.317Z" hostname="webkit" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="smoke.spec.js" timestamp="2025-08-07T06:59:45.317Z" hostname="Mobile Chrome" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="smoke.spec.js" timestamp="2025-08-07T06:59:45.317Z" hostname="Mobile Safari" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="E2E Infrastructure Smoke Test › should handle static HTML content" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle user interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle form interactions" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should capture basic performance metrics" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should work across different viewports" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should handle JavaScript execution" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="E2E Infrastructure Smoke Test › should verify browser capabilities" classname="smoke.spec.js" time="0">
+<skipped>
+</skipped>
 </testcase>
 </testsuite>
 </testsuites>

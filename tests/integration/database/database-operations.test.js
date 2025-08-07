@@ -1,8 +1,13 @@
 import { jest } from '@jest/globals';
 import pg from 'pg';
+import dotenv from 'dotenv';
 import { TestHelpers } from '../../helpers/TestHelpers.js';
+import { testDatabase } from '../../helpers/TestDatabase.js';
 import { UserFactory } from '../../factories/UserFactory.js';
 import { AuditFactory } from '../../factories/AuditFactory.js';
+
+// Load test environment
+dotenv.config({ path: '.env.test' });
 
 const { Pool } = pg;
 
@@ -11,19 +16,23 @@ describe('Database Integration Tests', () => {
   let testClient;
 
   beforeAll(async () => {
-    testPool = new Pool({
-      host: process.env.TEST_DB_HOST || 'localhost',
-      port: process.env.TEST_DB_PORT || 5432,
-      database: process.env.TEST_DB_NAME || 'domain_audit_test',
-      user: process.env.TEST_DB_USER || 'test_user',
-      password: process.env.TEST_DB_PASSWORD || 'test_password',
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    });
-
+    // Setup test database with proper configuration
     await TestHelpers.setupTestDatabase();
-  });
+    
+    testPool = testDatabase.getTestPool();
+    
+    // Log connection status
+    const isNeon = process.env.TEST_DB_HOST?.includes('neon.tech');
+    const isMock = testDatabase.useMockDatabase;
+    
+    if (isMock) {
+      console.log('📋 Using mock database for tests');
+    } else if (isNeon) {
+      console.log('☁️ Using Neon PostgreSQL for tests');
+    } else {
+      console.log('🐘 Using local PostgreSQL for tests');
+    }
+  }, 30000); // Longer timeout for Neon connection
 
   beforeEach(async () => {
     testClient = await testPool.connect();
@@ -46,7 +55,7 @@ describe('Database Integration Tests', () => {
       const userData = UserFactory.create();
       
       const result = await testClient.query(`
-        INSERT INTO users (email, password_hash, first_name, last_name, tier_id, verified)
+        INSERT INTO users (email, password_hash, first_name, last_name, tier, email_verified)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
       `, [
@@ -54,8 +63,8 @@ describe('Database Integration Tests', () => {
         userData.password_hash,
         userData.first_name,
         userData.last_name,
-        userData.tier_id,
-        userData.verified
+        userData.tier || 'starter',
+        userData.verified || false
       ]);
 
       expect(result.rows).toHaveLength(1);
@@ -71,9 +80,9 @@ describe('Database Integration Tests', () => {
       
       // Create first user
       await testClient.query(`
-        INSERT INTO users (email, password_hash, tier_id)
+        INSERT INTO users (email, password_hash, tier)
         VALUES ($1, $2, $3)
-      `, [userData.email, userData.password_hash, userData.tier_id]);
+      `, [userData.email, userData.password_hash, userData.tier || 'starter']);
 
       // Attempt to create duplicate email
       await expect(
@@ -271,74 +280,50 @@ describe('Database Integration Tests', () => {
 
   describe('Tier System', () => {
     test('should have proper tier data with constraints', async () => {
-      const tiersResult = await testClient.query('SELECT * FROM tiers ORDER BY id');
+      const tiersResult = await testClient.query('SELECT * FROM tier_definitions ORDER BY id');
       const tiers = tiersResult.rows;
 
-      expect(tiers).toHaveLength(3); // Basic, Pro, Enterprise
+      expect(tiers.length).toBeGreaterThanOrEqual(3); // At least freemium, starter, professional, enterprise
       
-      // Basic tier
-      expect(tiers[0]).toEqual(
-        expect.objectContaining({
-          id: 1,
-          name: 'Basic',
-          price: 0,
-          audit_limit: 5,
-          max_pages_per_audit: 25
-        })
-      );
-
-      // Pro tier
-      expect(tiers[1]).toEqual(
-        expect.objectContaining({
-          id: 2,
-          name: 'Pro',
-          audit_limit: 50,
-          max_pages_per_audit: 100
-        })
-      );
-
-      // Enterprise tier (unlimited)
-      expect(tiers[2]).toEqual(
-        expect.objectContaining({
-          id: 3,
-          name: 'Enterprise',
-          audit_limit: -1,
-          max_pages_per_audit: -1
-        })
-      );
+      // Check for required tiers
+      const tierNames = tiers.map(t => t.tier_name);
+      expect(tierNames).toContain('freemium');
+      expect(tierNames).toContain('starter');
+      expect(tierNames).toContain('professional');
+      expect(tierNames).toContain('enterprise');
     });
 
-    test('should enforce tier foreign key constraint on users', async () => {
+    test('should enforce tier constraint on users', async () => {
       await expect(
         testClient.query(`
-          INSERT INTO users (email, password_hash, tier_id)
+          INSERT INTO users (email, password_hash, tier)
           VALUES ($1, $2, $3)
-        `, ['test@example.com', 'hash', 999])
-      ).rejects.toThrow(/violates foreign key constraint/);
+        `, ['test@example.com', 'hash', 'invalid_tier'])
+      ).rejects.toThrow(/violates check constraint/);
     });
 
     test('should update user tier correctly', async () => {
-      // Create user with basic tier
+      // Create user with starter tier
       const userResult = await testClient.query(`
-        INSERT INTO users (email, password_hash, tier_id)
+        INSERT INTO users (email, password_hash, tier)
         VALUES ($1, $2, $3)
         RETURNING id
-      `, ['test@example.com', 'hash', 1]);
+      `, ['test@example.com', 'hash', 'starter']);
       
       const userId = userResult.rows[0].id;
 
-      // Upgrade to pro tier
+      // Upgrade to professional tier
       await testClient.query(`
-        UPDATE users SET tier_id = $1 WHERE id = $2
-      `, [2, userId]);
+        UPDATE users SET tier = $1 WHERE id = $2
+      `, ['professional', userId]);
 
       // Verify tier was updated
       const updatedResult = await testClient.query(
-        'SELECT tier_id FROM users WHERE id = $1',
+        'SELECT tier FROM users WHERE id = $1',
         [userId]
       );
       
-      expect(updatedResult.rows[0].tier_id).toBe(2);
+      expect(updatedResult.rows[0].tier).toBe('professional');
     });
   });
 

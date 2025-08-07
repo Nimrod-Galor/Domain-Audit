@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { validateCSRFToken, generateCSRFToken } from './validators.js';
 
 // JWT Secret (should be in environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
@@ -55,6 +54,90 @@ function generateSessionId() {
 }
 
 /**
+ * Generate secure CSRF token
+ */
+function generateCSRFToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Validate CSRF token with timing attack protection
+ */
+function validateCSRFToken(sessionToken, requestToken) {
+  if (!sessionToken || !requestToken) {
+    return false;
+  }
+  
+  if (sessionToken.length !== requestToken.length) {
+    return false;
+  }
+  
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(sessionToken),
+      Buffer.from(requestToken)
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * CSRF Protection middleware
+ */
+function csrfProtection(req, res, next) {
+  // Ensure session exists
+  if (!req.session) {
+    return res.status(403).json({
+      error: 'No session found'
+    });
+  }
+  
+  // Generate token if it doesn't exist
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = generateCSRFToken();
+  }
+  
+  // Skip validation for safe HTTP methods
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  
+  // Get token from various sources
+  const requestToken = req.headers['x-csrf-token'] || 
+                      req.body._token || 
+                      req.query._token;
+  
+  // Validate token
+  if (!validateCSRFToken(req.session.csrfToken, requestToken)) {
+    return res.status(403).json({
+      error: 'Invalid CSRF token'
+    });
+  }
+  
+  next();
+}
+
+/**
+ * Generate CSRF token for forms
+ */
+function generateCSRF() {
+  return generateCSRFToken();
+}
+
+/**
+ * Add CSRF token to response locals for templates
+ */
+function addCSRFToResponse(req, res, next) {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = generateCSRFToken();
+  }
+  
+  res.locals.csrfToken = req.session.csrfToken;
+  next();
+}
+
+/**
  * Session management
  */
 class SessionManager {
@@ -70,7 +153,7 @@ class SessionManager {
       userId,
       createdAt: Date.now(),
       lastAccessed: Date.now(),
-      csrfToken: generateCSRFToken(),
+      csrfToken: crypto.randomBytes(32).toString('hex'),
       ...userData
     };
     
@@ -126,11 +209,23 @@ class SessionManager {
   
   validateCSRF(sessionId, requestToken) {
     const session = this.getSession(sessionId);
-    if (!session) {
+    if (!session || !requestToken) {
       return false;
     }
     
-    return validateCSRFToken(session.csrfToken, requestToken);
+    // Use crypto.timingSafeEqual to prevent timing attacks
+    if (session.csrfToken.length !== requestToken.length) {
+      return false;
+    }
+    
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(session.csrfToken),
+        Buffer.from(requestToken)
+      );
+    } catch (error) {
+      return false;
+    }
   }
 }
 
@@ -170,6 +265,10 @@ class RateLimiter {
     this.requests.delete(identifier);
   }
   
+  resetAll() {
+    this.requests.clear();
+  }
+  
   getRemainingRequests(identifier) {
     const now = Date.now();
     const windowStart = now - this.windowMs;
@@ -177,6 +276,15 @@ class RateLimiter {
     const validRequests = requestHistory.filter(timestamp => timestamp > windowStart);
     
     return Math.max(0, this.maxRequests - validRequests.length);
+  }
+  
+  // Additional methods for testing compatibility
+  checkLimit(identifier) {
+    return this.isAllowed(identifier);
+  }
+  
+  isRateLimited(identifier) {
+    return !this.isAllowed(identifier);
   }
 }
 
@@ -249,6 +357,11 @@ export {
   hashPassword,
   comparePassword,
   generateSessionId,
+  generateCSRFToken,
+  validateCSRFToken,
+  csrfProtection,
+  generateCSRF,
+  addCSRFToResponse,
   SessionManager,
   RateLimiter,
   MFAManager,

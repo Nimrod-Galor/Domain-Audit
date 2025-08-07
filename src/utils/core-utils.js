@@ -3,35 +3,94 @@ import fs from 'fs';
 import path from 'path';
 
 export function extractMainDomain(hostname) {
-  const parts = hostname.replace(/^www\./, '').split('.');
-  
-  // If it's a standard domain (e.g., example.com, blog.example.com)
-  if (parts.length >= 2) {
-    const tld = parts[parts.length - 1];  // e.g., com, org, co.uk
-    const domain = parts[parts.length - 2];  // e.g., example, google
-    
-    // For subdomains, include subdomain, domain, and TLD
-    if (parts.length > 2) {
-      const subdomain = parts[0];  // e.g., blog, api, shop
-      return `${subdomain}-${domain}-${tld}`;  // e.g., blog-example-com
-    }
-    
-    // For regular domains, use domain and TLD
-    return `${domain}-${tld}`;  // e.g., example-com, google-org
+  // Handle null/undefined input
+  if (!hostname || typeof hostname !== 'string') {
+    return '';
   }
   
-  // Fallback to first part if something unusual
-  return parts[0];
+  // Clean up the hostname
+  let cleanHostname = hostname.toLowerCase().trim();
+  
+  // Remove protocol if present
+  cleanHostname = cleanHostname.replace(/^https?:\/\//, '');
+  
+  // Remove www prefix
+  cleanHostname = cleanHostname.replace(/^www\./, '');
+  
+  // Remove path, query, or fragment
+  cleanHostname = cleanHostname.split('/')[0];
+  cleanHostname = cleanHostname.split('?')[0];
+  cleanHostname = cleanHostname.split('#')[0];
+  
+  const parts = cleanHostname.split('.');
+  
+  // Handle complex TLDs like co.uk, com.au
+  if (parts.length >= 3) {
+    const lastTwo = parts.slice(-2).join('.');
+    const knownComplexTlds = ['co.uk', 'com.au', 'co.za', 'com.br', 'co.jp'];
+    
+    if (knownComplexTlds.includes(lastTwo)) {
+      // For complex TLD, return domain + complex TLD
+      return parts.slice(-3, -2)[0] + '.' + lastTwo;
+    }
+  }
+  
+  // For standard domains (example.com, subdomain.example.com)
+  if (parts.length >= 2) {
+    // Return the last two parts (domain.tld)
+    return parts.slice(-2).join('.');
+  }
+  
+  // Fallback for single part
+  return cleanHostname;
 }
 
-export function isInternalLink(href, BASE_URL, DOMAIN) {
-  try {
-    const parsed = new URL(href, BASE_URL);
-    const cleanHostname = parsed.hostname.replace(/^www\./, '');
-    const cleanDomain = DOMAIN.replace(/^www\./, '');
-    return cleanHostname === cleanDomain;
-  } catch {
+export function isInternalLink(href, baseDomain) {
+  // Handle null/undefined inputs
+  if (!href || !baseDomain || typeof href !== 'string' || typeof baseDomain !== 'string') {
     return false;
+  }
+  
+  try {
+    // Handle relative URLs (they are internal by definition)
+    if (href.startsWith('/') || href.startsWith('#') || href.startsWith('?')) {
+      return true;
+    }
+    
+    // Handle protocol-relative URLs
+    if (href.startsWith('//')) {
+      href = 'https:' + href;
+    }
+    
+    // Check for malformed URLs with multiple colons (not part of ://)
+    if (href.includes('::')) {
+      return false;
+    }
+    
+    // If no protocol, assume it's a relative URL
+    if (!href.includes('://')) {
+      return true;
+    }
+    
+    // Parse the URL
+    const url = new URL(href);
+    
+    // Only consider HTTP/HTTPS protocols as potentially internal
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return false;
+    }
+    
+    const linkDomain = extractMainDomain(url.hostname);
+    const cleanBaseDomain = extractMainDomain(baseDomain);
+    
+    return linkDomain.toLowerCase() === cleanBaseDomain.toLowerCase();
+  } catch (error) {
+    // If URL parsing fails and it contains ://, treat as external
+    if (href.includes('://')) {
+      return false;
+    }
+    // Otherwise assume it's a relative/internal link
+    return true;
   }
 }
 
@@ -48,28 +107,50 @@ export function isFunctionalLink(href) {
 }
 
 export function normalizeUrl(url) {
+  // Handle null/undefined input
+  if (!url || typeof url !== 'string') {
+    return '';
+  }
+  
   // Remove trailing slash unless it's the root path
-  if (url.endsWith('/')) {
+  if (url.endsWith('/') && url.length > 1) {
     return url.slice(0, -1);
   }
   return url;
 }
 
-export function recordFunctionalLink(href, source, mailtoLinks, telLinks) {
-  if (href.toLowerCase().startsWith('mailto:')) {
-    if (!mailtoLinks[href]) {
-      mailtoLinks[href] = {
+export function recordFunctionalLink(href, source, _, mailtoLinks, telLinks) {
+  // Ensure parameters are provided
+  if (!href || !source) {
+    return;
+  }
+  
+  const lowerHref = href.toLowerCase();
+  
+  if (lowerHref.startsWith('mailto:')) {
+    // Ensure mailtoLinks object exists
+    if (!mailtoLinks) {
+      return;
+    }
+    // Use lowercase version for storage
+    if (!mailtoLinks[lowerHref]) {
+      mailtoLinks[lowerHref] = {
         sources: new Set()
       };
     }
-    mailtoLinks[href].sources.add(source);
-  } else if (href.toLowerCase().startsWith('tel:')) {
-    if (!telLinks[href]) {
-      telLinks[href] = {
+    mailtoLinks[lowerHref].sources.add(source);
+  } else if (lowerHref.startsWith('tel:')) {
+    // Ensure telLinks object exists
+    if (!telLinks) {
+      return;
+    }
+    // Use lowercase version for storage
+    if (!telLinks[lowerHref]) {
+      telLinks[lowerHref] = {
         sources: new Set()
       };
     }
-    telLinks[href].sources.add(source);
+    telLinks[lowerHref].sources.add(source);
   }
 }
 

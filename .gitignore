@@ -142,3 +142,14 @@ dist
 # file uploads
 uploads/
 uploads/**
+
+# E2E test artifacts
+playwright-report/
+test-results/
+.playwright/
+*.png
+*.webm
+*.mp4
+
+# E2E environment (keep .env.e2e.example)
+.env.e2e

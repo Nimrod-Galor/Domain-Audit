@@ -1,5 +1,22 @@
 -- Migration 007: Administrator Dashboard System
--- This adds admin functionality to the existing tier system
+-- This adds admin fun-- Create a default admin user (password should be changed immediately)
+-- Note: This uses a placeholder password hash that should be updated
+INSERT INTO users (email, first_name, last_name, role, is_admin, admin_permissions, password_hash, tier_id, created_at)
+VALUES (
+  'admin@sitescope.com', 
+  'System', 
+  'Administrator',
+  'super_admin', 
+  TRUE, 
+  '["users", "billing", "audits", "analytics", "system"]'::json, 
+  '$2b$12$placeholder.hash.that.needs.to.be.changed.immediately', 
+  3, -- Enterprise tier
+  CURRENT_TIMESTAMP
+)
+ON CONFLICT (email) DO UPDATE SET
+  is_admin = TRUE,
+  admin_permissions = '["users", "billing", "audits", "analytics", "system"]'::json,
+  role = 'super_admin'; existing tier system
 
 -- 1. Add admin-related columns to users table
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';
@@ -93,24 +110,21 @@ CREATE OR REPLACE VIEW admin_user_overview AS
 SELECT 
   u.id,
   u.email,
-  u.full_name,
-  u.tier,
-  u.subscription_status,
+  CONCAT(u.first_name, ' ', u.last_name) as full_name,
+  u.tier_id,
+  u.verified,
   u.created_at,
   u.last_login_at,
   u.login_count,
-  ul.audits_per_month,
-  ul.max_internal_pages,
-  s.status as subscription_status_detail,
-  s.amount as subscription_amount,
-  s.billing_cycle,
-  ut.audits_used,
-  ut.api_calls_used
+  t.name as tier_name,
+  t.audits_per_month,
+  t.max_pages_per_audit,
+  COUNT(a.id) as total_audits
 FROM users u
-LEFT JOIN user_limits ul ON u.id = ul.user_id
-LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
-LEFT JOIN usage_tracking ut ON u.id = ut.user_id AND ut.month_year = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
-WHERE u.is_admin = FALSE;
+LEFT JOIN tiers t ON u.tier_id = t.id
+LEFT JOIN audits a ON u.id = a.user_id
+WHERE u.is_admin = FALSE
+GROUP BY u.id, u.email, u.first_name, u.last_name, u.tier_id, u.verified, u.created_at, u.last_login_at, u.login_count, t.name, t.audits_per_month, t.max_pages_per_audit;
 
 CREATE OR REPLACE VIEW admin_audit_stats AS
 SELECT 
@@ -127,10 +141,10 @@ GROUP BY DATE(created_at)
 ORDER BY audit_date DESC;
 
 -- 7. Create indexes for better admin dashboard performance
-CREATE INDEX IF NOT EXISTS idx_users_admin_search ON users(email, full_name) WHERE is_admin = FALSE;
-CREATE INDEX IF NOT EXISTS idx_users_tier_status ON users(tier, subscription_status);
+CREATE INDEX IF NOT EXISTS idx_users_admin_search ON users(email, first_name, last_name) WHERE is_admin = FALSE;
+CREATE INDEX IF NOT EXISTS idx_users_tier_status ON users(tier_id, verified);
 CREATE INDEX IF NOT EXISTS idx_audits_date_status ON audits(created_at, status);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_status_amount ON subscriptions(status, amount);
+CREATE INDEX IF NOT EXISTS idx_users_role_admin ON users(role, is_admin);
 
 -- 8. Add audit trigger for user login tracking
 CREATE OR REPLACE FUNCTION update_user_login_stats()

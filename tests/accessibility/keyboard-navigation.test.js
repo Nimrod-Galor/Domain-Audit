@@ -3,7 +3,7 @@
  * Tests for keyboard navigation and interaction patterns
  */
 
-import { expect } from '@jest/globals';
+import { describe, test, expect, jest } from '@jest/globals';
 
 describe('Keyboard Navigation Tests', () => {
 

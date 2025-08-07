@@ -11,11 +11,9 @@ import {
   mfaManager 
 } from '../lib/security.js';
 import { 
-  validateEmail, 
-  validatePassword, 
-  sanitizeInput, 
-  sanitizeHTML 
-} from '../lib/validators.js';
+  validationSchemas,
+  XSSProtection
+} from '../lib/enterprise-security.js';
 
 /**
  * Display login page
@@ -56,8 +54,8 @@ export const processLogin = async (req, res) => {
     const { email, password } = req.body;
     
     // Sanitize inputs
-    const sanitizedEmail = sanitizeInput(email);
-    const sanitizedPassword = sanitizeInput(password);
+    const sanitizedEmail = XSSProtection.sanitizeInput(email);
+    const sanitizedPassword = XSSProtection.sanitizeInput(password);
     
     // Enhanced validation
     if (!sanitizedEmail || !sanitizedPassword) {
@@ -69,7 +67,9 @@ export const processLogin = async (req, res) => {
       });
     }
     
-    if (!validateEmail(sanitizedEmail)) {
+    // Validate using Joi schemas
+    const { error: emailError } = validationSchemas.email.validate(sanitizedEmail);
+    if (emailError) {
       return res.render('auth/login', {
         title: 'Login',
         user: null,
