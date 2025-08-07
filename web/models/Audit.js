@@ -53,15 +53,73 @@ export const Audit = {
       const result = await query(queryText, params);
       const audit = result.rows[0] || null;
       
-      // Parse JSON fields
+      // Parse JSON fields safely
       if (audit) {
-        audit.config = typeof audit.config === 'string' ? JSON.parse(audit.config) : audit.config;
-        audit.results = typeof audit.results === 'string' ? JSON.parse(audit.results) : audit.results;
+        try {
+          audit.config = typeof audit.config === 'string' ? JSON.parse(audit.config) : audit.config;
+        } catch (e) {
+          // Keep original string if JSON parsing fails
+          audit.config = audit.config;
+        }
+        
+        try {
+          audit.results = typeof audit.results === 'string' ? JSON.parse(audit.results) : audit.results;
+        } catch (e) {
+          // Keep original string if JSON parsing fails
+          audit.results = audit.results;
+        }
+        
+        try {
+          audit.report_data = typeof audit.report_data === 'string' ? JSON.parse(audit.report_data) : audit.report_data;
+        } catch (e) {
+          // Keep original string if JSON parsing fails
+          audit.report_data = audit.report_data;
+        }
       }
       
       return audit;
     } catch (error) {
       console.error('❌ Error finding audit by ID:', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Find most recent audit by domain
+   * @param {string} domain - Domain/URL to search for
+   * @param {number} userId - User ID (optional, for access control)
+   * @returns {Promise<Object|null>} Most recent audit or null
+   */
+  async findByDomain(domain, userId = null) {
+    try {
+      let queryText = `SELECT * FROM audits
+WHERE url = $1 AND status = 'completed' AND report_data IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 1`;
+      let params = [domain];
+      
+      // If userId provided, ensure user has access to this audit
+      if (userId) {
+        queryText = `SELECT * FROM audits
+WHERE url = $1 AND (user_id = $2 OR user_id IS NULL) AND status = 'completed' AND report_data IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 1`;
+        params.push(userId);
+      }
+      
+      const result = await query(queryText, params);
+      const audit = result.rows[0] || null;
+      
+      // Parse JSON fields
+      if (audit) {
+        audit.config = typeof audit.config === 'string' ? JSON.parse(audit.config) : audit.config;
+        audit.results = typeof audit.results === 'string' ? JSON.parse(audit.results) : audit.results;
+        audit.report_data = typeof audit.report_data === 'string' ? JSON.parse(audit.report_data) : audit.report_data;
+      }
+      
+      return audit;
+    } catch (error) {
+      console.error('❌ Error finding audit by domain:', error.message);
       throw error;
     }
   },
@@ -138,12 +196,72 @@ export const Audit = {
   },
 
   /**
+   * Update audit with report data
+   * @param {number} id - Audit ID
+   * @param {Object} reportData - Report data
+   * @param {number} score - Overall score (optional)
+   * @returns {Promise<Object>} Updated audit object
+   */
+  async updateWithReport(id, reportData, score = null) {
+    try {
+      const result = await query(
+        `UPDATE audits 
+         SET report_data = $2, score = $3, status = 'completed', completed_at = CURRENT_TIMESTAMP 
+         WHERE id = $1 
+         RETURNING *`,
+        [id, JSON.stringify(reportData), score]
+      );
+      
+      if (result.rows.length === 0) {
+        throw new Error('Audit not found');
+      }
+      
+      console.log(`✅ Audit report updated: ${id} (Score: ${score})`);
+      return result.rows[0];
+    } catch (error) {
+      console.error('❌ Error updating audit report:', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Update audit progress
+   * @param {number} id - Audit ID
+   * @param {number} progress - Progress percentage (0-100)
+   * @param {Object} metadata - Additional metadata (optional)
+   * @returns {Promise<Object>} Updated audit object
+   */
+  async updateProgress(id, progress, metadata = {}) {
+    try {
+      const result = await query(
+        `UPDATE audits 
+         SET progress = $2, metadata = $3, status = 'running' 
+         WHERE id = $1 
+         RETURNING *`,
+        [id, progress, JSON.stringify(metadata)]
+      );
+      
+      if (result.rows.length === 0) {
+        throw new Error('Audit not found');
+      }
+      
+      console.log(`✅ Audit progress updated: ${id} -> ${progress}%`);
+      return result.rows[0];
+    } catch (error) {
+      console.error('❌ Error updating audit progress:', error.message);
+      throw error;
+    }
+  },
+
+  /**
    * Get user's audits with pagination
    * @param {number} userId - User ID
    * @param {Object} options - Query options
    * @param {number} options.page - Page number (default: 1)
    * @param {number} options.limit - Results per page (default: 10)
    * @param {string} options.status - Filter by status (optional)
+   * @param {string} options.startDate - Start date filter (optional)
+   * @param {string} options.endDate - End date filter (optional)
    * @param {string} options.sortBy - Sort field (default: 'created_at')
    * @param {string} options.sortOrder - Sort order (default: 'DESC')
    * @returns {Promise<Object>} Paginated results
@@ -153,6 +271,8 @@ export const Audit = {
       page = 1,
       limit = 10,
       status = null,
+      startDate = null,
+      endDate = null,
       sortBy = 'created_at',
       sortOrder = 'DESC'
     } = options;
@@ -174,6 +294,18 @@ export const Audit = {
         params.push(status);
         paramIndex++;
       }
+
+      if (startDate) {
+        whereClause += ` AND created_at >= $${paramIndex}`;
+        params.push(startDate);
+        paramIndex++;
+      }
+
+      if (endDate) {
+        whereClause += ` AND created_at <= $${paramIndex}`;
+        params.push(endDate);
+        paramIndex++;
+      }
       
       // Get total count
       const countResult = await query(
@@ -191,7 +323,7 @@ export const Audit = {
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...params, limit, offset]
       );
-      
+
       return {
         audits: auditsResult.rows,
         pagination: {
@@ -207,9 +339,7 @@ export const Audit = {
       console.error('❌ Error getting user audits:', error.message);
       throw error;
     }
-  },
-
-  /**
+  },  /**
    * Get recent audits across all users (for admin/analytics)
    * @param {number} limit - Number of results (default: 50)
    * @returns {Promise<Array>} Recent audits
@@ -265,13 +395,13 @@ export const Audit = {
       
       const stats = result.rows[0];
       return {
-        totalAudits: parseInt(stats.total_audits) || 0,
-        completedAudits: parseInt(stats.completed_audits) || 0,
-        failedAudits: parseInt(stats.failed_audits) || 0,
-        pendingAudits: parseInt(stats.pending_audits) || 0,
-        runningAudits: parseInt(stats.running_audits) || 0,
-        averageScore: stats.average_score || 0,
-        uniqueDomains: parseInt(stats.unique_domains) || 0
+        total_audits: parseInt(stats.total_audits) || 0,
+        completed_audits: parseInt(stats.completed_audits) || 0,
+        failed_audits: parseInt(stats.failed_audits) || 0,
+        pending_audits: parseInt(stats.pending_audits) || 0,
+        running_audits: parseInt(stats.running_audits) || 0,
+        avg_score: parseFloat(stats.average_score) || 0,
+        unique_domains: parseInt(stats.unique_domains) || 0
       };
     } catch (error) {
       console.error('❌ Error getting audit stats:', error.message);

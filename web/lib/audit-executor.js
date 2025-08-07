@@ -735,9 +735,12 @@ export class AuditExecutor extends EventEmitter {
       });
 
       // Give a small delay for cleanup to complete
-      setTimeout(() => {
-        console.log('✅ Audit cleanup completed');
-      }, 50);
+      // Skip logging in test environment to avoid Jest warnings
+      if (process.env.NODE_ENV !== 'test') {
+        setTimeout(() => {
+          console.log('✅ Audit cleanup completed');
+        }, 50);
+      }
       
     } catch (error) {
       console.warn('⚠️ Cleanup warning:', error.message);

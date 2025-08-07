@@ -10,7 +10,7 @@ import tierService from '../services/tierService.js';
 export const getHomePage = (req, res) => {
   res.render('index', {
     title: 'SiteScope - Website Audit Tool',
-    user: req.session.user || null,
+    user: req.session?.user || null,
     features: [
       {
         icon: 'fas fa-tachometer-alt',
@@ -62,7 +62,7 @@ export const getHomePage = (req, res) => {
 export const getAboutPage = (req, res) => {
   res.render('about', {
     title: 'About - SiteScope',
-    user: req.session.user || null
+    user: req.session?.user || null
   });
 };
 
@@ -80,14 +80,14 @@ export const getPricingPage = async (req, res) => {
 
     res.render('pricing', {
       title: 'Pricing - Choose Your Plan',
-      user: req.session.user || null,
+      user: req.session?.user || null,
       currentTier: currentTier || 'none'
     });
   } catch (error) {
     console.error('Error loading pricing page:', error);
     res.render('pricing', {
       title: 'Pricing - Choose Your Plan',
-      user: req.session.user || null,
+      user: req.session?.user || null,
       currentTier: 'none'
     });
   }
@@ -99,6 +99,6 @@ export const getPricingPage = async (req, res) => {
 export const getContactPage = (req, res) => {
   res.render('contact', {
     title: 'Contact - SiteScope',
-    user: req.session.user || null
+    user: req.session?.user || null
   });
 };

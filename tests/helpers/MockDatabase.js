@@ -134,24 +134,150 @@ export class MockClient {
       };
     }
 
+    // Handle users table queries
     if (sql.includes('users')) {
-      const users = Array.from(this.db.data.users.values());
+      let users = Array.from(this.db.data.users.values());
+      
+      // Handle WHERE clauses
+      if (sql.includes('where') && params.length > 0) {
+        if (sql.includes('email')) {
+          users = users.filter(u => u.email === params[0]);
+        }
+        if (sql.includes('id')) {
+          const id = parseInt(params[0]);
+          users = users.filter(u => u.id === id);
+        }
+        if (sql.includes('tier_id')) {
+          const tierId = parseInt(params[0]);
+          users = users.filter(u => u.tier_id === tierId);
+        }
+      }
+      
+      // Handle LIMIT
+      if (sql.includes('limit')) {
+        const limitMatch = sql.match(/limit\s+(\d+)/);
+        if (limitMatch) {
+          const limit = parseInt(limitMatch[1]);
+          users = users.slice(0, limit);
+        }
+      }
+      
       return { rows: users, rowCount: users.length };
     }
 
+    // Handle audits table queries
     if (sql.includes('audits')) {
-      const audits = Array.from(this.db.data.audits.values());
+      let audits = Array.from(this.db.data.audits.values());
+      
+      // Handle WHERE clauses
+      if (sql.includes('where') && params.length > 0) {
+        if (sql.includes('user_id')) {
+          const userId = parseInt(params[0]);
+          audits = audits.filter(a => a.user_id === userId);
+        }
+        if (sql.includes('url')) {
+          audits = audits.filter(a => a.url === params[0]);
+        }
+        if (sql.includes('status')) {
+          audits = audits.filter(a => a.status === params[0]);
+        }
+        if (sql.includes('created_at')) {
+          // Handle date range queries
+          const startDate = params[0];
+          const endDate = params[1];
+          audits = audits.filter(a => {
+            const auditDate = new Date(a.created_at);
+            return auditDate >= new Date(startDate) && auditDate <= new Date(endDate);
+          });
+        }
+      }
+      
+      // Handle ORDER BY
+      if (sql.includes('order by')) {
+        if (sql.includes('created_at desc')) {
+          audits.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+        if (sql.includes('score desc')) {
+          audits.sort((a, b) => (b.score || 0) - (a.score || 0));
+        }
+      }
+      
+      // Handle LIMIT
+      if (sql.includes('limit')) {
+        const limitMatch = sql.match(/limit\s+(\d+)/);
+        if (limitMatch) {
+          const limit = parseInt(limitMatch[1]);
+          audits = audits.slice(0, limit);
+        }
+      }
+      
       return { rows: audits, rowCount: audits.length };
     }
 
-    if (sql.includes('tiers')) {
-      const tiers = Array.from(this.db.data.tiers.values());
+    // Handle tiers table queries
+    if (sql.includes('tiers') || sql.includes('tier_definitions')) {
+      let tiers = Array.from(this.db.data.tiers.values());
+      
+      if (sql.includes('where') && params.length > 0) {
+        if (sql.includes('tier_name') || sql.includes('name')) {
+          tiers = tiers.filter(t => t.name === params[0]);
+        }
+      }
+      
       return { rows: tiers, rowCount: tiers.length };
     }
 
+    // Handle notifications table queries
     if (sql.includes('notifications')) {
-      const notifications = Array.from(this.db.data.notifications.values());
+      let notifications = Array.from(this.db.data.notifications.values());
+      
+      if (sql.includes('where') && params.length > 0) {
+        if (sql.includes('user_id')) {
+          const userId = parseInt(params[0]);
+          notifications = notifications.filter(n => n.user_id === userId);
+        }
+        if (sql.includes('read')) {
+          const isRead = params[0];
+          notifications = notifications.filter(n => n.read === isRead);
+        }
+      }
+      
+      if (sql.includes('order by created_at desc')) {
+        notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+      
       return { rows: notifications, rowCount: notifications.length };
+    }
+
+    // Handle aggregate functions
+    if (sql.includes('count(*)')) {
+      let count = 0;
+      if (sql.includes('users')) count = this.db.data.users.size;
+      if (sql.includes('audits')) count = this.db.data.audits.size;
+      if (sql.includes('notifications')) count = this.db.data.notifications.size;
+      
+      return { rows: [{ count }], rowCount: 1 };
+    }
+
+    if (sql.includes('sum(')) {
+      if (sql.includes('pages_scanned')) {
+        const audits = Array.from(this.db.data.audits.values());
+        const sum = audits.reduce((total, audit) => total + (audit.pages_scanned || 0), 0);
+        return { rows: [{ sum }], rowCount: 1 };
+      }
+      if (sql.includes('external_links_checked')) {
+        const audits = Array.from(this.db.data.audits.values());
+        const sum = audits.reduce((total, audit) => total + (audit.external_links_checked || 0), 0);
+        return { rows: [{ sum }], rowCount: 1 };
+      }
+    }
+
+    if (sql.includes('avg(')) {
+      if (sql.includes('score')) {
+        const audits = Array.from(this.db.data.audits.values()).filter(a => a.score !== null);
+        const avg = audits.length > 0 ? audits.reduce((total, audit) => total + audit.score, 0) / audits.length : 0;
+        return { rows: [{ avg }], rowCount: 1 };
+      }
     }
 
     // Default empty result
@@ -215,13 +341,188 @@ export class MockClient {
   }
 
   handleUpdate(sql, params) {
-    // Mock update operation
-    return { rows: [], rowCount: 1 };
+    let updatedCount = 0;
+    
+    if (sql.includes('users')) {
+      for (const [id, user] of this.db.data.users.entries()) {
+        let shouldUpdate = false;
+        
+        // Check WHERE conditions
+        if (sql.includes('where')) {
+          if (sql.includes('id =')) {
+            const targetId = parseInt(params[params.length - 1]); // Last param is usually WHERE condition
+            shouldUpdate = user.id === targetId;
+          }
+          if (sql.includes('email =')) {
+            const targetEmail = params[params.length - 1];
+            shouldUpdate = user.email === targetEmail;
+          }
+        } else {
+          shouldUpdate = true; // Update all if no WHERE clause
+        }
+        
+        if (shouldUpdate) {
+          // Update fields based on SET clause and params
+          if (sql.includes('verified =')) {
+            user.verified = params[0];
+          }
+          if (sql.includes('tier_id =')) {
+            user.tier_id = parseInt(params[0]);
+          }
+          if (sql.includes('first_name =')) {
+            user.first_name = params[0];
+          }
+          if (sql.includes('last_name =')) {
+            user.last_name = params[1] || user.last_name;
+          }
+          if (sql.includes('password_hash =')) {
+            user.password_hash = params[0];
+          }
+          
+          user.updated_at = new Date();
+          updatedCount++;
+        }
+      }
+    }
+    
+    if (sql.includes('audits')) {
+      for (const [id, audit] of this.db.data.audits.entries()) {
+        let shouldUpdate = false;
+        
+        if (sql.includes('where')) {
+          if (sql.includes('id =')) {
+            const targetId = parseInt(params[params.length - 1]);
+            shouldUpdate = audit.id === targetId;
+          }
+          if (sql.includes('user_id =')) {
+            const targetUserId = parseInt(params[params.length - 1]);
+            shouldUpdate = audit.user_id === targetUserId;
+          }
+        } else {
+          shouldUpdate = true;
+        }
+        
+        if (shouldUpdate) {
+          if (sql.includes('status =')) {
+            audit.status = params[0];
+          }
+          if (sql.includes('report_data =')) {
+            audit.report_data = params[0];
+          }
+          if (sql.includes('score =')) {
+            audit.score = parseFloat(params[0]);
+          }
+          if (sql.includes('pages_scanned =')) {
+            audit.pages_scanned = parseInt(params[0]);
+          }
+          if (sql.includes('external_links_checked =')) {
+            audit.external_links_checked = parseInt(params[0]);
+          }
+          if (sql.includes('duration_ms =')) {
+            audit.duration_ms = parseInt(params[0]);
+          }
+          
+          audit.updated_at = new Date();
+          updatedCount++;
+        }
+      }
+    }
+    
+    if (sql.includes('notifications')) {
+      for (const [id, notification] of this.db.data.notifications.entries()) {
+        let shouldUpdate = false;
+        
+        if (sql.includes('where')) {
+          if (sql.includes('id =')) {
+            const targetId = parseInt(params[params.length - 1]);
+            shouldUpdate = notification.id === targetId;
+          }
+          if (sql.includes('user_id =')) {
+            const targetUserId = parseInt(params[params.length - 1]);
+            shouldUpdate = notification.user_id === targetUserId;
+          }
+        } else {
+          shouldUpdate = true;
+        }
+        
+        if (shouldUpdate) {
+          if (sql.includes('read =')) {
+            notification.read = params[0];
+          }
+          
+          notification.updated_at = new Date();
+          updatedCount++;
+        }
+      }
+    }
+    
+    return { rows: [], rowCount: updatedCount };
   }
 
   handleDelete(sql, params) {
-    // Mock delete operation
-    return { rows: [], rowCount: 1 };
+    let deletedCount = 0;
+    
+    if (sql.includes('users')) {
+      const toDelete = [];
+      for (const [id, user] of this.db.data.users.entries()) {
+        if (sql.includes('where')) {
+          if (sql.includes('id =') && user.id === parseInt(params[0])) {
+            toDelete.push(id);
+          }
+          if (sql.includes('email =') && user.email === params[0]) {
+            toDelete.push(id);
+          }
+          if (sql.includes('verified = false') && !user.verified) {
+            toDelete.push(id);
+          }
+        }
+      }
+      toDelete.forEach(id => {
+        this.db.data.users.delete(id);
+        deletedCount++;
+      });
+    }
+    
+    if (sql.includes('audits')) {
+      const toDelete = [];
+      for (const [id, audit] of this.db.data.audits.entries()) {
+        if (sql.includes('where')) {
+          if (sql.includes('id =') && audit.id === parseInt(params[0])) {
+            toDelete.push(id);
+          }
+          if (sql.includes('user_id =') && audit.user_id === parseInt(params[0])) {
+            toDelete.push(id);
+          }
+          if (sql.includes('status =') && audit.status === params[0]) {
+            toDelete.push(id);
+          }
+        }
+      }
+      toDelete.forEach(id => {
+        this.db.data.audits.delete(id);
+        deletedCount++;
+      });
+    }
+    
+    if (sql.includes('notifications')) {
+      const toDelete = [];
+      for (const [id, notification] of this.db.data.notifications.entries()) {
+        if (sql.includes('where')) {
+          if (sql.includes('user_id =') && notification.user_id === parseInt(params[0])) {
+            toDelete.push(id);
+          }
+          if (sql.includes('read = true') && notification.read) {
+            toDelete.push(id);
+          }
+        }
+      }
+      toDelete.forEach(id => {
+        this.db.data.notifications.delete(id);
+        deletedCount++;
+      });
+    }
+    
+    return { rows: [], rowCount: deletedCount };
   }
 
   release() {

@@ -6,6 +6,9 @@ export default {
   preset: undefined,
   transform: {},
   
+  // Set environment variables for tests
+  setupFiles: ['<rootDir>/tests/jest.env.js'],
+  
   // Test file patterns
   testMatch: [
     '**/tests/**/*.test.js',
