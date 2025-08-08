@@ -153,3 +153,6 @@ test-results/
 
 # E2E environment (keep .env.e2e.example)
 .env.e2e
+
+
+audits/

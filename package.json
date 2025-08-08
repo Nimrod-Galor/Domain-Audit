@@ -42,6 +42,7 @@
     "test:all:no-e2e": "npm run test:unit && npm run test:integration && npm run test:web",
     "test:setup": "playwright install",
     "test:quick": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests --silent",
+    "test:business-intelligence": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/business-intelligence-minimal.test.js --verbose --silent",
     "test:ci": "npm run test:coverage && npm run test:integration && npm run test:e2e",
     "test:ci:no-e2e": "npm run test:coverage && npm run test:integration",
     "test:db:setup": "node scripts/setup-test-db.js setup",

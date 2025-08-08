@@ -30,6 +30,7 @@ import { SSLCertificateAnalyzer } from '../analyzers/ssl-certificate-analyzer.js
 import { AIIntegrationManager } from '../ai/ai-integration-manager.js';
 import { SocialMediaAnalyzer } from '../analyzers/social-media/social-media-analyzer.js';
 import { EcommerceAnalyzer } from '../analyzers/ecommerce/ecommerce-analyzer.js';
+import { BusinessIntelligenceAnalyzer } from '../analyzers/business-intelligence/business-analyzer-minimal.js';
 
 /**
  * Enhanced Extractors Integration Class
@@ -49,6 +50,7 @@ export class EnhancedExtractorsIntegration {
       enableOrphanDetection: options.enableOrphanDetection !== false,
       enableContentIntelligence: options.enableContentIntelligence !== false,
       enableBusinessAnalytics: options.enableBusinessAnalytics !== false,
+      enableBusinessIntelligence: options.enableBusinessIntelligence !== false,
       enableSSLCertificateAnalysis: options.enableSSLCertificateAnalysis !== false,
       enableSocialMediaAnalysis: options.enableSocialMediaAnalysis !== false,
       enableEcommerceAnalysis: options.enableEcommerceAnalysis !== false,
@@ -84,6 +86,7 @@ export class EnhancedExtractorsIntegration {
     // Initialize remaining coverage analyzers
     this.contentIntelligenceAnalyzer = new ContentIntelligenceAnalyzer(options);
     this.businessAnalyticsAnalyzer = new BusinessAnalyticsAnalyzer(options);
+    this.businessIntelligenceAnalyzer = new BusinessIntelligenceAnalyzer(options);
     this.sslCertificateAnalyzer = new SSLCertificateAnalyzer(options);
     this.socialMediaAnalyzer = new SocialMediaAnalyzer(options);
     this.ecommerceAnalyzer = new EcommerceAnalyzer(options);
@@ -303,7 +306,7 @@ export class EnhancedExtractorsIntegration {
    * @param {string} url - Page URL
    * @returns {Object} Complete enhanced analysis
    */
-  extractAllEnhancedData(dom, pageData, responseTime, pageSize, rawHTML = '', url = '') {
+  async extractAllEnhancedData(dom, pageData, responseTime, pageSize, rawHTML = '', url = '') {
     const analysis = {
       enhancedPerformance: null,
       advancedAccessibility: null,
@@ -322,7 +325,10 @@ export class EnhancedExtractorsIntegration {
       contentIntelligence: null,
       businessAnalytics: null,
       
-      // 🎯 PHASE 1: Enhanced Social Media Optimization
+      // � PHASE 3: Business Intelligence Module  
+      businessIntelligence: null,
+      
+      // �🎯 PHASE 1: Enhanced Social Media Optimization
       socialMediaAnalysis: null,
       
       // 🛒 PHASE 2: E-commerce Analysis Module
@@ -351,6 +357,9 @@ export class EnhancedExtractorsIntegration {
           // Final coverage features
           contentIntelligence: this.config.enableContentIntelligence,
           businessAnalytics: this.config.enableBusinessAnalytics,
+          
+          // Phase 3: Business Intelligence Module
+          businessIntelligence: this.config.enableBusinessIntelligence,
           
           // Phase 1: Enhanced Social Media Optimization
           socialMediaAnalysis: this.config.enableSocialMediaAnalysis,
@@ -428,7 +437,12 @@ export class EnhancedExtractorsIntegration {
       analysis.businessAnalytics = this.extractBusinessAnalytics(dom, pageData, url);
     }
 
-    // 🎯 PHASE 1: Enhanced Social Media Optimization
+    // � PHASE 3: Business Intelligence Module
+    if (this.config.enableBusinessIntelligence) {
+      analysis.businessIntelligence = await this.extractBusinessIntelligence(dom, pageData, url);
+    }
+
+    // �🎯 PHASE 1: Enhanced Social Media Optimization
     if (this.config.enableSocialMediaAnalysis) {
       analysis.socialMediaAnalysis = this.extractSocialMediaAnalysis(dom, pageData, url);
     }
@@ -716,6 +730,110 @@ export class EnhancedExtractorsIntegration {
         trustSignals: null,
         businessOptimizationScore: 0,
         recommendations: []
+      };
+    }
+  }
+
+  /**
+   * Extract business intelligence analysis
+   * @param {Object} dom - JSDOM document object
+   * @param {Object} pageData - Existing page data
+   * @param {string} url - Page URL
+   * @returns {Object} Business intelligence analysis results
+   */
+  async extractBusinessIntelligence(dom, pageData, url = '') {
+    try {
+      console.log('🏢 DEBUG: Starting Business Intelligence analysis for:', url);
+      console.log('🔍 DEBUG: Business Intelligence analyzer available:', !!this.businessIntelligenceAnalyzer);
+      console.log('🏗️ DEBUG: DOM object type:', typeof dom);
+      console.log('🏗️ DEBUG: DOM has window:', !!dom.window);
+      console.log('🏗️ DEBUG: DOM window has document:', !!(dom.window && dom.window.document));
+      console.log('🏗️ DEBUG: DOM window document type:', typeof (dom.window && dom.window.document));
+      console.log('🏗️ DEBUG: DOM constructor name:', dom.constructor.name);
+      console.log('🏗️ DEBUG: DOM toString:', dom.toString().substring(0, 100));
+      
+      if (!this.businessIntelligenceAnalyzer) {
+        console.log('❌ DEBUG: Business Intelligence analyzer not initialized');
+        return {
+          error: 'Business Intelligence analyzer not initialized',
+          debug: 'Analyzer instance missing'
+        };
+      }
+      
+      // Create a comprehensive document-like adapter for Cheerio
+      let documentAdapter;
+      if (typeof dom === 'function') {
+        // Server-side: dom is Cheerio $ function
+        console.log('🔧 DEBUG: Creating Cheerio adapter for Business Intelligence analyzer');
+        documentAdapter = {
+          querySelectorAll: (selector) => {
+            try {
+              const elements = dom(selector);
+              // Convert Cheerio elements to document-like elements
+              return elements.toArray().map(el => ({
+                textContent: dom(el).text(),
+                getAttribute: (attr) => dom(el).attr(attr),
+                innerHTML: dom(el).html(),
+                tagName: el.tagName,
+                classList: {
+                  contains: (className) => dom(el).hasClass(className)
+                }
+              }));
+            } catch (error) {
+              console.log('⚠️ DEBUG: Cheerio querySelectorAll error:', error.message);
+              return [];
+            }
+          },
+          querySelector: (selector) => {
+            try {
+              const element = dom(selector).first();
+              if (element.length === 0) return null;
+              const el = element[0];
+              return {
+                textContent: element.text(),
+                getAttribute: (attr) => element.attr(attr),
+                innerHTML: element.html(),
+                tagName: el.tagName,
+                classList: {
+                  contains: (className) => element.hasClass(className)
+                }
+              };
+            } catch (error) {
+              console.log('⚠️ DEBUG: Cheerio querySelector error:', error.message);
+              return null;
+            }
+          }
+        };
+      } else {
+        // Already a document object
+        documentAdapter = dom.window ? dom.window.document : dom;
+      }
+      
+      const result = await this.businessIntelligenceAnalyzer.analyzeBusinessIntelligence(
+        documentAdapter, 
+        pageData, 
+        url
+      );
+      
+      console.log('✅ DEBUG: Business Intelligence analysis completed');
+      console.log('📊 DEBUG: Result keys:', Object.keys(result || {}));
+      
+      return result;
+    } catch (error) {
+      console.log('❌ DEBUG: Business Intelligence analysis error:', error.message);
+      return {
+        error: `Business intelligence analysis failed: ${error.message}`,
+        trustSignals: null,
+        contactInformation: null,
+        aboutPageQuality: null,
+        customerSupport: null,
+        businessCredibility: null,
+        locationData: null,
+        score: 0,
+        grade: 'F',
+        recommendations: [],
+        analysisTime: 0,
+        timestamp: new Date().toISOString()
       };
     }
   }
