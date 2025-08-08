@@ -4,6 +4,14 @@ export default {
   
   // ES Modules support
   preset: undefined,
+  globals: {
+    'ts-jest': {
+      useESM: true
+    }
+  },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
   transform: {},
   
   // Set environment variables for tests

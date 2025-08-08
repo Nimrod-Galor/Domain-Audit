@@ -1,0 +1,23 @@
+{
+  "visited": [
+    "https://shopify.com"
+  ],
+  "queue": [],
+  "stats": {},
+  "badRequests": {
+    "https://shopify.com": {
+      "status": "PROCESSING_ERROR",
+      "sources": [
+        "https://shopify.com"
+      ]
+    }
+  },
+  "externalLinks": {},
+  "mailtoLinks": {},
+  "telLinks": {},
+  "pageDataSize": 0,
+  "_compression": {
+    "version": "1.0.0",
+    "timestamp": "2025-08-08T11:40:55.450Z"
+  }
+}

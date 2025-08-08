@@ -28,6 +28,8 @@ import { ContentIntelligenceAnalyzer } from '../analyzers/content-intelligence-a
 import { BusinessAnalyticsAnalyzer } from '../analyzers/business-analytics-analyzer.js';
 import { SSLCertificateAnalyzer } from '../analyzers/ssl-certificate-analyzer.js';
 import { AIIntegrationManager } from '../ai/ai-integration-manager.js';
+import { SocialMediaAnalyzer } from '../analyzers/social-media/social-media-analyzer.js';
+import { EcommerceAnalyzer } from '../analyzers/ecommerce/ecommerce-analyzer.js';
 
 /**
  * Enhanced Extractors Integration Class
@@ -48,6 +50,8 @@ export class EnhancedExtractorsIntegration {
       enableContentIntelligence: options.enableContentIntelligence !== false,
       enableBusinessAnalytics: options.enableBusinessAnalytics !== false,
       enableSSLCertificateAnalysis: options.enableSSLCertificateAnalysis !== false,
+      enableSocialMediaAnalysis: options.enableSocialMediaAnalysis !== false,
+      enableEcommerceAnalysis: options.enableEcommerceAnalysis !== false,
       
       // 🤖 AI INTELLIGENCE FEATURES - Next-Gen AI Capabilities
       enableAIIntegration: options.enableAIIntegration !== false,
@@ -81,6 +85,8 @@ export class EnhancedExtractorsIntegration {
     this.contentIntelligenceAnalyzer = new ContentIntelligenceAnalyzer(options);
     this.businessAnalyticsAnalyzer = new BusinessAnalyticsAnalyzer(options);
     this.sslCertificateAnalyzer = new SSLCertificateAnalyzer(options);
+    this.socialMediaAnalyzer = new SocialMediaAnalyzer(options);
+    this.ecommerceAnalyzer = new EcommerceAnalyzer(options);
     
     // 🤖 Initialize AI Integration Manager
     this.aiIntegrationManager = this.config.enableAIIntegration 
@@ -316,6 +322,12 @@ export class EnhancedExtractorsIntegration {
       contentIntelligence: null,
       businessAnalytics: null,
       
+      // 🎯 PHASE 1: Enhanced Social Media Optimization
+      socialMediaAnalysis: null,
+      
+      // 🛒 PHASE 2: E-commerce Analysis Module
+      ecommerceAnalysis: null,
+      
       // 🤖 AI Intelligence Features - Next-Gen AI Capabilities
       aiIntelligence: null,
       
@@ -338,7 +350,13 @@ export class EnhancedExtractorsIntegration {
           
           // Final coverage features
           contentIntelligence: this.config.enableContentIntelligence,
-          businessAnalytics: this.config.enableBusinessAnalytics
+          businessAnalytics: this.config.enableBusinessAnalytics,
+          
+          // Phase 1: Enhanced Social Media Optimization
+          socialMediaAnalysis: this.config.enableSocialMediaAnalysis,
+          
+          // Phase 2: E-commerce Analysis Module
+          ecommerceAnalysis: this.config.enableEcommerceAnalysis
         },
         version: '1.0.0'
       }
@@ -408,6 +426,16 @@ export class EnhancedExtractorsIntegration {
     // Extract business analytics (addresses 0.5% gap)
     if (this.config.enableBusinessAnalytics) {
       analysis.businessAnalytics = this.extractBusinessAnalytics(dom, pageData, url);
+    }
+
+    // 🎯 PHASE 1: Enhanced Social Media Optimization
+    if (this.config.enableSocialMediaAnalysis) {
+      analysis.socialMediaAnalysis = this.extractSocialMediaAnalysis(dom, pageData, url);
+    }
+
+    // 🛒 PHASE 2: E-commerce Analysis Module
+    if (this.config.enableEcommerceAnalysis) {
+      analysis.ecommerceAnalysis = this.extractEcommerceAnalysis(dom, pageData, url);
     }
 
     // Extract SSL certificate analysis (addresses remaining security gap)
@@ -693,6 +721,55 @@ export class EnhancedExtractorsIntegration {
   }
 
   /**
+   * Extract social media analysis
+   * @param {Object} dom - JSDOM document object
+   * @param {Object} pageData - Existing page data
+   * @param {string} url - Page URL
+   * @returns {Object} Social media analysis results
+   */
+  extractSocialMediaAnalysis(dom, pageData, url = '') {
+    try {
+      return this.socialMediaAnalyzer.analyzeSocialMedia(dom, pageData, url);
+    } catch (error) {
+      return {
+        error: `Social media analysis failed: ${error.message}`,
+        platforms: null,
+        sharing: null,
+        socialProof: null,
+        images: null,
+        optimizationScore: 0,
+        recommendations: []
+      };
+    }
+  }
+
+  /**
+   * Extract e-commerce analysis
+   * @param {Object} dom - JSDOM document object
+   * @param {Object} pageData - Existing page data
+   * @param {string} url - Page URL
+   * @returns {Object} E-commerce analysis results
+   */
+  extractEcommerceAnalysis(dom, pageData, url = '') {
+    try {
+      return this.ecommerceAnalyzer.analyzeEcommerce(dom, pageData, url);
+    } catch (error) {
+      return {
+        error: `E-commerce analysis failed: ${error.message}`,
+        type: 'analysis-error',
+        product: null,
+        checkout: null,
+        reviews: null,
+        security: null,
+        conversion: null,
+        schema: null,
+        optimization: { overall: 0, grade: 'F' },
+        recommendations: []
+      };
+    }
+  }
+
+  /**
    * Extract SSL certificate analysis data
    * @param {string} url - Page URL
    * @param {Object} pageData - Existing page data for mixed content analysis
@@ -952,6 +1029,16 @@ export class EnhancedExtractorsIntegration {
 
     if (analysis.businessAnalytics?.businessOptimizationScore) {
       scores.push(analysis.businessAnalytics.businessOptimizationScore);
+    }
+
+    // 🎯 PHASE 1: Enhanced Social Media Optimization Score
+    if (analysis.socialMediaAnalysis?.optimization?.overall) {
+      scores.push(analysis.socialMediaAnalysis.optimization.overall);
+    }
+
+    // 🛒 PHASE 2: E-commerce Analysis Score
+    if (analysis.ecommerceAnalysis?.optimization?.overall) {
+      scores.push(analysis.ecommerceAnalysis.optimization.overall);
     }
     
     return scores.length > 0 ? 

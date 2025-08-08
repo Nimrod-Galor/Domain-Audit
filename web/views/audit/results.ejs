@@ -174,6 +174,29 @@
                 </div>
             </div>
             <% } %>
+
+            <!-- E-commerce Analysis Card -->
+            <% if (results.enhanced?.ecommerceAnalysis && results.enhanced.ecommerceAnalysis.type !== 'non-ecommerce') { %>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-shopping-cart fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title">E-commerce</h5>
+                        <div class="h2 fw-bold mb-2" style="color: <%= results.enhanced.ecommerceAnalysis.optimization?.overall >= 80 ? '#28a745' : results.enhanced.ecommerceAnalysis.optimization?.overall >= 60 ? '#ffc107' : '#dc3545' %>">
+                            <%= results.enhanced.ecommerceAnalysis.optimization?.overall || 0 %>/100
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: <%= results.enhanced.ecommerceAnalysis.optimization?.overall || 0 %>%"></div>
+                        </div>
+                        <small class="text-muted">
+                            <%= results.enhanced.ecommerceAnalysis.type?.charAt(0).toUpperCase() + results.enhanced.ecommerceAnalysis.type?.slice(1) || 'Unknown' %> platform
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <% } %>
         </div>
     </div>
 </section>
@@ -205,6 +228,14 @@
                                     Technical Details
                                 </button>
                             </li>
+                            <% if (results.enhanced?.ecommerceAnalysis && results.enhanced.ecommerceAnalysis.type !== 'non-ecommerce') { %>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ecommerce-tab">
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    E-commerce Analysis
+                                </button>
+                            </li>
+                            <% } %>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -304,6 +335,149 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- E-commerce Analysis Tab -->
+                            <% if (results.enhanced?.ecommerceAnalysis && results.enhanced.ecommerceAnalysis.type !== 'non-ecommerce') { %>
+                            <div class="tab-pane" id="ecommerce-tab">
+                                <div class="row g-4">
+                                    <!-- Platform Detection -->
+                                    <div class="col-12">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-store me-2"></i>Platform Detection
+                                        </h5>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-6">
+                                                        <h6 class="text-capitalize">
+                                                            <%= results.enhanced.ecommerceAnalysis.type %> Platform
+                                                        </h6>
+                                                        <% if (results.enhanced.ecommerceAnalysis.platform) { %>
+                                                        <p class="text-muted mb-0">
+                                                            Version: <%= results.enhanced.ecommerceAnalysis.platform.version || 'Unknown' %>
+                                                        </p>
+                                                        <% } %>
+                                                    </div>
+                                                    <div class="col-md-6 text-end">
+                                                        <span class="badge bg-success fs-6">
+                                                            Confidence: <%= results.enhanced.ecommerceAnalysis.confidence || 'High' %>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Optimization Scores -->
+                                    <div class="col-12">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-chart-line me-2"></i>Optimization Scores
+                                        </h5>
+                                        <div class="row g-3">
+                                            <% if (results.enhanced.ecommerceAnalysis.optimization) { %>
+                                            <% Object.entries(results.enhanced.ecommerceAnalysis.optimization).forEach(([key, score]) => { %>
+                                            <% if (key !== 'overall' && typeof score === 'number') { %>
+                                            <div class="col-md-4">
+                                                <div class="card h-100">
+                                                    <div class="card-body text-center">
+                                                        <h6 class="text-capitalize"><%= key.replace(/([A-Z])/g, ' $1').trim() %></h6>
+                                                        <div class="h4 mb-2" style="color: <%= score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545' %>">
+                                                            <%= score %>/100
+                                                        </div>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar" style="width: <%= score %>%; background-color: <%= score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545' %>"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <% } %>
+                                            <% }); %>
+                                            <% } %>
+                                        </div>
+                                    </div>
+
+                                    <!-- Key Features -->
+                                    <% if (results.enhanced.ecommerceAnalysis.features && Object.keys(results.enhanced.ecommerceAnalysis.features).length > 0) { %>
+                                    <div class="col-12">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-cogs me-2"></i>E-commerce Features
+                                        </h5>
+                                        <div class="row g-3">
+                                            <% Object.entries(results.enhanced.ecommerceAnalysis.features).forEach(([category, features]) => { %>
+                                            <div class="col-md-6">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h6 class="mb-0 text-capitalize">
+                                                            <%= category.replace(/([A-Z])/g, ' $1').trim() %>
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <% if (Array.isArray(features)) { %>
+                                                        <ul class="list-unstyled mb-0">
+                                                            <% features.forEach(feature => { %>
+                                                            <li class="mb-1">
+                                                                <i class="fas fa-check text-success me-2"></i>
+                                                                <%= feature %>
+                                                            </li>
+                                                            <% }); %>
+                                                        </ul>
+                                                        <% } else if (typeof features === 'object') { %>
+                                                        <ul class="list-unstyled mb-0">
+                                                            <% Object.entries(features).forEach(([key, value]) => { %>
+                                                            <li class="mb-1">
+                                                                <strong class="text-capitalize"><%= key %>:</strong> <%= value %>
+                                                            </li>
+                                                            <% }); %>
+                                                        </ul>
+                                                        <% } else { %>
+                                                        <p class="mb-0"><%= features %></p>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <% }); %>
+                                        </div>
+                                    </div>
+                                    <% } %>
+
+                                    <!-- Recommendations -->
+                                    <% if (results.enhanced.ecommerceAnalysis.recommendations && results.enhanced.ecommerceAnalysis.recommendations.length > 0) { %>
+                                    <div class="col-12">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-lightbulb me-2"></i>E-commerce Recommendations
+                                        </h5>
+                                        <div class="row g-3">
+                                            <% results.enhanced.ecommerceAnalysis.recommendations.forEach((rec, index) => { %>
+                                            <div class="col-md-6">
+                                                <div class="alert alert-<%= rec.priority === 'high' ? 'warning' : rec.priority === 'medium' ? 'info' : 'light' %> mb-0">
+                                                    <div class="d-flex align-items-start">
+                                                        <div class="me-3">
+                                                            <i class="fas fa-<%= rec.priority === 'high' ? 'exclamation-triangle' : rec.priority === 'medium' ? 'info-circle' : 'lightbulb' %>"></i>
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <h6 class="alert-heading mb-2"><%= rec.title %></h6>
+                                                            <p class="mb-2"><%= rec.description %></p>
+                                                            <% if (rec.impact) { %>
+                                                            <small class="text-muted">
+                                                                <strong>Expected Impact:</strong> <%= rec.impact %>
+                                                            </small>
+                                                            <% } %>
+                                                        </div>
+                                                        <div class="ms-3">
+                                                            <span class="badge bg-<%= rec.priority === 'high' ? 'warning' : rec.priority === 'medium' ? 'info' : 'secondary' %>">
+                                                                <%= rec.priority %>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <% }); %>
+                                        </div>
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <% } %>
                         </div>
                     </div>
                 </div>

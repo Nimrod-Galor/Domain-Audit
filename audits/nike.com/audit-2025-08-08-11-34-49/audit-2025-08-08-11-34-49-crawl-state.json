@@ -1,0 +1,23 @@
+{
+  "visited": [
+    "https://store.nike.com"
+  ],
+  "queue": [],
+  "stats": {},
+  "badRequests": {
+    "https://store.nike.com": {
+      "status": "PROCESSING_ERROR",
+      "sources": [
+        "https://store.nike.com"
+      ]
+    }
+  },
+  "externalLinks": {},
+  "mailtoLinks": {},
+  "telLinks": {},
+  "pageDataSize": 0,
+  "_compression": {
+    "version": "1.0.0",
+    "timestamp": "2025-08-08T11:34:50.474Z"
+  }
+}

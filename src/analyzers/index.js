@@ -2,6 +2,7 @@
 import { extractSEOData } from '../extractors/seo-extractor.js';
 import { extractContentData } from '../extractors/content-extractor.js';
 import { extractTechnicalDataOptimized, extractAccessibilityDataOptimized, extractArchitectureDataOptimized, extractSecurityDataOptimized } from '../extractors/technical-extractor.js';
+import { EcommerceAnalyzer } from './ecommerce/ecommerce-analyzer.js';
 
 // Create analyzer wrappers
 export const seoAnalyzer = {
@@ -86,6 +87,24 @@ export const mobileAnalyzer = {
     mobileScore: 50,
     recommendations: []
   })
+};
+
+// E-commerce analyzer (Phase 2 - Production Ready)
+export const ecommerceAnalyzer = {
+  analyzer: new EcommerceAnalyzer(),
+  analyze: async (dom, pageData = {}, url = '') => {
+    try {
+      return await ecommerceAnalyzer.analyzer.analyzeEcommerce(dom, pageData, url);
+    } catch (error) {
+      console.warn('E-commerce analysis failed:', error.message);
+      return {
+        type: 'analysis-error',
+        error: error.message,
+        analysisTime: 0,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
 };
 
 // Enhanced extractors (medium-priority features)

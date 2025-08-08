@@ -1,0 +1,20 @@
+{
+  "domain": "myshopify.com",
+  "audits": [
+    {
+      "id": "audit-2025-08-08-12-04-34",
+      "startTime": "2025-08-08T12:04:34.071Z",
+      "status": "completed",
+      "version": "1.0.0",
+      "domain": "myshopify.com",
+      "endTime": "2025-08-08T12:04:35.601Z",
+      "duration": 2,
+      "pagesAnalyzed": 0,
+      "linksChecked": 0
+    }
+  ],
+  "totalAudits": 1,
+  "lastAuditId": "audit-2025-08-08-12-04-34",
+  "created": "2025-08-08T12:04:34.071Z",
+  "lastUpdated": "2025-08-08T12:04:35.601Z"
+}

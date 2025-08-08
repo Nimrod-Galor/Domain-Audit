@@ -1,0 +1,20 @@
+{
+  "domain": "allbirds.com",
+  "audits": [
+    {
+      "id": "audit-2025-08-08-11-55-16",
+      "startTime": "2025-08-08T11:55:16.025Z",
+      "status": "completed",
+      "version": "1.0.0",
+      "domain": "allbirds.com",
+      "endTime": "2025-08-08T11:55:28.922Z",
+      "duration": 13,
+      "pagesAnalyzed": 31056,
+      "linksChecked": 136
+    }
+  ],
+  "totalAudits": 1,
+  "lastAuditId": "audit-2025-08-08-11-55-16",
+  "created": "2025-08-08T11:55:16.025Z",
+  "lastUpdated": "2025-08-08T11:55:28.922Z"
+}

@@ -1,0 +1,97 @@
+{
+  "id": "test-audit-12345",
+  "domain": "test-ecommerce-store.com",
+  "url": "https://test-ecommerce-store.com",
+  "timestamp": "2025-08-08T11:42:06.322Z",
+  "overallScore": 82,
+  "seo": {
+    "score": 85,
+    "issues": [
+      "Missing meta description on 2 pages"
+    ]
+  },
+  "performance": {
+    "score": 78,
+    "issues": [
+      "Large image sizes",
+      "Unoptimized CSS"
+    ]
+  },
+  "accessibility": {
+    "score": 90,
+    "issues": [
+      "Missing alt text on 1 image"
+    ]
+  },
+  "security": {
+    "score": 88,
+    "issues": [
+      "Missing security headers"
+    ]
+  },
+  "enhanced": {
+    "ecommerceAnalysis": {
+      "type": "shopify",
+      "confidence": "high",
+      "optimization": {
+        "overall": 84,
+        "productOptimization": 87,
+        "checkoutExperience": 82,
+        "conversionOptimization": 80,
+        "paymentSecurity": 95,
+        "reviewSystem": 78
+      },
+      "features": {
+        "productCatalog": [
+          "Product grid layout",
+          "Product filtering",
+          "Product search",
+          "Product images"
+        ],
+        "shoppingCart": [
+          "Add to cart functionality",
+          "Cart persistence",
+          "Quantity adjustment"
+        ],
+        "checkout": [
+          "Multi-step checkout",
+          "Guest checkout option",
+          "Address validation"
+        ],
+        "payment": [
+          "Multiple payment methods",
+          "SSL encryption",
+          "PCI compliance indicators"
+        ]
+      },
+      "recommendations": [
+        {
+          "title": "Optimize product images",
+          "description": "Compress product images to improve page load speed",
+          "priority": "high",
+          "impact": "Improved page load time by 15-20%"
+        },
+        {
+          "title": "Add product reviews",
+          "description": "Implement customer review system to increase trust",
+          "priority": "medium",
+          "impact": "Increased conversion rate by 10-15%"
+        },
+        {
+          "title": "Implement abandoned cart recovery",
+          "description": "Set up email reminders for abandoned carts",
+          "priority": "medium",
+          "impact": "Recover 5-10% of abandoned carts"
+        }
+      ]
+    }
+  },
+  "allIssues": [
+    {
+      "title": "Missing meta description",
+      "description": "Meta description missing on product pages",
+      "severity": "medium"
+    }
+  ],
+  "totalRecommendations": 8
+}
