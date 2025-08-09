@@ -18,7 +18,7 @@ import { WebVitalsAnalyzer } from '../performance/web-vitals-analyzer.js';
 import { AdvancedAccessibilityAnalyzer } from './advanced-accessibility-analyzer.js';
 import { ContentQualityAnalyzer } from '../analyzers/content-quality-analyzer.js';
 import { ThirdPartyAnalyzer } from '../analyzers/third-party-analyzer.js';
-import { ResourceAnalyzer } from '../analyzers/resource-analyzer.js';
+import { ResourceAnalyzer } from '../analyzers/performance/ResourceAnalyzer.js';
 import { PageTypeClassifier } from '../analyzers/page-type-classifier.js';
 import { CDNDetector } from '../analyzers/cdn-detector.js';
 import { AdvancedLinkAnalyzer } from '../analyzers/advanced-link-analyzer.js';

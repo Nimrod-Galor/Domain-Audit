@@ -12,10 +12,17 @@
  *
  * @author Nimrod Galor
  * @version 1.0.0
+ * @extends BaseAnalyzer
  */
 
-export class ProductSchemaAnalyzer {
+import { BaseAnalyzer } from '../../core/base-analyzer.js';
+import { AnalyzerCategories } from '../../utils/analyzer-categories.js';
+
+export class ProductSchemaAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('ProductSchemaAnalyzer');
+    
+    this.category = AnalyzerCategories.ECOMMERCE;
     this.options = options;
     this.requiredProductFields = [
       "name",
@@ -37,24 +44,91 @@ export class ProductSchemaAnalyzer {
   }
 
   /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'ProductSchemaAnalyzer',
+      version: '1.0.0',
+      category: AnalyzerCategories.ECOMMERCE,
+      description: 'Analyzes product schema markup and product page optimization',
+      author: 'Nimrod Galor',
+      capabilities: [
+        'JSON-LD Product schema validation',
+        'Microdata product markup analysis',
+        'Product information completeness check',
+        'Price and availability validation',
+        'Product image optimization',
+        'E-commerce SEO optimization'
+      ]
+    };
+  }
+
+  /**
+   * Validate the context before analysis
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether the context is valid
+   */
+  validate(context) {
+    return context && 
+           ((context.dom && context.dom.window && context.dom.window.document) ||
+            (context.document));
+  }
+
+  /**
    * Analyze product schema and product page optimization
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context containing document, url, etc.
    * @returns {Object} Product analysis results
    */
-  analyze(document, url) {
-    const schemas = this._extractProductSchemas(document);
-    const validation = this._validateProductSchemas(schemas);
-    const optimization = this._analyzeOptimization(document, schemas);
-    const productPage = this._analyzeProductPage(document);
+  async analyze(context) {
+    try {
+      this.log('Starting product schema analysis');
+      
+      // Validate context
+      if (!this.validate(context)) {
+        throw new Error('Invalid context provided for product schema analysis');
+      }
 
-    return {
-      schemas,
-      validation,
-      optimization,
-      productPage,
-      score: this._calculateProductScore(validation, optimization, productPage),
-    };
+      const { document = context.document || context.dom?.window?.document, url = context.url || '' } = context;
+
+      const schemas = this._extractProductSchemas(document);
+      const validation = this._validateProductSchemas(schemas);
+      const optimization = this._analyzeOptimization(document, schemas);
+      const productPage = this._analyzeProductPage(document);
+
+      const result = {
+        schemas,
+        validation,
+        optimization,
+        productPage,
+        score: this._calculateProductScore(validation, optimization, productPage),
+      };
+
+      // BaseAnalyzer integration: comprehensive scoring and summary
+      const comprehensiveScore = this._calculateComprehensiveScore(result);
+      const recommendations = this._generateProductSchemaRecommendations(result);
+      const summary = this._generateProductSchemaSummary(result);
+      
+      this.log('Product schema analysis completed successfully');
+      
+      return {
+        ...result,
+        score: comprehensiveScore,
+        recommendations: [...(result.recommendations || []), ...recommendations],
+        summary,
+        metadata: this.getMetadata()
+      };
+    } catch (error) {
+      return this.handleError('Product schema analysis failed', error, {
+        schemas: [],
+        validation: null,
+        optimization: null,
+        productPage: null,
+        score: 0,
+        recommendations: []
+      });
+    }
   }
 
   /**
@@ -505,5 +579,310 @@ export class ProductSchemaAnalyzer {
 
   _hasBrandInSchema(schemas) {
     return schemas.some(schema => schema.data.brand);
+  }
+
+  /**
+   * Calculate comprehensive product schema score for BaseAnalyzer integration
+   * @param {Object} analysis - Product schema analysis results
+   * @returns {number} Comprehensive score (0-100)
+   */
+  _calculateComprehensiveScore(analysis) {
+    try {
+      const weights = {
+        schemas: 0.40,          // 40% - Schema presence and validity
+        validation: 0.30,       // 30% - Schema validation quality
+        optimization: 0.20,     // 20% - E-commerce optimization
+        productPage: 0.10       // 10% - Product page elements
+      };
+
+      let totalScore = 0;
+      let totalWeight = 0;
+
+      // Schema presence score
+      if (analysis.schemas) {
+        const schemaCount = analysis.schemas.length;
+        const schemaScore = Math.min(100, schemaCount > 0 ? 80 + (schemaCount * 10) : 0);
+        totalScore += schemaScore * weights.schemas;
+        totalWeight += weights.schemas;
+      }
+
+      // Validation score
+      if (analysis.validation) {
+        const validation = analysis.validation;
+        let validationScore = 50; // Base score
+
+        if (validation.valid) validationScore += 30;
+        if (validation.errors?.length === 0) validationScore += 10;
+        if (validation.warnings?.length === 0) validationScore += 10;
+
+        totalScore += Math.min(100, validationScore) * weights.validation;
+        totalWeight += weights.validation;
+      }
+
+      // Optimization score
+      if (analysis.optimization) {
+        const optimization = analysis.optimization;
+        let optScore = 0;
+
+        if (optimization.hasReviews) optScore += 20;
+        if (optimization.hasRatings) optScore += 20;
+        if (optimization.hasOffers) optScore += 20;
+        if (optimization.hasAvailability) optScore += 20;
+        if (optimization.hasImages) optScore += 20;
+
+        totalScore += optScore * weights.optimization;
+        totalWeight += weights.optimization;
+      }
+
+      // Product page score
+      if (analysis.productPage) {
+        const page = analysis.productPage;
+        let pageScore = 0;
+
+        if (page.hasTitle) pageScore += 25;
+        if (page.hasDescription) pageScore += 25;
+        if (page.hasImages) pageScore += 25;
+        if (page.hasPrice) pageScore += 25;
+
+        totalScore += pageScore * weights.productPage;
+        totalWeight += weights.productPage;
+      }
+
+      return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+    } catch (error) {
+      this.log('Error calculating comprehensive score:', error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate comprehensive product schema recommendations
+   * @param {Object} analysis - Product schema analysis results
+   * @returns {Array} Enhanced recommendations
+   */
+  _generateProductSchemaRecommendations(analysis) {
+    const recommendations = [];
+
+    try {
+      // Schema implementation recommendations
+      if (!analysis.schemas || analysis.schemas.length === 0) {
+        recommendations.push({
+          category: 'schema-markup',
+          priority: 'high',
+          title: 'Implement Product Schema Markup',
+          description: 'No product schema markup detected',
+          impact: 'Rich snippets in search results and improved e-commerce SEO',
+          actionItems: [
+            'Add JSON-LD Product schema to product pages',
+            'Include required fields: name, description, price, availability, brand',
+            'Add optional fields: SKU, GTIN, reviews, ratings, images',
+            'Validate schema using Google Rich Results Test',
+            'Monitor schema performance in Search Console'
+          ]
+        });
+      } else if (analysis.validation && !analysis.validation.valid) {
+        recommendations.push({
+          category: 'schema-validation',
+          priority: 'high',
+          title: 'Fix Product Schema Validation Errors',
+          description: `${analysis.validation.errors?.length || 0} validation errors found`,
+          impact: 'Schema recognition and rich snippet eligibility',
+          actionItems: [
+            'Review and fix schema validation errors',
+            'Ensure all required Product fields are present',
+            'Validate price and availability formats',
+            'Check image URLs and formats',
+            'Test with Google Rich Results Test tool'
+          ]
+        });
+      }
+
+      // E-commerce optimization recommendations
+      if (analysis.optimization) {
+        const opt = analysis.optimization;
+        
+        if (!opt.hasReviews) {
+          recommendations.push({
+            category: 'reviews',
+            priority: 'medium',
+            title: 'Add Product Review Schema',
+            description: 'No review schema found for products',
+            impact: 'Star ratings in search results and customer trust',
+            actionItems: [
+              'Implement review collection system',
+              'Add Review schema markup to product pages',
+              'Include aggregateRating with review count',
+              'Display reviews prominently on product pages',
+              'Encourage customer reviews through email campaigns'
+            ]
+          });
+        }
+
+        if (!opt.hasOffers) {
+          recommendations.push({
+            category: 'offers',
+            priority: 'medium',
+            title: 'Add Offer Schema Information',
+            description: 'Missing offer details in product schema',
+            impact: 'Price display in search results',
+            actionItems: [
+              'Add Offer schema with price and currency',
+              'Include availability status (InStock, OutOfStock)',
+              'Specify price validation period',
+              'Add shipping and return policy information',
+              'Include seller information where applicable'
+            ]
+          });
+        }
+
+        if (!opt.hasImages) {
+          recommendations.push({
+            category: 'images',
+            priority: 'medium',
+            title: 'Optimize Product Image Schema',
+            description: 'Product images not properly marked up in schema',
+            impact: 'Image display in search results and shopping features',
+            actionItems: [
+              'Add high-quality product images to schema',
+              'Include multiple image views and angles',
+              'Ensure images meet Google guidelines (minimum 300x300px)',
+              'Add descriptive alt text for accessibility',
+              'Optimize image file sizes for performance'
+            ]
+          });
+        }
+      }
+
+      // Product page optimization
+      if (analysis.productPage) {
+        const page = analysis.productPage;
+        
+        if (!page.hasDescription) {
+          recommendations.push({
+            category: 'content',
+            priority: 'medium',
+            title: 'Enhance Product Descriptions',
+            description: 'Product descriptions need improvement',
+            impact: 'User engagement and conversion rates',
+            actionItems: [
+              'Write detailed, unique product descriptions',
+              'Include key features and benefits',
+              'Use bullet points for easy scanning',
+              'Include size, material, and care instructions',
+              'Optimize descriptions for target keywords'
+            ]
+          });
+        }
+
+        if (!page.hasPrice) {
+          recommendations.push({
+            category: 'pricing',
+            priority: 'high',
+            title: 'Display Clear Pricing Information',
+            description: 'Product pricing not clearly displayed',
+            impact: 'User experience and conversion rates',
+            actionItems: [
+              'Display prices prominently on product pages',
+              'Include currency and tax information',
+              'Show original and sale prices when applicable',
+              'Add price comparison or savings calculations',
+              'Ensure pricing is consistent across schema and display'
+            ]
+          });
+        }
+      }
+
+      return recommendations;
+    } catch (error) {
+      this.log('Error generating product schema recommendations:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Generate comprehensive product schema summary
+   * @param {Object} analysis - Product schema analysis results
+   * @returns {Object} Product schema summary
+   */
+  _generateProductSchemaSummary(analysis) {
+    try {
+      const summary = {
+        schemaCount: 0,
+        schemaValid: false,
+        hasReviews: false,
+        hasOffers: false,
+        optimizationLevel: 'Poor',
+        keyFindings: []
+      };
+
+      // Count schemas
+      if (analysis.schemas) {
+        summary.schemaCount = analysis.schemas.length;
+        summary.keyFindings.push(`${analysis.schemas.length} product schema(s) found`);
+      }
+
+      // Check validation
+      if (analysis.validation?.valid) {
+        summary.schemaValid = true;
+        summary.keyFindings.push('Product schema validation passed');
+      } else if (analysis.validation?.errors?.length > 0) {
+        summary.keyFindings.push(`${analysis.validation.errors.length} schema validation errors`);
+      }
+
+      // Check optimization features
+      if (analysis.optimization) {
+        if (analysis.optimization.hasReviews) {
+          summary.hasReviews = true;
+          summary.keyFindings.push('Product reviews included in schema');
+        }
+        
+        if (analysis.optimization.hasOffers) {
+          summary.hasOffers = true;
+          summary.keyFindings.push('Offer information included in schema');
+        }
+      }
+
+      // Determine optimization level
+      const score = this._calculateComprehensiveScore(analysis);
+      if (score >= 90) summary.optimizationLevel = 'Excellent';
+      else if (score >= 80) summary.optimizationLevel = 'Good';
+      else if (score >= 70) summary.optimizationLevel = 'Fair';
+      else if (score >= 60) summary.optimizationLevel = 'Poor';
+      else summary.optimizationLevel = 'Very Poor';
+
+      // Additional findings
+      if (summary.schemaCount === 0) {
+        summary.keyFindings.push('No product schema markup detected');
+      }
+      
+      if (analysis.productPage?.hasPrice) {
+        summary.keyFindings.push('Pricing information displayed');
+      }
+
+      return summary;
+    } catch (error) {
+      this.log('Error generating product schema summary:', error.message);
+      return {
+        schemaCount: 0,
+        schemaValid: false,
+        hasReviews: false,
+        hasOffers: false,
+        optimizationLevel: 'Unknown',
+        keyFindings: ['Analysis error occurred']
+      };
+    }
+  }
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * @deprecated Use analyze() method instead
+   * Legacy method for backward compatibility
+   */
+  analyzeSchema(document) {
+    console.warn('ProductSchemaAnalyzer.analyzeSchema() is deprecated. Use analyze() method instead.');
+    return this.analyze({ document });
   }
 }

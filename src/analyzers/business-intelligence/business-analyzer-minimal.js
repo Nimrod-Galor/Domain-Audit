@@ -4,9 +4,12 @@
  * ============================================================================
  */
 
-export class BusinessIntelligenceAnalyzer {
+import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../core/AnalyzerInterface.js';
+
+export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = {
+    super('BusinessIntelligenceAnalyzer', {
       enableTrustAnalysis: options.enableTrustAnalysis !== false,
       enableContactAnalysis: options.enableContactAnalysis !== false,
       enableContentAnalysis: options.enableContentAnalysis !== false,
@@ -14,86 +17,110 @@ export class BusinessIntelligenceAnalyzer {
       enableCredibilityAnalysis: options.enableCredibilityAnalysis !== false,
       enableLocationAnalysis: options.enableLocationAnalysis !== false,
       ...options,
+    });
+  }
+
+  getMetadata() {
+    return {
+      name: 'BusinessIntelligenceAnalyzer',
+      version: '1.0.0',
+      description: 'Analyzes business intelligence signals from website content',
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
+      priority: 'high'
     };
   }
 
   /**
    * Perform business intelligence analysis
+   * @param {Document} document - DOM document
+   * @param {Object|string} pageDataOrUrl - Page data object or URL string
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} Analysis results
+   */
+  async analyze(document, pageDataOrUrl, url) {
+    return this.measureTime(async () => {
+      try {
+        this.log('info', 'Starting Business Intelligence analysis...');
+        
+        let actualUrl, pageData;
+        if (typeof pageDataOrUrl === 'string') {
+          actualUrl = pageDataOrUrl;
+          pageData = {};
+        } else {
+          pageData = pageDataOrUrl || {};
+          actualUrl = url;
+        }
+
+        // Perform basic analysis using document adapter
+        const trustSignals = this._analyzeTrustSignals(document, actualUrl);
+        const contactInformation = this._analyzeContactInformation(document);
+        const aboutPageQuality = this._analyzeAboutPage(document, actualUrl);
+        const customerSupport = this._analyzeCustomerSupport(document);
+        const businessCredibility = this._analyzeBusinessCredibility(document);
+        const locationData = this._analyzeLocationData(document);
+
+        // Calculate basic score
+        const analysisComponents = [trustSignals, contactInformation, aboutPageQuality, 
+                                  customerSupport, businessCredibility, locationData];
+        const validComponents = analysisComponents.filter(c => c.score !== undefined).length;
+        const totalScore = analysisComponents.reduce((sum, c) => sum + (c.score || 0), 0);
+        const overallScore = validComponents > 0 ? Math.round(totalScore / validComponents) : 0;
+
+        const analysisData = {
+          trustSignals,
+          contactInformation,
+          aboutPageQuality,
+          customerSupport,
+          businessCredibility,
+          locationData,
+          score: overallScore,
+          grade: this._getGrade(overallScore),
+          recommendations: this._generateRecommendations(overallScore),
+          strengths: this._identifyStrengths(analysisComponents),
+          businessType: 'general'
+        };
+
+        this.log('info', `Business Intelligence analysis completed with score: ${overallScore}`);
+        return analysisData;
+
+      } catch (error) {
+        return this.handleError(error, 'business intelligence analysis');
+      }
+    }).then(({ result, time }) => {
+      if (result.error) {
+        return {
+          ...result,
+          trustSignals: null,
+          contactInformation: null,
+          aboutPageQuality: null,
+          customerSupport: null,
+          businessCredibility: null,
+          locationData: null,
+          score: 0,
+          grade: 'F',
+          recommendations: ['Fix analysis errors'],
+          analysisTime: time
+        };
+      }
+      return this.createSuccessResponse(result, time);
+    });
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
    */
   async analyzeBusinessIntelligence(document, pageDataOrUrl, url) {
-    const analysisStart = Date.now();
-
-    try {
-      console.log('🔧 Starting minimal Business Intelligence analysis...');
-      
-      let actualUrl, pageData;
-      if (typeof pageDataOrUrl === 'string') {
-        actualUrl = pageDataOrUrl;
-        pageData = {};
-      } else {
-        pageData = pageDataOrUrl || {};
-        actualUrl = url;
-      }
-
-      // Perform basic analysis using document adapter
-      const trustSignals = this._analyzeTrustSignals(document, actualUrl);
-      const contactInformation = this._analyzeContactInformation(document);
-      const aboutPageQuality = this._analyzeAboutPage(document, actualUrl);
-      const customerSupport = this._analyzeCustomerSupport(document);
-      const businessCredibility = this._analyzeBusinessCredibility(document);
-      const locationData = this._analyzeLocationData(document);
-
-      // Calculate basic score
-      const analysisComponents = [trustSignals, contactInformation, aboutPageQuality, 
-                                customerSupport, businessCredibility, locationData];
-      const validComponents = analysisComponents.filter(c => c.score !== undefined).length;
-      const totalScore = analysisComponents.reduce((sum, c) => sum + (c.score || 0), 0);
-      const overallScore = validComponents > 0 ? Math.round(totalScore / validComponents) : 0;
-
-      const result = {
-        trustSignals,
-        contactInformation,
-        aboutPageQuality,
-        customerSupport,
-        businessCredibility,
-        locationData,
-        score: overallScore,
-        grade: this._getGrade(overallScore),
-        recommendations: this._generateRecommendations(overallScore),
-        strengths: this._identifyStrengths(analysisComponents),
-        businessType: 'general',
-        analysisTime: Date.now() - analysisStart,
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('✅ Business Intelligence analysis completed with score:', overallScore);
-      return result;
-
-    } catch (error) {
-      console.error('❌ Business Intelligence analysis error:', error.message);
-      return {
-        error: `Business intelligence analysis failed: ${error.message}`,
-        trustSignals: null,
-        contactInformation: null,
-        aboutPageQuality: null,
-        customerSupport: null,
-        businessCredibility: null,
-        locationData: null,
-        score: 0,
-        grade: 'F',
-        recommendations: ['Fix analysis errors'],
-        analysisTime: Date.now() - analysisStart,
-        timestamp: new Date().toISOString()
-      };
-    }
+    console.warn('analyzeBusinessIntelligence() is deprecated. Use analyze() method instead.');
+    return this.analyze(document, pageDataOrUrl, url);
   }
 
   _analyzeTrustSignals(document, url) {
     try {
-      // Look for trust indicators
-      const securityElements = document.querySelectorAll ? 
+      // Look for trust indicators - use direct querySelectorAll to allow errors to propagate in tests
+      const securityElements = document && document.querySelectorAll ? 
         document.querySelectorAll('img[alt*="ssl"], img[alt*="secure"], img[alt*="verified"]') : [];
-      const certificationElements = document.querySelectorAll ? 
+      const certificationElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="trust"], [class*="cert"], [class*="secure"]') : [];
       
       const trustScore = (securityElements.length * 20) + (certificationElements.length * 15);
@@ -113,11 +140,11 @@ export class BusinessIntelligenceAnalyzer {
   _analyzeContactInformation(document) {
     try {
       // Look for contact information
-      const emailElements = document.querySelectorAll ? 
+      const emailElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[href^="mailto:"], [href*="@"]') : [];
-      const phoneElements = document.querySelectorAll ? 
+      const phoneElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[href^="tel:"], [href*="phone"]') : [];
-      const addressElements = document.querySelectorAll ? 
+      const addressElements = document && document.querySelectorAll ? 
         document.querySelectorAll('address, [class*="address"], [class*="location"]') : [];
       
       const contactScore = (emailElements.length * 25) + (phoneElements.length * 25) + (addressElements.length * 30);
@@ -137,9 +164,9 @@ export class BusinessIntelligenceAnalyzer {
   _analyzeAboutPage(document, url) {
     try {
       // Look for about page indicators
-      const aboutLinks = document.querySelectorAll ? 
+      const aboutLinks = document && document.querySelectorAll ? 
         document.querySelectorAll('[href*="about"], [href*="company"]') : [];
-      const missionElements = document.querySelectorAll ? 
+      const missionElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="mission"], [class*="vision"], [class*="about"]') : [];
       
       const aboutScore = (aboutLinks.length * 30) + (missionElements.length * 20);
@@ -158,9 +185,9 @@ export class BusinessIntelligenceAnalyzer {
   _analyzeCustomerSupport(document) {
     try {
       // Look for support elements
-      const supportLinks = document.querySelectorAll ? 
+      const supportLinks = document && document.querySelectorAll ? 
         document.querySelectorAll('[href*="support"], [href*="help"], [href*="contact"]') : [];
-      const chatElements = document.querySelectorAll ? 
+      const chatElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="chat"], [class*="support"]') : [];
       
       const supportScore = (supportLinks.length * 30) + (chatElements.length * 25);
@@ -179,9 +206,9 @@ export class BusinessIntelligenceAnalyzer {
   _analyzeBusinessCredibility(document) {
     try {
       // Look for credibility indicators
-      const testimonialElements = document.querySelectorAll ? 
+      const testimonialElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="testimonial"], [class*="review"]') : [];
-      const clientElements = document.querySelectorAll ? 
+      const clientElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="client"], [class*="partner"]') : [];
       
       const credibilityScore = (testimonialElements.length * 20) + (clientElements.length * 15);
@@ -200,9 +227,9 @@ export class BusinessIntelligenceAnalyzer {
   _analyzeLocationData(document) {
     try {
       // Look for location information
-      const mapElements = document.querySelectorAll ? 
+      const mapElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="map"], iframe[src*="maps"]') : [];
-      const locationElements = document.querySelectorAll ? 
+      const locationElements = document && document.querySelectorAll ? 
         document.querySelectorAll('[class*="location"], [class*="address"]') : [];
       
       const locationScore = (mapElements.length * 40) + (locationElements.length * 20);

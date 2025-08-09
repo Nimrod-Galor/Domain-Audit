@@ -13,7 +13,11 @@
  * @author Nimrod Galor
  * @AI assistant Claude Sonnet 4
  * @version 1.0.0
+ * @extends BaseAnalyzer
  */
+
+import { BaseAnalyzer } from '../core/base-analyzer.js';
+import { AnalyzerCategories } from '../utils/analyzer-categories.js';
 
 /**
  * Content Quality Standards and Thresholds
@@ -50,9 +54,13 @@ export const CONTENT_QUALITY_STANDARDS = {
 
 /**
  * Content Quality Analyzer Class
+ * @extends BaseAnalyzer
  */
-export class ContentQualityAnalyzer {
+export class ContentQualityAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('ContentQualityAnalyzer');
+    
+    this.category = AnalyzerCategories.CONTENT;
     this.config = {
       includeReadabilityAnalysis: options.includeReadabilityAnalysis !== false,
       includeKeywordAnalysis: options.includeKeywordAnalysis !== false,
@@ -65,14 +73,53 @@ export class ContentQualityAnalyzer {
   }
 
   /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'ContentQualityAnalyzer',
+      version: '1.0.0',
+      category: AnalyzerCategories.CONTENT,
+      description: 'Analyzes content quality including readability, keyword density, and content ratios',
+      author: 'Nimrod Galor',
+      capabilities: [
+        'Reading level analysis',
+        'Keyword density analysis',
+        'Content uniqueness scoring',
+        'Content-to-code ratio analysis',
+        'Duplicate content detection'
+      ]
+    };
+  }
+
+  /**
+   * Validate the context before analysis
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether the context is valid
+   */
+  validate(context) {
+    return context && 
+           context.dom && 
+           context.dom.window && 
+           context.dom.window.document;
+  }
+
+  /**
    * Perform comprehensive content quality analysis
-   * @param {Object} dom - JSDOM document object
-   * @param {Object} pageData - Existing page data
-   * @param {string} rawHTML - Raw HTML content
+   * @param {Object} context - Analysis context containing dom, pageData, etc.
    * @returns {Object} Content quality analysis
    */
-  analyzeContentQuality(dom, pageData, rawHTML = '') {
+  async analyze(context) {
     try {
+      this.log('Starting content quality analysis');
+      
+      // Validate context
+      if (!this.validate(context)) {
+        throw new Error('Invalid context provided for content quality analysis');
+      }
+
+      const { dom, pageData = {}, rawHTML = '' } = context;
       const document = dom.window.document;
       const textContent = this._extractTextContent(document);
       
@@ -104,23 +151,33 @@ export class ContentQualityAnalyzer {
         analysisTimestamp: new Date().toISOString()
       };
 
-      // Calculate overall quality score
+      // Calculate overall quality score and generate comprehensive results
       analysis.qualityScore = this._calculateContentQualityScore(analysis);
-      
-      // Generate recommendations
       analysis.recommendations = this._generateContentRecommendations(analysis);
       
-      return analysis;
+      // BaseAnalyzer integration: comprehensive scoring and summary
+      const comprehensiveScore = this._calculateComprehensiveScore(analysis);
+      const recommendations = this._generateContentQualityRecommendations(analysis);
+      const summary = this._generateContentQualitySummary(analysis);
+      
+      this.log('Content quality analysis completed successfully');
+      
+      return {
+        ...analysis,
+        score: comprehensiveScore,
+        recommendations: [...analysis.recommendations, ...recommendations],
+        summary,
+        metadata: this.getMetadata()
+      };
       
     } catch (error) {
-      return {
-        error: `Content quality analysis failed: ${error.message}`,
+      return this.handleError('Content quality analysis failed', error, {
         readability: null,
         keywordDensity: null,
         contentRatio: null,
         qualityScore: 0,
         recommendations: []
-      };
+      });
     }
   }
 
@@ -830,6 +887,264 @@ export class ContentQualityAnalyzer {
     }
     
     return recommendations;
+  }
+
+  /**
+   * Calculate comprehensive content quality score for BaseAnalyzer integration
+   * @param {Object} analysis - Content analysis results
+   * @returns {number} Comprehensive score (0-100)
+   */
+  _calculateComprehensiveScore(analysis) {
+    try {
+      const weights = {
+        readability: 0.25,        // 25% - Reading level and complexity
+        keywordDensity: 0.20,     // 20% - Keyword optimization
+        contentRatio: 0.20,       // 20% - Content-to-code ratio
+        contentStructure: 0.15,   // 15% - Content organization
+        uniqueness: 0.20          // 20% - Content uniqueness
+      };
+
+      let totalScore = 0;
+      let totalWeight = 0;
+
+      // Readability score
+      if (analysis.readability && analysis.readability.fleschScore !== undefined) {
+        const readabilityScore = Math.min(100, Math.max(0, analysis.readability.fleschScore));
+        totalScore += readabilityScore * weights.readability;
+        totalWeight += weights.readability;
+      }
+
+      // Keyword density score (inverse of issues)
+      if (analysis.keywordDensity) {
+        const issueCount = analysis.keywordDensity.issues ? analysis.keywordDensity.issues.length : 0;
+        const keywordScore = Math.max(0, 100 - (issueCount * 10));
+        totalScore += keywordScore * weights.keywordDensity;
+        totalWeight += weights.keywordDensity;
+      }
+
+      // Content ratio score
+      if (analysis.contentRatio && analysis.contentRatio.ratio !== undefined) {
+        const ratio = analysis.contentRatio.ratio;
+        let ratioScore = 0;
+        if (ratio >= 40) ratioScore = 100;
+        else if (ratio >= 25) ratioScore = 80;
+        else if (ratio >= 15) ratioScore = 60;
+        else ratioScore = Math.max(0, ratio * 2);
+        
+        totalScore += ratioScore * weights.contentRatio;
+        totalWeight += weights.contentRatio;
+      }
+
+      // Content structure score
+      if (analysis.contentStructure) {
+        const structure = analysis.contentStructure;
+        let structureScore = 50; // Base score
+        
+        if (structure.headingStructure && structure.headingStructure.hasH1) structureScore += 10;
+        if (structure.headingStructure && structure.headingStructure.properHierarchy) structureScore += 10;
+        if (structure.paragraphCount > 3) structureScore += 10;
+        if (structure.averageParagraphLength < 100) structureScore += 10;
+        if (structure.averageSentenceLength < 25) structureScore += 10;
+        
+        totalScore += Math.min(100, structureScore) * weights.contentStructure;
+        totalWeight += weights.contentStructure;
+      }
+
+      // Uniqueness score
+      if (analysis.uniqueness && analysis.uniqueness.uniquenessScore !== undefined) {
+        totalScore += analysis.uniqueness.uniquenessScore * weights.uniqueness;
+        totalWeight += weights.uniqueness;
+      }
+
+      return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+    } catch (error) {
+      this.log('Error calculating comprehensive score:', error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate comprehensive content quality recommendations
+   * @param {Object} analysis - Content analysis results
+   * @returns {Array} Enhanced recommendations
+   */
+  _generateContentQualityRecommendations(analysis) {
+    const recommendations = [];
+
+    try {
+      // Reading level optimization
+      if (analysis.readability) {
+        const flesch = analysis.readability.fleschScore;
+        if (flesch < 30) {
+          recommendations.push({
+            category: 'readability',
+            priority: 'high',
+            title: 'Simplify Content for Better Readability',
+            description: 'Content is too complex for most readers',
+            impact: 'User engagement and comprehension',
+            actionItems: [
+              'Use shorter sentences (15-20 words)',
+              'Choose simpler vocabulary',
+              'Break up complex ideas',
+              'Add transitional phrases'
+            ]
+          });
+        } else if (flesch > 90) {
+          recommendations.push({
+            category: 'readability',
+            priority: 'medium',
+            title: 'Add Depth to Content',
+            description: 'Content may be oversimplified',
+            impact: 'Professional credibility and expertise demonstration',
+            actionItems: [
+              'Add more detailed explanations',
+              'Include technical terms where appropriate',
+              'Expand on key concepts'
+            ]
+          });
+        }
+      }
+
+      // Content structure improvements
+      if (analysis.contentStructure) {
+        const structure = analysis.contentStructure;
+        
+        if (!structure.headingStructure?.hasH1) {
+          recommendations.push({
+            category: 'structure',
+            priority: 'high',
+            title: 'Add Primary Heading (H1)',
+            description: 'Page is missing a main heading',
+            impact: 'SEO and content hierarchy',
+            actionItems: ['Add a descriptive H1 tag to the page']
+          });
+        }
+
+        if (structure.paragraphCount < 3) {
+          recommendations.push({
+            category: 'structure',
+            priority: 'medium',
+            title: 'Improve Content Structure',
+            description: 'Content needs better organization',
+            impact: 'Readability and user experience',
+            actionItems: [
+              'Break content into logical paragraphs',
+              'Use subheadings to organize topics',
+              'Ensure each paragraph has a clear focus'
+            ]
+          });
+        }
+      }
+
+      // Content volume recommendations
+      if (analysis.wordCount < 300) {
+        recommendations.push({
+          category: 'volume',
+          priority: 'high',
+          title: 'Increase Content Volume',
+          description: `Content is too short (${analysis.wordCount} words)`,
+          impact: 'SEO value and user engagement',
+          actionItems: [
+            'Expand on existing topics',
+            'Add supporting details and examples',
+            'Include relevant background information',
+            'Target at least 300 words for meaningful content'
+          ]
+        });
+      }
+
+      return recommendations;
+    } catch (error) {
+      this.log('Error generating content quality recommendations:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Generate comprehensive content quality summary
+   * @param {Object} analysis - Content analysis results
+   * @returns {Object} Content quality summary
+   */
+  _generateContentQualitySummary(analysis) {
+    try {
+      const summary = {
+        totalWords: analysis.wordCount || 0,
+        readabilityLevel: 'Unknown',
+        contentQuality: 'Poor',
+        keyIssues: [],
+        strengths: []
+      };
+
+      // Determine readability level
+      if (analysis.readability && analysis.readability.fleschScore !== undefined) {
+        const flesch = analysis.readability.fleschScore;
+        if (flesch >= 90) summary.readabilityLevel = 'Very Easy';
+        else if (flesch >= 80) summary.readabilityLevel = 'Easy';
+        else if (flesch >= 70) summary.readabilityLevel = 'Fairly Easy';
+        else if (flesch >= 60) summary.readabilityLevel = 'Standard';
+        else if (flesch >= 50) summary.readabilityLevel = 'Fairly Difficult';
+        else if (flesch >= 30) summary.readabilityLevel = 'Difficult';
+        else summary.readabilityLevel = 'Very Difficult';
+      }
+
+      // Determine overall content quality
+      const score = this._calculateComprehensiveScore(analysis);
+      if (score >= 90) summary.contentQuality = 'Excellent';
+      else if (score >= 80) summary.contentQuality = 'Good';
+      else if (score >= 70) summary.contentQuality = 'Fair';
+      else if (score >= 60) summary.contentQuality = 'Poor';
+      else summary.contentQuality = 'Very Poor';
+
+      // Identify key issues
+      if (analysis.wordCount < 300) {
+        summary.keyIssues.push('Insufficient content length');
+      }
+      
+      if (analysis.keywordDensity?.issues?.length > 0) {
+        summary.keyIssues.push('Keyword density issues detected');
+      }
+      
+      if (analysis.contentRatio?.ratio < 15) {
+        summary.keyIssues.push('Low content-to-code ratio');
+      }
+
+      // Identify strengths
+      if (analysis.readability?.fleschScore >= 60 && analysis.readability?.fleschScore <= 80) {
+        summary.strengths.push('Good readability level');
+      }
+      
+      if (analysis.contentStructure?.headingStructure?.properHierarchy) {
+        summary.strengths.push('Well-structured heading hierarchy');
+      }
+      
+      if (analysis.uniqueness?.uniquenessScore > 80) {
+        summary.strengths.push('High content uniqueness');
+      }
+
+      return summary;
+    } catch (error) {
+      this.log('Error generating content quality summary:', error.message);
+      return {
+        totalWords: 0,
+        readabilityLevel: 'Unknown',
+        contentQuality: 'Unknown',
+        keyIssues: ['Analysis error occurred'],
+        strengths: []
+      };
+    }
+  }
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * @deprecated Use analyze() method instead
+   * Legacy method for backward compatibility
+   */
+  analyzeContentQuality(dom, pageData, rawHTML = '') {
+    console.warn('ContentQualityAnalyzer.analyzeContentQuality() is deprecated. Use analyze() method instead.');
+    return this.analyze({ dom, pageData, rawHTML });
   }
 }
 

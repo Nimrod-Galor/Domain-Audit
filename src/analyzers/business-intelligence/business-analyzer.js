@@ -3,15 +3,6 @@
  * BUSINESS INTELLIGENCE ANALYZER MODULE
  * ============================================================================
  *
- * Comprehensive business intelligence analysis includi  async _analyzeLocationData(document, $) {
-    if (!this.options.enableLocationAnalysis) {
-      return { enabled: false };
-    }
-/**
- * ============================================================================
- * BUSINESS INTELLIGENCE ANALYZER MODULE
- * ============================================================================
- *
  * Comprehensive business intelligence analysis including:
  * - Trust signal analysis (certifications, awards, badges)
  * - Contact information quality assessment
@@ -25,6 +16,8 @@
  * @version 1.0.0
  */
 
+import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../core/AnalyzerCategories.js';
 import { TrustSignalAnalyzer } from "./trust/trust-signal-analyzer.js";
 import { ContactAnalyzer } from "./contact/contact-analyzer.js";
 import { AboutPageAnalyzer } from "./about/about-page-analyzer.js";
@@ -37,8 +30,10 @@ import {
   BusinessIntelligenceUtils 
 } from "./business-constants.js";
 
-export class BusinessIntelligenceAnalyzer {
+export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('BusinessIntelligenceAnalyzer');
+    
     this.options = {
       enableTrustAnalysis: options.enableTrustAnalysis !== false,
       enableContactAnalysis: options.enableContactAnalysis !== false,
@@ -60,65 +55,112 @@ export class BusinessIntelligenceAnalyzer {
   }
 
   /**
-   * Helper method to abstract DOM queries for both Cheerio and JSDOM
-   * @param {string} selector - CSS selector
-   * @param {Document} document - JSDOM document (if available)
-   * @param {Function} $ - Cheerio function (if available)
-   * @returns {Array} Array of elements
+   * Get analyzer metadata for BaseAnalyzer integration
+   * @returns {Object} Analyzer metadata
    */
-  _querySelector(selector, document, $) {
-    if ($) {
-      // Server-side: Use Cheerio
-      const elements = $(selector);
-      return elements.toArray ? elements.toArray() : Array.from(elements);
-    } else if (document && document.querySelectorAll) {
-      // Client-side: Use JSDOM/DOM
-      return Array.from(document.querySelectorAll(selector));
-    }
-    return [];
+  getMetadata() {
+    return {
+      name: 'Business Intelligence Analyzer',
+      category: AnalyzerCategories.BUSINESS,
+      description: 'Comprehensive business intelligence analysis including trust signals, contact information, about page quality, support accessibility, and location data',
+      version: '1.0.0',
+      author: 'Nimrod Galor',
+      tags: ['business', 'intelligence', 'trust', 'contact', 'about', 'support', 'location', 'credibility'],
+      capabilities: [
+        'trust-signal-analysis',
+        'contact-information-assessment',
+        'about-page-evaluation',
+        'support-accessibility-analysis',
+        'location-data-validation',
+        'credibility-assessment'
+      ]
+    };
   }
 
   /**
-   * Helper method to get text content from an element
-   * @param {Element} element - DOM element
-   * @param {Function} $ - Cheerio function (if available)
-   * @returns {string} Text content
+   * Validate input for business intelligence analysis
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether input is valid
    */
-  _getTextContent(element, $) {
-    if ($) {
-      // Server-side: Use Cheerio
-      return $(element).text() || '';
-    } else {
-      // Client-side: Use JSDOM/DOM
-      return element.textContent || '';
+  validate(context) {
+    if (!context || typeof context !== 'object') {
+      return this.handleError('Invalid context provided');
     }
+
+    if (!context.document && !context.dom && !context.cheerio) {
+      return this.handleError('No document, DOM, or Cheerio function provided for business intelligence analysis');
+    }
+
+    return true;
   }
 
   /**
-   * Helper method to get attribute value
-   * @param {Element} element - DOM element
-   * @param {string} attribute - Attribute name
-   * @param {Function} $ - Cheerio function (if available)
-   * @returns {string} Attribute value
+   * Enhanced analyze method with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing document/dom/cheerio, url, pageData
+   * @returns {Object} Enhanced analysis results with BaseAnalyzer structure
    */
-  _getAttribute(element, attribute, $) {
-    if ($) {
-      // Server-side: Use Cheerio
-      return $(element).attr(attribute) || '';
-    } else {
-      // Client-side: Use JSDOM/DOM
-      return element.getAttribute(attribute) || '';
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      // Validate input
+      if (!this.validate(context)) {
+        return this.createErrorResult('Validation failed');
+      }
+
+      // Extract data from context
+      const domOrDocument = context.document || context.dom || context.cheerio;
+      const url = context.url || '';
+      const pageData = context.pageData || {};
+
+      // Perform comprehensive business intelligence analysis
+      const analysisResult = await this.performBusinessIntelligenceAnalysis(domOrDocument, pageData, url);
+
+      // Calculate comprehensive score using BaseAnalyzer integration
+      const score = this._calculateComprehensiveScore(analysisResult);
+
+      // Generate optimization recommendations
+      const recommendations = this._generateBusinessIntelligenceRecommendations(analysisResult);
+
+      // Generate analysis summary
+      const summary = this._generateBusinessIntelligenceSummary(analysisResult);
+
+      // Return enhanced BaseAnalyzer-compatible result
+      return {
+        success: true,
+        analyzer: 'BusinessIntelligenceAnalyzer',
+        category: AnalyzerCategories.BUSINESS,
+        score: score,
+        data: {
+          ...analysisResult,
+          metadata: {
+            analysisTime: Date.now() - startTime,
+            timestamp: new Date().toISOString(),
+            version: this.getMetadata().version
+          }
+        },
+        recommendations: recommendations,
+        summary: summary,
+        errors: [],
+        warnings: analysisResult.warnings || []
+      };
+
+    } catch (error) {
+      return this.handleError(`Business intelligence analysis failed: ${error.message}`, {
+        analyzer: 'BusinessIntelligenceAnalyzer',
+        duration: Date.now() - startTime
+      });
     }
   }
 
   /**
    * Perform comprehensive business intelligence analysis
-   * @param {Object|Document} domOrDocument - JSDOM object or DOM document
-   * @param {Object|string} pageDataOrUrl - Existing page data or URL string
-   * @param {string} url - Page URL (if pageData is provided)
+   * @param {Object|Document} domOrDocument - JSDOM object, DOM document, or Cheerio function
+   * @param {Object} pageData - Existing page data
+   * @param {string} url - Page URL
    * @returns {Object} Business intelligence analysis results
    */
-  async analyzeBusinessIntelligence(domOrDocument, pageDataOrUrl, url) {
+  async performBusinessIntelligenceAnalysis(domOrDocument, pageData, url) {
     const analysisStart = Date.now();
 
     try {
@@ -792,5 +834,369 @@ export class BusinessIntelligenceAnalyzer {
     if (analysis.businessCredibility?.score < 60) areas.push('Business credibility indicators');
     
     return areas;
+  }
+
+  // ============================================================================
+  // BASEANALYZER INTEGRATION HELPER METHODS
+  // ============================================================================
+
+  /**
+   * Calculate comprehensive business intelligence score for BaseAnalyzer integration
+   * @param {Object} analysis - Business intelligence analysis results
+   * @returns {number} Comprehensive score (0-100)
+   */
+  _calculateComprehensiveScore(analysis) {
+    try {
+      const weights = {
+        trustSignals: 0.25,       // 25% - Trust signals and security
+        contact: 0.20,            // 20% - Contact information quality
+        aboutPage: 0.15,          // 15% - About page quality
+        support: 0.15,            // 15% - Customer support accessibility
+        credibility: 0.15,        // 15% - Business credibility
+        location: 0.10            // 10% - Location and business data
+      };
+
+      let totalScore = 0;
+      let totalWeight = 0;
+
+      // Trust signals score
+      if (analysis.trustSignals && typeof analysis.trustSignals.score === 'number') {
+        totalScore += analysis.trustSignals.score * weights.trustSignals;
+        totalWeight += weights.trustSignals;
+      }
+
+      // Contact information score
+      if (analysis.contactInformation && typeof analysis.contactInformation.score === 'number') {
+        totalScore += analysis.contactInformation.score * weights.contact;
+        totalWeight += weights.contact;
+      }
+
+      // About page quality score
+      if (analysis.aboutPageQuality && typeof analysis.aboutPageQuality.score === 'number') {
+        totalScore += analysis.aboutPageQuality.score * weights.aboutPage;
+        totalWeight += weights.aboutPage;
+      }
+
+      // Customer support score
+      if (analysis.customerSupport && typeof analysis.customerSupport.score === 'number') {
+        totalScore += analysis.customerSupport.score * weights.support;
+        totalWeight += weights.support;
+      }
+
+      // Business credibility score
+      if (analysis.businessCredibility && typeof analysis.businessCredibility.score === 'number') {
+        totalScore += analysis.businessCredibility.score * weights.credibility;
+        totalWeight += weights.credibility;
+      }
+
+      // Location data score
+      if (analysis.locationData && typeof analysis.locationData.score === 'number') {
+        totalScore += analysis.locationData.score * weights.location;
+        totalWeight += weights.location;
+      }
+
+      return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+    } catch (error) {
+      this.log('Error calculating comprehensive score:', error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate comprehensive business intelligence optimization recommendations
+   * @param {Object} analysis - Business intelligence analysis results
+   * @returns {Array} Enhanced recommendations
+   */
+  _generateBusinessIntelligenceRecommendations(analysis) {
+    const recommendations = [];
+
+    try {
+      // Trust signals recommendations
+      if (analysis.trustSignals && analysis.trustSignals.score < 70) {
+        recommendations.push({
+          category: 'trust-signals',
+          priority: 'high',
+          title: 'Improve Trust Signals',
+          description: `Trust signal score is ${analysis.trustSignals.score}%`,
+          impact: 'Customer confidence and conversion rates',
+          actionItems: [
+            'Add SSL security badges and certificates',
+            'Display professional certifications and accreditations',
+            'Include customer testimonials with photos',
+            'Add industry awards and recognitions',
+            'Show third-party validations and endorsements',
+            'Implement comprehensive privacy policy'
+          ]
+        });
+      }
+
+      // Contact information recommendations
+      if (analysis.contactInformation && analysis.contactInformation.score < 70) {
+        const missing = analysis.contactInformation.missing || [];
+        recommendations.push({
+          category: 'contact-information',
+          priority: 'high',
+          title: 'Enhance Contact Information',
+          description: `Contact information score is ${analysis.contactInformation.score}%`,
+          impact: 'Customer accessibility and business credibility',
+          actionItems: [
+            'Add missing contact methods: ' + missing.join(', '),
+            'Include phone number with area code',
+            'Add physical business address',
+            'Provide multiple contact channels',
+            'Include business hours information',
+            'Add contact form with validation'
+          ]
+        });
+      }
+
+      // About page recommendations
+      if (analysis.aboutPageQuality && analysis.aboutPageQuality.score < 70) {
+        recommendations.push({
+          category: 'about-page',
+          priority: 'medium',
+          title: 'Improve About Page Quality',
+          description: `About page quality score is ${analysis.aboutPageQuality.score}%`,
+          impact: 'Brand trust and customer understanding',
+          actionItems: [
+            'Add comprehensive company history and mission',
+            'Include team member photos and bios',
+            'Showcase company values and culture',
+            'Add business achievements and milestones',
+            'Include industry expertise and experience',
+            'Add testimonials and success stories'
+          ]
+        });
+      }
+
+      // Customer support recommendations
+      if (analysis.customerSupport && analysis.customerSupport.score < 70) {
+        recommendations.push({
+          category: 'customer-support',
+          priority: 'medium',
+          title: 'Enhance Customer Support',
+          description: `Customer support score is ${analysis.customerSupport.score}%`,
+          impact: 'Customer satisfaction and retention',
+          actionItems: [
+            'Add multiple support channels (phone, email, chat)',
+            'Include FAQ section for common questions',
+            'Provide support hours and response times',
+            'Add knowledge base or help center',
+            'Include support contact form',
+            'Consider live chat implementation'
+          ]
+        });
+      }
+
+      // Business credibility recommendations
+      if (analysis.businessCredibility && analysis.businessCredibility.score < 70) {
+        recommendations.push({
+          category: 'business-credibility',
+          priority: 'medium',
+          title: 'Strengthen Business Credibility',
+          description: `Business credibility score is ${analysis.businessCredibility.score}%`,
+          impact: 'Professional reputation and authority',
+          actionItems: [
+            'Add business founding date and history',
+            'Include company size and team information',
+            'Showcase industry experience and expertise',
+            'Display client base and customer success stories',
+            'Add strategic partnerships and alliances',
+            'Include media coverage and press mentions'
+          ]
+        });
+      }
+
+      // Location data recommendations
+      if (analysis.locationData && analysis.locationData.score < 70) {
+        recommendations.push({
+          category: 'location-data',
+          priority: 'low',
+          title: 'Improve Location Information',
+          description: `Location data score is ${analysis.locationData.score}%`,
+          impact: 'Local SEO and customer accessibility',
+          actionItems: [
+            'Add complete business address with postal code',
+            'Include Google Maps integration or directions',
+            'Add business hours for each location',
+            'Include parking and accessibility information',
+            'Add local phone numbers for each location',
+            'Optimize for local search and Google My Business'
+          ]
+        });
+      }
+
+      // Overall business intelligence recommendations
+      const overallScore = this._calculateComprehensiveScore(analysis);
+      if (overallScore < 60) {
+        recommendations.push({
+          category: 'overall-business-intelligence',
+          priority: 'high',
+          title: 'Comprehensive Business Intelligence Improvement',
+          description: `Overall business intelligence score is ${overallScore}%`,
+          impact: 'Overall business credibility and customer trust',
+          actionItems: [
+            'Conduct comprehensive audit of all business information',
+            'Implement consistent branding across all touchpoints',
+            'Create comprehensive customer experience strategy',
+            'Establish regular review process for business information',
+            'Consider professional business consulting',
+            'Benchmark against industry leaders'
+          ]
+        });
+      }
+
+      return recommendations;
+    } catch (error) {
+      this.log('Error generating business intelligence recommendations:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Generate comprehensive business intelligence analysis summary
+   * @param {Object} analysis - Business intelligence analysis results
+   * @returns {Object} Business intelligence summary
+   */
+  _generateBusinessIntelligenceSummary(analysis) {
+    try {
+      const summary = {
+        overallRating: 'Poor',
+        trustLevel: 'Low',
+        contactQuality: 'Poor',
+        contentQuality: 'Poor',
+        supportLevel: 'Basic',
+        credibilityLevel: 'Low',
+        keyStrengths: [],
+        keyWeaknesses: []
+      };
+
+      // Trust level assessment
+      if (analysis.trustSignals) {
+        const trustScore = analysis.trustSignals.score || 0;
+        if (trustScore >= 80) summary.trustLevel = 'High';
+        else if (trustScore >= 60) summary.trustLevel = 'Medium';
+        else summary.trustLevel = 'Low';
+
+        if (trustScore > 70) {
+          summary.keyStrengths.push('Strong trust signals present');
+        } else {
+          summary.keyWeaknesses.push('Limited trust signals');
+        }
+      }
+
+      // Contact quality assessment
+      if (analysis.contactInformation) {
+        const contactScore = analysis.contactInformation.score || 0;
+        if (contactScore >= 80) summary.contactQuality = 'Excellent';
+        else if (contactScore >= 60) summary.contactQuality = 'Good';
+        else if (contactScore >= 40) summary.contactQuality = 'Fair';
+        else summary.contactQuality = 'Poor';
+
+        if (contactScore > 70) {
+          summary.keyStrengths.push('Comprehensive contact information');
+        } else {
+          summary.keyWeaknesses.push('Incomplete contact information');
+        }
+      }
+
+      // Content quality assessment (About page)
+      if (analysis.aboutPageQuality) {
+        const contentScore = analysis.aboutPageQuality.score || 0;
+        if (contentScore >= 80) summary.contentQuality = 'Excellent';
+        else if (contentScore >= 60) summary.contentQuality = 'Good';
+        else if (contentScore >= 40) summary.contentQuality = 'Fair';
+        else summary.contentQuality = 'Poor';
+
+        if (contentScore > 70) {
+          summary.keyStrengths.push('High-quality about page content');
+        } else {
+          summary.keyWeaknesses.push('About page needs improvement');
+        }
+      }
+
+      // Support level assessment
+      if (analysis.customerSupport) {
+        const supportScore = analysis.customerSupport.score || 0;
+        if (supportScore >= 80) summary.supportLevel = 'Excellent';
+        else if (supportScore >= 60) summary.supportLevel = 'Good';
+        else if (supportScore >= 40) summary.supportLevel = 'Basic';
+        else summary.supportLevel = 'Limited';
+
+        if (supportScore > 70) {
+          summary.keyStrengths.push('Multiple customer support channels');
+        } else {
+          summary.keyWeaknesses.push('Limited customer support options');
+        }
+      }
+
+      // Credibility level assessment
+      if (analysis.businessCredibility) {
+        const credibilityScore = analysis.businessCredibility.score || 0;
+        if (credibilityScore >= 80) summary.credibilityLevel = 'High';
+        else if (credibilityScore >= 60) summary.credibilityLevel = 'Medium';
+        else summary.credibilityLevel = 'Low';
+
+        if (credibilityScore > 70) {
+          summary.keyStrengths.push('Strong business credibility indicators');
+        } else {
+          summary.keyWeaknesses.push('Limited business credibility information');
+        }
+      }
+
+      // Overall rating based on comprehensive score
+      const overallScore = this._calculateComprehensiveScore(analysis);
+      if (overallScore >= 80) summary.overallRating = 'Excellent';
+      else if (overallScore >= 60) summary.overallRating = 'Good';
+      else if (overallScore >= 40) summary.overallRating = 'Fair';
+      else summary.overallRating = 'Poor';
+
+      // Additional strengths and weaknesses
+      if (analysis.locationData && analysis.locationData.score > 70) {
+        summary.keyStrengths.push('Complete location information');
+      }
+
+      if (summary.keyStrengths.length === 0) {
+        summary.keyWeaknesses.push('No significant business intelligence strengths identified');
+      }
+
+      return summary;
+    } catch (error) {
+      this.log('Error generating business intelligence summary:', error.message);
+      return {
+        overallRating: 'Unknown',
+        trustLevel: 'Unknown',
+        contactQuality: 'Unknown',
+        contentQuality: 'Unknown',
+        supportLevel: 'Unknown',
+        credibilityLevel: 'Unknown',
+        keyStrengths: [],
+        keyWeaknesses: ['Analysis error occurred']
+      };
+    }
+  }
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * @deprecated Use analyze() method instead
+   * Legacy method for backward compatibility
+   */
+  analyzeBusinessIntelligence(domOrDocument, pageDataOrUrl, url) {
+    console.warn('BusinessIntelligenceAnalyzer.analyzeBusinessIntelligence(domOrDocument, pageDataOrUrl, url) is deprecated. Use analyze(context) method instead.');
+    
+    // Handle legacy call signature
+    let actualPageData, actualUrl;
+    if (typeof pageDataOrUrl === 'string') {
+      actualUrl = pageDataOrUrl;
+      actualPageData = {};
+    } else {
+      actualPageData = pageDataOrUrl;
+      actualUrl = url;
+    }
+    
+    return this.performBusinessIntelligenceAnalysis(domOrDocument, actualPageData, actualUrl);
   }
 }

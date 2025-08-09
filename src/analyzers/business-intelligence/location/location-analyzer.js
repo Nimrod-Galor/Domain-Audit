@@ -15,8 +15,12 @@
  * @version 1.0.0
  */
 
-export class LocationAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerCategories.js';
+
+export class LocationAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('LocationAnalyzer');
     this.options = {
       enableAddressAnalysis: options.enableAddressAnalysis !== false,
       enableServiceAreaAnalysis: options.enableServiceAreaAnalysis !== false,
@@ -89,61 +93,123 @@ export class LocationAnalyzer {
   }
 
   /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: this.name,
+      category: AnalyzerCategories.BUSINESS,
+      description: 'Analyzes business location and presence data including physical locations, service areas, local business indicators, and geographic targeting',
+      version: '1.0.0',
+      author: 'Nimrod Galor',
+      priority: 'high',
+      type: 'business-intelligence',
+      capabilities: [
+        'physical-location-analysis',
+        'service-area-detection',
+        'business-hours-analysis',
+        'local-presence-assessment',
+        'geographic-targeting-analysis',
+        'structured-location-data',
+        'multi-location-analysis'
+      ],
+      metrics: [
+        'physical_locations_count',
+        'service_areas_count',
+        'business_hours_availability',
+        'local_presence_score',
+        'geographic_targeting_score',
+        'structured_data_score',
+        'overall_location_score'
+      ],
+      dependencies: ['cheerio'],
+      performanceImpact: 'medium'
+    };
+  }
+
+  /**
+   * Validate input parameters
+   * @param {Document} document - The DOM document
+   * @param {string} url - The page URL
+   * @returns {boolean} True if inputs are valid
+   */
+  validate(document, url) {
+    if (!document) {
+      this.handleError('Document is required for location analysis');
+      return false;
+    }
+
+    if (!url || typeof url !== 'string') {
+      this.handleError('Valid URL is required for location analysis');
+      return false;
+    }
+
+    try {
+      new URL(url);
+    } catch (error) {
+      this.handleError(`Invalid URL format: ${url}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Analyze location and business presence information
    * @param {Document} document - DOM document
    * @param {string} url - Page URL
    * @returns {Object} Location analysis results
    */
-  analyze(document, url) {
-    const physicalLocation = this._analyzePhysicalLocation(document);
-    const serviceAreas = this._analyzeServiceAreas(document);
-    const businessHours = this._analyzeBusinessHours(document);
-    const localPresence = this._analyzeLocalPresence(document);
-    const geographicTargeting = this._analyzeGeographicTargeting(document);
-    const structuredLocationData = this._analyzeStructuredLocationData(document);
-    const multiLocationBusiness = this._analyzeMultiLocationBusiness(document);
+  async analyze(document, url) {
+    if (!this.validate(document, url)) {
+      return this.createErrorResult('Validation failed for location analysis');
+    }
 
-    const score = this._calculateLocationScore({
-      physicalLocation,
-      serviceAreas,
-      businessHours,
-      localPresence,
-      geographicTargeting,
-      structuredLocationData,
-      multiLocationBusiness,
-    });
+    try {
+      const physicalLocation = this._analyzePhysicalLocation(document);
+      const serviceAreas = this._analyzeServiceAreas(document);
+      const businessHours = this._analyzeBusinessHours(document);
+      const localPresence = this._analyzeLocalPresence(document);
+      const geographicTargeting = this._analyzeGeographicTargeting(document);
+      const structuredLocationData = this._analyzeStructuredLocationData(document);
+      const multiLocationBusiness = this._analyzeMultiLocationBusiness(document);
 
-    return {
-      physicalLocation,
-      serviceAreas,
-      businessHours,
-      localPresence,
-      geographicTargeting,
-      structuredLocationData,
-      multiLocationBusiness,
-      score,
-      grade: this._assignGrade(score),
-      businessType: this._classifyBusinessType({
+      const analysis = {
         physicalLocation,
         serviceAreas,
+        businessHours,
         localPresence,
+        geographicTargeting,
+        structuredLocationData,
         multiLocationBusiness,
-      }),
-      strengths: this._identifyLocationStrengths({
-        physicalLocation,
-        serviceAreas,
-        businessHours,
-        localPresence,
-        structuredLocationData,
-      }),
-      recommendations: this._generateLocationRecommendations({
-        physicalLocation,
-        serviceAreas,
-        businessHours,
-        localPresence,
-        structuredLocationData,
-      }),
-    };
+      };
+
+      const score = this._calculateLocationScore(analysis);
+      const performance = performance.now() - startTime;
+
+      const result = {
+        ...analysis,
+        score,
+        grade: this._assignGrade(score),
+        businessType: this._classifyBusinessType(analysis),
+        strengths: this._identifyLocationStrengths(analysis),
+        recommendations: this._generateLocationRecommendations(analysis),
+        summary: this._generateExecutiveSummary(analysis, score),
+        metadata: {
+          ...this.getMetadata(),
+          analysisDate: new Date().toISOString(),
+          performanceMs: Math.round(performance),
+          url: url
+        }
+      };
+
+      return result;
+
+    } catch (error) {
+      this.handleError(`Location analysis failed: ${error.message}`);
+      return this.createErrorResult('Location analysis failed');
+    }
   }
 
   /**
@@ -1018,5 +1084,93 @@ export class LocationAnalyzer {
     }
     
     return recommendations;
+  }
+
+  /**
+   * Generate executive summary
+   * @param {Object} analysis - Analysis results
+   * @param {number} score - Overall score
+   * @returns {string} Executive summary
+   */
+  _generateExecutiveSummary(analysis, score) {
+    const grade = this._assignGrade(score);
+    const businessType = this._classifyBusinessType(analysis);
+    
+    let summary = `Location & Geographic Presence Analysis (Grade: ${grade}, Score: ${score}/100)\n\n`;
+    
+    summary += `Overall Assessment: `;
+    if (score >= 80) {
+      summary += `Excellent location information and geographic presence setup. `;
+    } else if (score >= 60) {
+      summary += `Good location information with some geographic targeting, improvements possible. `;
+    } else if (score >= 40) {
+      summary += `Basic location information present, needs geographic optimization. `;
+    } else {
+      summary += `Limited location information, requires significant geographic enhancement. `;
+    }
+    
+    summary += `Business Type: ${businessType}. `;
+    
+    // Physical location summary
+    if (analysis.physicalLocation.addresses.length > 0) {
+      summary += `Found ${analysis.physicalLocation.addresses.length} physical address(es). `;
+    } else {
+      summary += `No physical addresses detected. `;
+    }
+    
+    // Service areas summary
+    if (analysis.serviceAreas.areas.length > 0) {
+      summary += `Service areas defined for ${analysis.serviceAreas.areas.length} region(s). `;
+    } else {
+      summary += `Service areas not clearly defined. `;
+    }
+    
+    // Business hours summary
+    if (analysis.businessHours.found) {
+      summary += `Business hours information available. `;
+    } else {
+      summary += `Business hours not specified. `;
+    }
+    
+    // Local presence summary
+    if (analysis.localPresence.hasLocalPresence) {
+      summary += `Strong local business presence indicators found. `;
+    } else {
+      summary += `Limited local business presence. `;
+    }
+    
+    // Structured data summary
+    if (analysis.structuredLocationData.hasAnyStructuredData) {
+      summary += `Location-based structured data implemented. `;
+    } else {
+      summary += `No location structured data found. `;
+    }
+    
+    // Multi-location summary
+    if (analysis.multiLocationBusiness.isMultiLocation) {
+      summary += `Multi-location business with ${analysis.multiLocationBusiness.locationCount} locations. `;
+    }
+    
+    return summary.trim();
+  }
+
+  /**
+   * Assign letter grade based on score
+   * @param {number} score - Numerical score
+   * @returns {string} Letter grade
+   */
+  _assignGrade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 45) return 'D+';
+    if (score >= 40) return 'D';
+    return 'F';
   }
 }

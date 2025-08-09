@@ -14,9 +14,25 @@
  * @version 1.0.0
  */
 
-export class ReviewAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
+export class ReviewAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = options;
+    super('ReviewAnalyzer', {
+      enableReviewDetection: options.enableReviewDetection !== false,
+      enableRatingAnalysis: options.enableRatingAnalysis !== false,
+      enableSchemaValidation: options.enableSchemaValidation !== false,
+      enableQualityAnalysis: options.enableQualityAnalysis !== false,
+      enableUserContentAnalysis: options.enableUserContentAnalysis !== false,
+      maxReviewAnalysis: options.maxReviewAnalysis || 100,
+      includeDetailedAnalysis: options.includeDetailedAnalysis !== false,
+      ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.ECOMMERCE;
+    
     this.reviewSelectors = [
       ".review",
       ".reviews",
@@ -39,38 +55,168 @@ export class ReviewAnalyzer {
   }
 
   /**
-   * Analyze review systems and customer feedback
-   * @param {Document} document - DOM document
-   * @returns {Object} Review analysis results
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
    */
-  analyze(document) {
-    const reviewElements = this._findReviewElements(document);
-    const reviewFeatures = this._analyzeReviewFeatures(document);
-    const ratingSystem = this._analyzeRatingSystem(document);
-    const reviewSchema = this._analyzeReviewSchema(document);
-    const reviewQuality = this._analyzeReviewQuality(document, reviewElements);
-    const userGenerated = this._analyzeUserGeneratedContent(document);
-
+  getMetadata() {
     return {
-      hasReviews: reviewElements.length > 0,
-      reviewCount: reviewElements.length,
-      reviewElements: reviewElements.map(el => ({
-        tagName: el.tagName,
-        className: el.className,
-        textLength: el.textContent.trim().length,
-      })),
-      features: reviewFeatures,
-      ratingSystem,
-      schema: reviewSchema,
-      quality: reviewQuality,
-      userGenerated,
-      score: this._calculateReviewScore(
+      name: 'ReviewAnalyzer',
+      version: this.version,
+      description: 'Analyzes customer review systems and user-generated content',
+      category: this.category,
+      priority: 'high',
+      capabilities: [
+        'review_system_detection',
+        'rating_system_analysis',
+        'schema_markup_validation',
+        'review_quality_assessment',
+        'user_generated_content_analysis',
+        'review_scoring',
+        'optimization_recommendations'
+      ]
+    };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    if (!context) {
+      this.handleError('Analysis context is required');
+      return false;
+    }
+
+    if (!context.document && !context.dom) {
+      this.handleError('DOM document is required for review analysis');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Perform comprehensive review system analysis
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} Review analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+
+    try {
+      if (!this.validate(context)) {
+        return this.createErrorResult('Invalid analysis context');
+      }
+
+      this.log('info', 'Starting review system analysis');
+
+      const document = context.document || context.dom?.window?.document;
+      const url = context.url || '';
+      const pageData = context.pageData || {};
+
+      const reviewElements = this._findReviewElements(document);
+      const reviewFeatures = this._analyzeReviewFeatures(document);
+      const ratingSystem = this._analyzeRatingSystem(document);
+      const reviewSchema = this._analyzeReviewSchema(document);
+      const reviewQuality = this._analyzeReviewQuality(document, reviewElements);
+      const userGenerated = this._analyzeUserGeneratedContent(document);
+
+      // Calculate review score
+      const score = this._calculateReviewScore(
         reviewFeatures,
         ratingSystem,
         reviewSchema,
         reviewQuality
-      ),
-    };
+      );
+
+      const data = {
+        hasReviews: reviewElements.length > 0,
+        reviewCount: reviewElements.length,
+        reviewElements: reviewElements.slice(0, this.options.maxReviewAnalysis).map(el => ({
+          tagName: el.tagName,
+          className: el.className,
+          textLength: el.textContent?.trim().length || 0,
+          hasRating: this._hasElementRating(el),
+          hasAuthor: this._hasElementAuthor(el),
+          hasDate: this._hasElementDate(el)
+        })),
+        features: reviewFeatures,
+        ratingSystem,
+        schema: reviewSchema,
+        quality: reviewQuality,
+        userGenerated,
+        score,
+        grade: this._getGradeFromScore(score),
+        recommendations: this._generateRecommendations(reviewFeatures, ratingSystem, reviewSchema, reviewQuality),
+        summary: this._generateSummary(score, reviewElements.length, reviewFeatures),
+        metadata: this.getMetadata(),
+        analysisTimestamp: new Date().toISOString(),
+        url: url
+      };
+
+      const endTime = Date.now();
+
+      this.log('info', `Review analysis completed. Score: ${score}%, Grade: ${data.grade}`);
+      
+      return {
+        success: true,
+        data,
+        performance: {
+          analysisTime: endTime - startTime,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+    } catch (error) {
+      return this.handleError('Review analysis failed', error);
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
+   * @param {Document} document - DOM document
+   * @returns {Object} Review analysis results
+   */
+  analyzeReviews(document) {
+    try {
+      // Convert legacy parameters to new context format
+      const context = {
+        document: document,
+        url: 'https://example.com',
+        pageData: {}
+      };
+      
+      // Use the new analyze method and extract data
+      return this.analyze(context).then(result => {
+        if (result.success) {
+          return result.data;
+        } else {
+          return {
+            error: result.error,
+            hasReviews: false,
+            reviewCount: 0,
+            score: 0
+          };
+        }
+      }).catch(error => {
+        return {
+          error: `Review analysis failed: ${error.message}`,
+          hasReviews: false,
+          reviewCount: 0,
+          score: 0
+        };
+      });
+      
+    } catch (error) {
+      return {
+        error: `Review analysis failed: ${error.message}`,
+        hasReviews: false,
+        reviewCount: 0,
+        score: 0
+      };
+    }
   }
 
   /**
@@ -80,8 +226,10 @@ export class ReviewAnalyzer {
     const elements = [];
 
     this.reviewSelectors.forEach((selector) => {
-      const found = document.querySelectorAll(selector);
-      elements.push(...Array.from(found));
+      const found = this.safeQuery(document, selector);
+      if (found && found.length > 0) {
+        elements.push(...Array.from(found));
+      }
     });
 
     return [...new Set(elements)];
@@ -326,8 +474,10 @@ export class ReviewAnalyzer {
     const elements = [];
 
     this.ratingSelectors.forEach((selector) => {
-      const found = document.querySelectorAll(selector);
-      elements.push(...Array.from(found));
+      const found = this.safeQuery(document, selector);
+      if (found && found.length > 0) {
+        elements.push(...Array.from(found));
+      }
     });
 
     return [...new Set(elements)];
@@ -539,18 +689,170 @@ export class ReviewAnalyzer {
     return schemaCount > 0 ? Math.round(totalScore / schemaCount) : 0;
   }
 
-  // Quality analysis methods
+  
+  // Additional helper methods for BaseAnalyzer integration
+
+  /**
+   * Calculate average review length
+   */
   _calculateAverageReviewLength(reviewElements) {
     if (reviewElements.length === 0) return 0;
     
     const totalLength = reviewElements.reduce((sum, element) => {
-      return sum + element.textContent.trim().length;
+      return sum + (element.textContent?.trim().length || 0);
     }, 0);
     
     return Math.round(totalLength / reviewElements.length);
   }
 
-  _countDetailedReviews(reviewElements) {
+  /**
+   * Check if element has rating
+   */
+  _hasElementRating(element) {
+    return this.safeQuery(element, '.rating, .stars, .star-rating').length > 0;
+  }
+
+  /**
+   * Check if element has author
+   */
+  _hasElementAuthor(element) {
+    return this.safeQuery(element, '.author, .reviewer, .user, .customer').length > 0;
+  }
+
+  /**
+   * Check if element has date
+   */
+  _hasElementDate(element) {
+    return this.safeQuery(element, '.date, .time, [datetime]').length > 0;
+  }
+
+  /**
+   * Get grade from score
+   */
+  _getGradeFromScore(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 45) return 'D+';
+    if (score >= 40) return 'D';
+    return 'F';
+  }
+
+  /**
+   * Generate recommendations
+   */
+  _generateRecommendations(features, ratingSystem, schema, quality) {
+    const recommendations = [];
+
+    // Review system recommendations
+    if (!features.userReviews) {
+      recommendations.push({
+        type: 'review-system',
+        priority: 'high',
+        title: 'Implement User Review System',
+        description: 'Add functionality for customers to leave reviews and ratings',
+        impact: 'High - Reviews significantly impact purchasing decisions'
+      });
+    }
+
+    if (!features.averageRating) {
+      recommendations.push({
+        type: 'rating-display',
+        priority: 'medium',
+        title: 'Display Average Rating',
+        description: 'Show aggregate rating scores prominently on product pages',
+        impact: 'Medium - Helps customers quickly assess product quality'
+      });
+    }
+
+    // Schema markup recommendations
+    if (!schema.hasReviewSchema) {
+      recommendations.push({
+        type: 'schema-markup',
+        priority: 'high',
+        title: 'Add Review Schema Markup',
+        description: 'Implement structured data for reviews to enhance search visibility',
+        impact: 'High - Enables rich snippets and improved SEO'
+      });
+    }
+
+    if (schema.validationErrors.length > 0) {
+      recommendations.push({
+        type: 'schema-validation',
+        priority: 'medium',
+        title: 'Fix Schema Validation Errors',
+        description: `Resolve ${schema.validationErrors.length} schema validation issues`,
+        impact: 'Medium - Ensures proper search engine understanding'
+      });
+    }
+
+    // Quality recommendations
+    if (quality.averageLength < 50) {
+      recommendations.push({
+        type: 'review-quality',
+        priority: 'low',
+        title: 'Encourage Detailed Reviews',
+        description: 'Implement features to encourage more detailed customer feedback',
+        impact: 'Low - More detailed reviews provide better customer insights'
+      });
+    }
+
+    return recommendations.slice(0, 8); // Limit to top 8 recommendations
+  }
+
+  /**
+   * Generate summary
+   */
+  _generateSummary(score, reviewCount, features) {
+    let summary = `Review analysis completed with a score of ${score}%.`;
+    
+    if (reviewCount === 0) {
+      summary += ' No review system detected on this page.';
+    } else {
+      summary += ` Found ${reviewCount} review elements.`;
+      
+      if (score >= 80) {
+        summary += ' Review system is well-implemented with good features and optimization.';
+      } else if (score >= 60) {
+        summary += ' Review system has good basic functionality but could benefit from enhancements.';
+      } else if (score >= 40) {
+        summary += ' Review system needs significant improvements for better user experience.';
+      } else {
+        summary += ' Review system requires major optimization and feature additions.';
+      }
+    }
+
+    // Add feature highlights
+    const activeFeatures = Object.entries(features).filter(([key, value]) => value).length;
+    const totalFeatures = Object.keys(features).length;
+    summary += ` Review features: ${activeFeatures}/${totalFeatures} implemented.`;
+    
+    return summary;
+  }
+
+  /**
+   * Create error result for consistency
+   */
+  createErrorResult(message) {
+    return {
+      success: false,
+      error: message,
+      data: {
+        hasReviews: false,
+        reviewCount: 0,
+        score: 0,
+        grade: 'F',
+        summary: `Analysis failed: ${message}`,
+        metadata: this.getMetadata()
+      }
+    };
+  }  _countDetailedReviews(reviewElements) {
     return reviewElements.filter(element => 
       element.textContent.trim().length > 100
     ).length;

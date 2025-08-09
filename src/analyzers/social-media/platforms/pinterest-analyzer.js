@@ -1,30 +1,190 @@
 /**
- * Pinterest Analyzer
- * Rich Pins validation and Pinterest optimization
+ * Enhanced Pinterest Analyzer
+ * Comprehensive analysis of Pinterest Rich Pins and optimization with BaseAnalyzer integration
+ * 
+ * @extends BaseAnalyzer
+ * @version 1.0.0
+ * @author Nimrod Galor
+ * @date 2025-08-08
  */
 
-export class PinterestAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
+export class PinterestAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = options;
+    super('PinterestAnalyzer', {
+      enableRichPinValidation: options.enableRichPinValidation !== false,
+      enableImageOptimization: options.enableImageOptimization !== false,
+      enableContentAnalysis: options.enableContentAnalysis !== false,
+      enableSchemaValidation: options.enableSchemaValidation !== false,
+      strictValidation: options.strictValidation || false,
+      validateImageDimensions: options.validateImageDimensions !== false,
+      includeRecommendations: options.includeRecommendations !== false,
+      ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.CONTENT;
+    
     this.richPinTypes = ['article', 'product', 'recipe', 'app'];
+    this.requiredSchemaTypes = ['Article', 'Product', 'Recipe', 'SoftwareApplication'];
+    this.recommendedMetaTags = ['og:title', 'og:description', 'og:image', 'og:type', 'og:url'];
   }
 
-  async analyze(document, url) {
-    const richPins = this._analyzeRichPins(document);
-    const imageOptimization = this._analyzePinterestImages(document);
-    const contentOptimization = this._analyzePinterestContent(document);
-    const validation = this._validatePinterestTags(document);
-
-    const score = this._calculatePinterestScore(richPins, imageOptimization, contentOptimization);
-
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
     return {
-      richPins,
-      imageOptimization,
-      contentOptimization,
-      validation,
-      score,
-      recommendations: this._generatePinterestRecommendations(richPins, imageOptimization, validation),
+      name: 'PinterestAnalyzer',
+      version: '1.0.0',
+      description: 'Comprehensive Pinterest Rich Pins analysis and social media optimization',
+      category: AnalyzerCategories.CONTENT,
+      priority: 'high',
+      capabilities: [
+        'rich_pins_validation',
+        'pinterest_image_optimization',
+        'schema_markup_analysis',
+        'content_optimization',
+        'pin_quality_assessment',
+        'social_sharing_optimization',
+        'recommendation_generation'
+      ]
     };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    try {
+      if (!context || typeof context !== 'object') {
+        return false;
+      }
+
+      const { document } = context;
+      if (!document || !document.querySelector) {
+        this.log('Pinterest analysis requires a valid DOM document', 'warn');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.handleError('Error validating Pinterest analysis context', error);
+      return false;
+    }
+  }
+
+  /**
+   * Perform comprehensive Pinterest analysis with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} Pinterest analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      this.log('Starting Pinterest analysis', 'info');
+
+      // Validate context
+      if (!this.validate(context)) {
+        return this.handleError('Invalid context for Pinterest analysis', new Error('Context validation failed'), {
+          hasPinterestOptimization: false,
+          score: 0,
+          grade: 'F'
+        });
+      }
+
+      const { document, url = '', pageData = {} } = context;
+
+      // Perform Pinterest analysis
+      const pinterestData = await this._performPinterestAnalysis(document, url);
+      
+      // Calculate comprehensive score
+      const score = this._calculateComprehensiveScore(pinterestData);
+      const grade = this._getGradeFromScore ? this._getGradeFromScore(score) : this._calculateGrade(score);
+      
+      // Generate recommendations
+      const recommendations = this._generatePinterestRecommendations(pinterestData);
+      
+      // Generate summary
+      const summary = this._generatePinterestSummary(pinterestData, score);
+
+      const result = {
+        success: true,
+        data: {
+          ...pinterestData,
+          score,
+          grade,
+          recommendations,
+          summary,
+          metadata: this.getMetadata()
+        },
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      };
+
+      this.log(`Pinterest analysis completed in ${result.executionTime}ms with score ${score}`, 'info');
+      return result;
+
+    } catch (error) {
+      return this.handleError('Pinterest analysis failed', error, {
+        hasPinterestOptimization: false,
+        score: 0,
+        grade: 'F',
+        summary: 'Pinterest analysis encountered an error'
+      });
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
+   * @param {Document} document - DOM document
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} Pinterest analysis results
+   */
+  async analyzePinterest(document, url) {
+    console.warn('analyzePinterest() is deprecated. Use analyze() method instead.');
+    return this._performPinterestAnalysis(document, url);
+  }
+
+  /**
+   * Internal method to perform Pinterest analysis
+   * @param {Document} document - DOM document
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} Pinterest analysis results
+   */
+  async _performPinterestAnalysis(document, url) {
+    try {
+      this.log('Analyzing Pinterest Rich Pins and optimization', 'info');
+      
+      const richPins = this._analyzeRichPins(document);
+      const imageOptimization = this._analyzePinterestImages(document);
+      const contentOptimization = this._analyzePinterestContent(document);
+      const validation = this._validatePinterestTags(document);
+      const schemaAnalysis = this._analyzeSchemaMarkup(document);
+
+      const score = this._calculatePinterestScore(richPins, imageOptimization, contentOptimization, validation);
+
+      return {
+        richPins,
+        imageOptimization,
+        contentOptimization,
+        validation,
+        schemaAnalysis,
+        score,
+        recommendations: this._generatePinterestRecommendationsLegacy(richPins, imageOptimization, validation),
+        hasPinterestOptimization: richPins.hasRichPins || imageOptimization.isOptimized,
+        completeness: this._calculatePinterestCompleteness(richPins, validation, schemaAnalysis)
+      };
+    } catch (error) {
+      throw new Error(`Pinterest analysis failed: ${error.message}`);
+    }
   }
 
   _analyzeRichPins(document) {
@@ -525,5 +685,308 @@ export class PinterestAnalyzer {
     } catch {
       return false;
     }
+  }
+
+  // ============================================================================
+  // BaseAnalyzer Integration Helper Methods
+  // ============================================================================
+
+  /**
+   * Calculate comprehensive Pinterest score
+   * @param {Object} pinterestData - Complete Pinterest analysis data
+   * @returns {number} Score (0-100)
+   */
+  _calculateComprehensiveScore(pinterestData) {
+    const weights = {
+      richPins: 0.3,
+      imageOptimization: 0.25,
+      contentOptimization: 0.25,
+      validation: 0.2
+    };
+    
+    // Rich Pins score
+    const richPinsScore = pinterestData.richPins.hasRichPins ? 
+      (pinterestData.richPins.types[pinterestData.richPins.primaryType]?.completeness || 0) : 0;
+    
+    // Image optimization score
+    const imageScore = pinterestData.imageOptimization.optimizationScore || 0;
+    
+    // Content optimization score
+    let contentScore = 0;
+    if (pinterestData.contentOptimization.title?.optimized) contentScore += 40;
+    if (pinterestData.contentOptimization.description?.optimized) contentScore += 40;
+    if (pinterestData.contentOptimization.keywords?.isPinterestFriendly) contentScore += 20;
+    
+    // Validation score
+    const validationScore = pinterestData.validation.errors.length === 0 ? 100 : 
+      Math.max(0, 100 - (pinterestData.validation.errors.length * 20));
+    
+    const totalScore = Math.round(
+      (richPinsScore * weights.richPins) +
+      (imageScore * weights.imageOptimization) +
+      (contentScore * weights.contentOptimization) +
+      (validationScore * weights.validation)
+    );
+    
+    return Math.min(100, Math.max(0, totalScore));
+  }
+
+  /**
+   * Generate comprehensive Pinterest recommendations
+   * @param {Object} pinterestData - Complete Pinterest analysis data
+   * @returns {Array} Array of recommendation objects
+   */
+  _generatePinterestRecommendations(pinterestData) {
+    const recommendations = [];
+    
+    // Rich Pins recommendations
+    if (!pinterestData.richPins.hasRichPins) {
+      recommendations.push({
+        category: 'critical',
+        title: 'Implement Pinterest Rich Pins',
+        description: 'Add structured data or Open Graph tags to enable Pinterest Rich Pins for better engagement',
+        impact: 'high',
+        implementation: 'Add structured data (JSON-LD) or Open Graph meta tags for your content type'
+      });
+    }
+    
+    // Image optimization recommendations
+    if (pinterestData.imageOptimization.verticalImages === 0) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Use Vertical Images',
+        description: 'Pinterest favors vertical images with 2:3 aspect ratio for better visibility',
+        impact: 'high',
+        implementation: 'Use images that are 600x900 pixels or similar vertical ratios'
+      });
+    }
+    
+    // Content optimization recommendations
+    if (!pinterestData.contentOptimization.title?.optimized) {
+      recommendations.push({
+        category: 'content',
+        title: 'Optimize Pinterest Title',
+        description: 'Create compelling titles (20-100 characters) that work well for Pinterest sharing',
+        impact: 'medium',
+        implementation: 'Include action words like "How to", "Best", "DIY" in your og:title'
+      });
+    }
+    
+    if (!pinterestData.contentOptimization.description?.optimized) {
+      recommendations.push({
+        category: 'content',
+        title: 'Optimize Pinterest Description',
+        description: 'Write engaging descriptions (50-500 characters) that encourage pinning',
+        impact: 'medium',
+        implementation: 'Create detailed og:description that tells a story and includes relevant keywords'
+      });
+    }
+    
+    // Validation error recommendations
+    pinterestData.validation.errors.forEach(error => {
+      recommendations.push({
+        category: 'error',
+        title: 'Fix Pinterest Issue',
+        description: error,
+        impact: 'high',
+        implementation: 'Review and fix the mentioned Pinterest optimization issue'
+      });
+    });
+    
+    // Schema markup recommendations
+    if (!pinterestData.schemaAnalysis.hasRelevantSchema) {
+      recommendations.push({
+        category: 'enhancement',
+        title: 'Add Structured Data',
+        description: 'Implement structured data markup for better Pinterest Rich Pin support',
+        impact: 'medium',
+        implementation: 'Add JSON-LD structured data matching your content type (Article, Product, Recipe, etc.)'
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Generate Pinterest analysis summary
+   * @param {Object} pinterestData - Complete Pinterest analysis data
+   * @param {number} score - Overall score
+   * @returns {string} Analysis summary
+   */
+  _generatePinterestSummary(pinterestData, score) {
+    const { richPins, imageOptimization, contentOptimization, validation } = pinterestData;
+    
+    if (validation.errors.length > 0) {
+      return `Pinterest optimization has ${validation.errors.length} critical issue(s) that need attention for proper sharing functionality.`;
+    }
+    
+    if (!richPins.hasRichPins) {
+      return `No Pinterest Rich Pins detected. Implement structured data or Open Graph tags to enable Rich Pins for better engagement.`;
+    }
+    
+    const completeness = pinterestData.completeness.percentage;
+    
+    if (score >= 90) {
+      return `Excellent Pinterest optimization with Rich Pins (${richPins.primaryType}) and ${completeness}% implementation completeness.`;
+    } else if (score >= 70) {
+      return `Good Pinterest setup with ${richPins.primaryType} Rich Pins but could benefit from image and content optimization.`;
+    } else if (score >= 50) {
+      return `Basic Pinterest optimization detected. Focus on image optimization and Rich Pin implementation for better performance.`;
+    } else {
+      return `Limited Pinterest optimization. Implement Rich Pins, vertical images, and optimize content for Pinterest sharing.`;
+    }
+  }
+
+  /**
+   * Analyze schema markup for Pinterest Rich Pins
+   * @param {Document} document - DOM document
+   * @returns {Object} Schema analysis results
+   */
+  _analyzeSchemaMarkup(document) {
+    const schemas = document.querySelectorAll('script[type="application/ld+json"]');
+    const detectedSchemas = [];
+    let hasRelevantSchema = false;
+    
+    schemas.forEach(script => {
+      try {
+        const data = JSON.parse(script.textContent);
+        const schemaType = Array.isArray(data) ? data[0]?.['@type'] : data['@type'];
+        
+        if (schemaType && this.requiredSchemaTypes.includes(schemaType)) {
+          hasRelevantSchema = true;
+          detectedSchemas.push({
+            type: schemaType,
+            valid: true,
+            data: data
+          });
+        }
+      } catch (e) {
+        // Invalid JSON
+      }
+    });
+    
+    return {
+      hasRelevantSchema,
+      detectedSchemas,
+      supportedTypes: this.requiredSchemaTypes,
+      count: detectedSchemas.length
+    };
+  }
+
+  /**
+   * Calculate Pinterest completeness percentage
+   * @param {Object} richPins - Rich Pins analysis
+   * @param {Object} validation - Validation results
+   * @param {Object} schemaAnalysis - Schema analysis
+   * @returns {Object} Completeness analysis
+   */
+  _calculatePinterestCompleteness(richPins, validation, schemaAnalysis) {
+    const factors = [
+      { name: 'Rich Pins', weight: 30, present: richPins.hasRichPins },
+      { name: 'Open Graph Tags', weight: 25, present: this._hasOpenGraphTags(validation) },
+      { name: 'Structured Data', weight: 20, present: schemaAnalysis.hasRelevantSchema },
+      { name: 'Optimized Images', weight: 15, present: validation.errors.length === 0 },
+      { name: 'Pinterest Verification', weight: 10, present: this._hasPinterestVerificationTag(validation) }
+    ];
+    
+    const totalWeight = factors.reduce((sum, factor) => sum + factor.weight, 0);
+    const achievedWeight = factors.reduce((sum, factor) => sum + (factor.present ? factor.weight : 0), 0);
+    
+    return {
+      percentage: Math.round((achievedWeight / totalWeight) * 100),
+      factors: factors,
+      achieved: achievedWeight,
+      total: totalWeight
+    };
+  }
+
+  /**
+   * Check if Open Graph tags are present
+   * @param {Object} validation - Validation results
+   * @returns {boolean} Whether Open Graph tags are present
+   */
+  _hasOpenGraphTags(validation) {
+    return validation.warnings.some(warning => 
+      !warning.includes('Missing recommended Open Graph tag')
+    );
+  }
+
+  /**
+   * Check if Pinterest verification tag is present
+   * @param {Object} validation - Validation results
+   * @returns {boolean} Whether Pinterest verification is present
+   */
+  _hasPinterestVerificationTag(validation) {
+    return !validation.warnings.some(warning => 
+      warning.includes('Pinterest domain verification')
+    );
+  }
+
+  /**
+   * Legacy Pinterest recommendations method for backward compatibility
+   * @param {Object} richPins - Rich Pins analysis
+   * @param {Object} imageOptimization - Image optimization analysis
+   * @param {Object} validation - Validation results
+   * @returns {Array} Array of recommendation objects
+   */
+  _generatePinterestRecommendationsLegacy(richPins, imageOptimization, validation) {
+    const recommendations = [];
+
+    // Error-based recommendations
+    validation.errors.forEach(error => {
+      recommendations.push({
+        type: 'error',
+        priority: 'high',
+        title: 'Fix Pinterest Sharing Issue',
+        description: error,
+        impact: 'pinterest-sharing',
+      });
+    });
+
+    // Rich Pins recommendations
+    if (!richPins.hasRichPins) {
+      recommendations.push({
+        type: 'enhancement',
+        priority: 'medium',
+        title: 'Implement Rich Pins',
+        description: 'Add structured data or Open Graph tags to enable Pinterest Rich Pins',
+        impact: 'pinterest-engagement',
+      });
+    }
+
+    // Image optimization recommendations
+    if (imageOptimization.recommendations) {
+      imageOptimization.recommendations.forEach(rec => {
+        recommendations.push({
+          type: 'optimization',
+          priority: 'medium',
+          title: 'Optimize Images for Pinterest',
+          description: rec,
+          impact: 'pinterest-engagement',
+        });
+      });
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Calculate grade from score (fallback method)
+   * @param {number} score - Score (0-100)
+   * @returns {string} Grade letter
+   */
+  _calculateGrade(score) {
+    if (score >= 97) return 'A+';
+    if (score >= 93) return 'A';
+    if (score >= 90) return 'A-';
+    if (score >= 87) return 'B+';
+    if (score >= 83) return 'B';
+    if (score >= 80) return 'B-';
+    if (score >= 77) return 'C+';
+    if (score >= 73) return 'C';
+    if (score >= 70) return 'C-';
+    if (score >= 67) return 'D+';
+    if (score >= 60) return 'D';
+    return 'F';
   }
 }

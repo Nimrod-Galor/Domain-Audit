@@ -15,8 +15,12 @@
  * @version 1.0.0
  */
 
-export class SupportAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerCategories.js';
+
+export class SupportAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('SupportAnalyzer');
     this.options = {
       enableChatAnalysis: options.enableChatAnalysis !== false,
       enableFAQAnalysis: options.enableFAQAnalysis !== false,
@@ -76,61 +80,123 @@ export class SupportAnalyzer {
   }
 
   /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: this.name,
+      category: AnalyzerCategories.BUSINESS,
+      description: 'Analyzes customer support accessibility and quality including live chat, FAQ, documentation, and response times',
+      version: '1.0.0',
+      author: 'Nimrod Galor',
+      priority: 'high',
+      type: 'business-intelligence',
+      capabilities: [
+        'live-chat-analysis',
+        'faq-detection',
+        'documentation-analysis',
+        'support-channels-analysis',
+        'response-time-analysis',
+        'help-accessibility-assessment',
+        'support-quality-evaluation'
+      ],
+      metrics: [
+        'live_chat_availability',
+        'faq_quality_score',
+        'documentation_completeness',
+        'support_channels_count',
+        'response_time_indicators',
+        'help_accessibility_score',
+        'overall_support_score'
+      ],
+      dependencies: ['cheerio'],
+      performanceImpact: 'medium'
+    };
+  }
+
+  /**
+   * Validate input parameters
+   * @param {Document} document - The DOM document
+   * @param {string} url - The page URL
+   * @returns {boolean} True if inputs are valid
+   */
+  validate(document, url) {
+    if (!document) {
+      this.handleError('Document is required for support analysis');
+      return false;
+    }
+
+    if (!url || typeof url !== 'string') {
+      this.handleError('Valid URL is required for support analysis');
+      return false;
+    }
+
+    try {
+      new URL(url);
+    } catch (error) {
+      this.handleError(`Invalid URL format: ${url}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Analyze customer support features and accessibility
    * @param {Document} document - DOM document
    * @param {string} url - Page URL
    * @returns {Object} Support analysis results
    */
-  analyze(document, url) {
-    const liveChatAnalysis = this._analyzeLiveChat(document);
-    const faqAnalysis = this._analyzeFAQ(document);
-    const documentationAnalysis = this._analyzeDocumentation(document);
-    const supportChannels = this._analyzeSupportChannels(document);
-    const responseTimeInfo = this._analyzeResponseTime(document);
-    const helpAccessibility = this._analyzeHelpAccessibility(document);
-    const supportQuality = this._analyzeSupportQuality(document);
+  async analyze(document, url) {
+    if (!this.validate(document, url)) {
+      return this.createErrorResult('Validation failed for support analysis');
+    }
 
-    const score = this._calculateSupportScore({
-      liveChatAnalysis,
-      faqAnalysis,
-      documentationAnalysis,
-      supportChannels,
-      responseTimeInfo,
-      helpAccessibility,
-      supportQuality,
-    });
+    try {
+      const liveChatAnalysis = this._analyzeLiveChat(document);
+      const faqAnalysis = this._analyzeFAQ(document);
+      const documentationAnalysis = this._analyzeDocumentation(document);
+      const supportChannels = this._analyzeSupportChannels(document);
+      const responseTimeInfo = this._analyzeResponseTime(document);
+      const helpAccessibility = this._analyzeHelpAccessibility(document);
+      const supportQuality = this._analyzeSupportQuality(document);
 
-    return {
-      liveChatAnalysis,
-      faqAnalysis,
-      documentationAnalysis,
-      supportChannels,
-      responseTimeInfo,
-      helpAccessibility,
-      supportQuality,
-      score,
-      grade: this._assignGrade(score),
-      availableChannels: this._countAvailableChannels({
-        liveChatAnalysis,
-        supportChannels,
-      }),
-      strengths: this._identifySupportStrengths({
+      const analysis = {
         liveChatAnalysis,
         faqAnalysis,
         documentationAnalysis,
         supportChannels,
         responseTimeInfo,
         helpAccessibility,
-      }),
-      recommendations: this._generateSupportRecommendations({
-        liveChatAnalysis,
-        faqAnalysis,
-        documentationAnalysis,
-        supportChannels,
-        responseTimeInfo,
-        helpAccessibility,
-      }),
-    };
+        supportQuality,
+      };
+
+      const score = this._calculateSupportScore(analysis);
+      const performance = performance.now() - startTime;
+
+      const result = {
+        ...analysis,
+        score,
+        grade: this._assignGrade(score),
+        availableChannels: this._countAvailableChannels(analysis),
+        strengths: this._identifySupportStrengths(analysis),
+        recommendations: this._generateSupportRecommendations(analysis),
+        summary: this._generateExecutiveSummary(analysis, score),
+        metadata: {
+          ...this.getMetadata(),
+          analysisDate: new Date().toISOString(),
+          performanceMs: Math.round(performance),
+          url: url
+        }
+      };
+
+      return result;
+
+    } catch (error) {
+      this.handleError(`Support analysis failed: ${error.message}`);
+      return this.createErrorResult('Support analysis failed');
+    }
   }
 
   /**
@@ -823,5 +889,102 @@ export class SupportAnalyzer {
     }
     
     return recommendations;
+  }
+
+  /**
+   * Generate executive summary
+   * @param {Object} analysis - Analysis results
+   * @param {number} score - Overall score
+   * @returns {string} Executive summary
+   */
+  _generateExecutiveSummary(analysis, score) {
+    const availableChannels = this._countAvailableChannels(analysis);
+    const grade = this._assignGrade(score);
+    
+    let summary = `Customer Support Analysis (Grade: ${grade}, Score: ${score}/100)\n\n`;
+    
+    summary += `Overall Assessment: `;
+    if (score >= 80) {
+      summary += `Excellent customer support setup with ${availableChannels} support channels available. `;
+    } else if (score >= 60) {
+      summary += `Good customer support infrastructure with ${availableChannels} channels, some improvements possible. `;
+    } else if (score >= 40) {
+      summary += `Basic customer support present with ${availableChannels} channels, needs enhancement. `;
+    } else {
+      summary += `Limited customer support options with only ${availableChannels} channels, requires significant improvement. `;
+    }
+    
+    // Live chat summary
+    if (analysis.liveChatAnalysis.available) {
+      summary += `Live chat is available with ${Math.round(analysis.liveChatAnalysis.quality * 100)}% implementation quality. `;
+    } else {
+      summary += `No live chat functionality detected. `;
+    }
+    
+    // FAQ summary
+    if (analysis.faqAnalysis.present) {
+      summary += `FAQ section found with ${analysis.faqAnalysis.questionCount} questions and ${Math.round(analysis.faqAnalysis.quality * 100)}% quality score. `;
+    } else {
+      summary += `No FAQ section detected. `;
+    }
+    
+    // Documentation summary
+    if (analysis.documentationAnalysis.present) {
+      summary += `Documentation available with ${analysis.documentationAnalysis.sectionsCount} sections. `;
+    } else {
+      summary += `No help documentation found. `;
+    }
+    
+    // Support channels summary
+    if (analysis.supportChannels.channels.length > 0) {
+      summary += `Additional support channels include ${analysis.supportChannels.channels.map(c => c.type).join(', ')}. `;
+    }
+    
+    // Response time summary
+    if (analysis.responseTimeInfo.mentioned) {
+      summary += `Response time expectations are clearly communicated. `;
+    } else {
+      summary += `Response time information not provided. `;
+    }
+    
+    return summary.trim();
+  }
+
+  /**
+   * Assign letter grade based on score
+   * @param {number} score - Numerical score
+   * @returns {string} Letter grade
+   */
+  _assignGrade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 45) return 'D+';
+    if (score >= 40) return 'D';
+    return 'F';
+  }
+
+  /**
+   * Count available support channels
+   * @param {Object} analysis - Analysis results
+   * @returns {number} Number of available channels
+   */
+  _countAvailableChannels(analysis) {
+    let channels = 0;
+    
+    if (analysis.liveChatAnalysis?.available) channels++;
+    if (analysis.faqAnalysis?.present) channels++;
+    if (analysis.documentationAnalysis?.present) channels++;
+    if (analysis.supportChannels?.channels?.length > 0) {
+      channels += analysis.supportChannels.channels.length;
+    }
+    
+    return channels;
   }
 }

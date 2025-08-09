@@ -7,7 +7,11 @@
  * @author Nimrod Galor
  * @AI assistant Claude Sonnet 4
  * @date 2025-08-02
+ * @extends BaseAnalyzer
  */
+
+import { BaseAnalyzer } from '../core/base-analyzer.js';
+import { AnalyzerCategories } from '../utils/analyzer-categories.js';
 
 /**
  * Known third-party service patterns and their categories
@@ -100,9 +104,13 @@ export const THIRD_PARTY_SERVICES = {
 
 /**
  * Third-Party Scripts and Services Analyzer Class
+ * @extends BaseAnalyzer
  */
-export class ThirdPartyAnalyzer {
+export class ThirdPartyAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('ThirdPartyAnalyzer');
+    
+    this.category = AnalyzerCategories.SECURITY;
     this.config = {
       includeInlineScripts: options.includeInlineScripts !== false,
       analyzeDataUrls: options.analyzeDataUrls !== false,
@@ -113,13 +121,53 @@ export class ThirdPartyAnalyzer {
   }
 
   /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'ThirdPartyAnalyzer',
+      version: '1.0.0',
+      category: AnalyzerCategories.SECURITY,
+      description: 'Analyzes third-party scripts, tracking services, and external dependencies',
+      author: 'Nimrod Galor',
+      capabilities: [
+        'Third-party script detection',
+        'Tracking service identification',
+        'Privacy impact assessment',
+        'Performance impact analysis',
+        'Security risk evaluation'
+      ]
+    };
+  }
+
+  /**
+   * Validate the context before analysis
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether the context is valid
+   */
+  validate(context) {
+    return context && 
+           context.dom && 
+           context.dom.window && 
+           context.dom.window.document;
+  }
+
+  /**
    * Analyze third-party scripts and services on a page
-   * @param {Object} dom - JSDOM document object
-   * @param {Object} pageData - Existing page data with headers
+   * @param {Object} context - Analysis context containing dom, pageData, etc.
    * @returns {Object} Third-party analysis results
    */
-  analyzeThirdPartyServices(dom, pageData = {}) {
+  async analyze(context) {
     try {
+      this.log('Starting third-party services analysis');
+      
+      // Validate context
+      if (!this.validate(context)) {
+        throw new Error('Invalid context provided for third-party analysis');
+      }
+
+      const { dom, pageData = {} } = context;
       const document = dom.window.document;
       
       const analysis = {
@@ -145,17 +193,31 @@ export class ThirdPartyAnalyzer {
         summary: {}
       };
 
-      // Generate summary
+      // Generate summary and BaseAnalyzer integration
       analysis.summary = this._generateSummary(analysis);
       
-      return analysis;
-    } catch (error) {
+      // BaseAnalyzer integration: comprehensive scoring and summary
+      const comprehensiveScore = this._calculateComprehensiveScore(analysis);
+      const recommendations = this._generateThirdPartyRecommendations(analysis);
+      const summary = this._generateThirdPartySummary(analysis);
+      
+      this.log('Third-party services analysis completed successfully');
+      
       return {
-        error: `Third-party analysis failed: ${error.message}`,
+        ...analysis,
+        score: comprehensiveScore,
+        recommendations: [...(analysis.recommendations || []), ...recommendations],
+        enhancedSummary: summary,
+        metadata: this.getMetadata()
+      };
+    } catch (error) {
+      return this.handleError('Third-party analysis failed', error, {
         scripts: null,
         resources: null,
-        summary: null
-      };
+        summary: null,
+        score: 0,
+        recommendations: []
+      });
     }
   }
 
@@ -638,5 +700,269 @@ export class ThirdPartyAnalyzer {
     }
 
     return recommendations;
+  }
+
+  /**
+   * Calculate comprehensive third-party score for BaseAnalyzer integration
+   * @param {Object} analysis - Third-party analysis results
+   * @returns {number} Comprehensive score (0-100)
+   */
+  _calculateComprehensiveScore(analysis) {
+    try {
+      const weights = {
+        security: 0.30,         // 30% - Security and privacy risks
+        performance: 0.25,      // 25% - Performance impact
+        tracking: 0.20,         // 20% - Tracking and privacy
+        resources: 0.15,        // 15% - Resource optimization
+        compliance: 0.10        // 10% - Regulatory compliance
+      };
+
+      let totalScore = 0;
+      let totalWeight = 0;
+
+      // Security score (inverse of risk level)
+      if (analysis.scripts) {
+        const externalScripts = analysis.scripts.external?.length || 0;
+        const unsafeScripts = analysis.scripts.external?.filter(s => 
+          !s.async && !s.defer && !s.integrity
+        ).length || 0;
+        
+        const securityScore = Math.max(0, 100 - (unsafeScripts * 10) - (externalScripts * 2));
+        totalScore += securityScore * weights.security;
+        totalWeight += weights.security;
+      }
+
+      // Performance score
+      if (analysis.performanceImpact) {
+        const blockingScripts = analysis.performanceImpact.blockingScripts || 0;
+        const performanceScore = Math.max(0, 100 - (blockingScripts * 15));
+        totalScore += performanceScore * weights.performance;
+        totalWeight += weights.performance;
+      }
+
+      // Tracking score (privacy-focused)
+      if (analysis.tracking) {
+        const trackingServices = analysis.tracking.services?.length || 0;
+        const trackingScore = Math.max(0, 100 - (trackingServices * 12));
+        totalScore += trackingScore * weights.tracking;
+        totalWeight += weights.tracking;
+      }
+
+      // Resource optimization score
+      if (analysis.resources) {
+        const externalResources = analysis.resources.external?.length || 0;
+        const resourceScore = Math.max(0, 100 - (externalResources * 3));
+        totalScore += resourceScore * weights.resources;
+        totalWeight += weights.resources;
+      }
+
+      // Compliance score
+      if (analysis.privacyImplications) {
+        let complianceScore = 60; // Base score
+        
+        if (analysis.privacyImplications.compliance?.cookieConsent) complianceScore += 20;
+        if (analysis.privacyImplications.compliance?.privacyPolicy) complianceScore += 10;
+        if (analysis.privacyImplications.compliance?.dataProcessing) complianceScore += 10;
+        
+        totalScore += complianceScore * weights.compliance;
+        totalWeight += weights.compliance;
+      }
+
+      return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+    } catch (error) {
+      this.log('Error calculating comprehensive score:', error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate comprehensive third-party recommendations
+   * @param {Object} analysis - Third-party analysis results
+   * @returns {Array} Enhanced recommendations
+   */
+  _generateThirdPartyRecommendations(analysis) {
+    const recommendations = [];
+
+    try {
+      // Security and integrity recommendations
+      if (analysis.scripts?.external) {
+        const scriptsWithoutIntegrity = analysis.scripts.external.filter(s => !s.integrity);
+        if (scriptsWithoutIntegrity.length > 0) {
+          recommendations.push({
+            category: 'security',
+            priority: 'high',
+            title: 'Add Subresource Integrity (SRI)',
+            description: `${scriptsWithoutIntegrity.length} external scripts lack integrity checks`,
+            impact: 'Security vulnerability to script tampering',
+            actionItems: [
+              'Add integrity attributes to external scripts',
+              'Use SRI hash generators for verification',
+              'Implement fallback mechanisms for failed loads',
+              'Monitor third-party script changes'
+            ]
+          });
+        }
+      }
+
+      // Performance optimization recommendations
+      if (analysis.performanceImpact?.blockingScripts > 0) {
+        recommendations.push({
+          category: 'performance',
+          priority: 'high',
+          title: 'Optimize Script Loading Strategy',
+          description: `${analysis.performanceImpact.blockingScripts} render-blocking scripts detected`,
+          impact: 'Page load performance and user experience',
+          actionItems: [
+            'Add async attribute to non-critical scripts',
+            'Use defer for scripts that need DOM',
+            'Implement critical CSS inlining',
+            'Consider script bundling and minification',
+            'Use resource hints (preload, prefetch, dns-prefetch)'
+          ]
+        });
+      }
+
+      // Privacy and compliance recommendations
+      if (analysis.tracking?.services?.length > 0) {
+        const trackingCount = analysis.tracking.services.length;
+        recommendations.push({
+          category: 'privacy',
+          priority: 'high',
+          title: 'Implement Privacy Controls',
+          description: `${trackingCount} tracking services require privacy consideration`,
+          impact: 'Legal compliance and user trust',
+          actionItems: [
+            'Implement cookie consent management',
+            'Add privacy policy and data processing notices',
+            'Consider GDPR/CCPA compliance requirements',
+            'Implement opt-out mechanisms for tracking',
+            'Regular audit of third-party data collection'
+          ]
+        });
+      }
+
+      // CDN and resource optimization
+      if (analysis.cdnUsage?.cdnDetected === false) {
+        recommendations.push({
+          category: 'performance',
+          priority: 'medium',
+          title: 'Implement CDN Strategy',
+          description: 'No CDN usage detected for static assets',
+          impact: 'Global performance and reliability',
+          actionItems: [
+            'Evaluate CDN providers for static assets',
+            'Implement geographic distribution strategy',
+            'Configure proper cache headers',
+            'Monitor CDN performance and availability'
+          ]
+        });
+      }
+
+      // Resource consolidation recommendations
+      if (analysis.resources?.external?.length > 10) {
+        recommendations.push({
+          category: 'optimization',
+          priority: 'medium',
+          title: 'Consolidate External Resources',
+          description: `${analysis.resources.external.length} external resources may impact performance`,
+          impact: 'Network requests and loading efficiency',
+          actionItems: [
+            'Audit necessity of all external resources',
+            'Bundle and minimize HTTP requests',
+            'Implement resource prioritization',
+            'Consider self-hosting critical resources'
+          ]
+        });
+      }
+
+      return recommendations;
+    } catch (error) {
+      this.log('Error generating third-party recommendations:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Generate comprehensive third-party summary
+   * @param {Object} analysis - Third-party analysis results
+   * @returns {Object} Third-party summary
+   */
+  _generateThirdPartySummary(analysis) {
+    try {
+      const summary = {
+        totalExternalScripts: 0,
+        totalTrackingServices: 0,
+        securityRisk: 'Low',
+        privacyRisk: 'Low',
+        performanceImpact: 'Low',
+        keyFindings: []
+      };
+
+      // Count external scripts
+      if (analysis.scripts?.external) {
+        summary.totalExternalScripts = analysis.scripts.external.length;
+      }
+
+      // Count tracking services
+      if (analysis.tracking?.services) {
+        summary.totalTrackingServices = analysis.tracking.services.length;
+      }
+
+      // Assess security risk
+      const scriptsWithoutIntegrity = analysis.scripts?.external?.filter(s => !s.integrity).length || 0;
+      if (scriptsWithoutIntegrity > 3) summary.securityRisk = 'High';
+      else if (scriptsWithoutIntegrity > 1) summary.securityRisk = 'Medium';
+
+      // Assess privacy risk
+      if (summary.totalTrackingServices > 5) summary.privacyRisk = 'High';
+      else if (summary.totalTrackingServices > 2) summary.privacyRisk = 'Medium';
+
+      // Assess performance impact
+      const blockingScripts = analysis.performanceImpact?.blockingScripts || 0;
+      if (blockingScripts > 3) summary.performanceImpact = 'High';
+      else if (blockingScripts > 1) summary.performanceImpact = 'Medium';
+
+      // Generate key findings
+      if (summary.totalExternalScripts > 0) {
+        summary.keyFindings.push(`${summary.totalExternalScripts} external scripts detected`);
+      }
+      
+      if (summary.totalTrackingServices > 0) {
+        summary.keyFindings.push(`${summary.totalTrackingServices} tracking services identified`);
+      }
+      
+      if (scriptsWithoutIntegrity > 0) {
+        summary.keyFindings.push(`${scriptsWithoutIntegrity} scripts lack integrity protection`);
+      }
+      
+      if (blockingScripts > 0) {
+        summary.keyFindings.push(`${blockingScripts} render-blocking scripts found`);
+      }
+
+      return summary;
+    } catch (error) {
+      this.log('Error generating third-party summary:', error.message);
+      return {
+        totalExternalScripts: 0,
+        totalTrackingServices: 0,
+        securityRisk: 'Unknown',
+        privacyRisk: 'Unknown',
+        performanceImpact: 'Unknown',
+        keyFindings: ['Analysis error occurred']
+      };
+    }
+  }
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * @deprecated Use analyze() method instead
+   * Legacy method for backward compatibility
+   */
+  analyzeThirdPartyServices(dom, pageData = {}) {
+    console.warn('ThirdPartyAnalyzer.analyzeThirdPartyServices() is deprecated. Use analyze() method instead.');
+    return this.analyze({ dom, pageData });
   }
 }

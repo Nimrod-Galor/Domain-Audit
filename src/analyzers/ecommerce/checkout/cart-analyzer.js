@@ -13,9 +13,24 @@
  * @version 1.0.0
  */
 
-export class CartAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
+export class CartAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = options;
+    super('CartAnalyzer', {
+      enableCartDetection: options.enableCartDetection !== false,
+      enableFeatureAnalysis: options.enableFeatureAnalysis !== false,
+      enableUsabilityAnalysis: options.enableUsabilityAnalysis !== false,
+      enableAccessibilityAnalysis: options.enableAccessibilityAnalysis !== false,
+      maxCartElements: options.maxCartElements || 50,
+      includeDetailedAnalysis: options.includeDetailedAnalysis !== false,
+      ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.ECOMMERCE;
+
     this.cartSelectors = [
       ".cart",
       ".shopping-cart",
@@ -40,40 +55,102 @@ export class CartAnalyzer {
   }
 
   /**
-   * Analyze shopping cart functionality
-   * @param {Document} document - DOM document
-   * @returns {Object} Cart analysis results
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
    */
-  analyze(document) {
-    const cartElements = this._findCartElements(document);
-    const addToCartButtons = this._findAddToCartButtons(document);
-    const cartFeatures = this._analyzeCartFeatures(document);
-    const cartUsability = this._analyzeCartUsability(cartElements);
-    const cartAccessibility = this._analyzeCartAccessibility(cartElements);
-
+  getMetadata() {
     return {
-      hasCart: cartElements.length > 0,
-      cartCount: cartElements.length,
-      cartElements: cartElements.map(el => ({
-        tagName: el.tagName,
-        className: el.className,
-        id: el.id,
-        visible: this._isElementVisible(el),
-      })),
-      addToCartButtons: {
-        count: addToCartButtons.length,
-        buttons: addToCartButtons.map(btn => ({
-          text: btn.textContent.trim(),
-          tagName: btn.tagName,
-          className: btn.className,
-          visible: this._isElementVisible(btn),
-        })),
-      },
-      features: cartFeatures,
-      usability: cartUsability,
-      accessibility: cartAccessibility,
-      score: this._calculateCartScore(cartFeatures, cartUsability, cartAccessibility, addToCartButtons.length),
+      name: this.name,
+      version: this.version,
+      category: this.category,
+      description: 'Comprehensive e-commerce cart functionality and usability analysis',
+      features: [
+        'Shopping cart detection',
+        'Add to cart button analysis',
+        'Cart feature assessment',
+        'Usability evaluation',
+        'Accessibility analysis',
+        'Mobile optimization check',
+        'Cart scoring system'
+      ],
+      config: this.options
     };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    if (!context?.document) {
+      this.log('warn', 'No document provided for cart analysis');
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Perform comprehensive cart analysis
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} Cart analysis results
+   */
+  async analyze(context) {
+    const { document, url = '', pageData = {} } = context;
+
+    this.log('info', 'Starting cart analysis');
+
+    try {
+      // Core cart analysis
+      const cartElements = this._findCartElements(document);
+      const addToCartButtons = this._findAddToCartButtons(document);
+      const cartFeatures = this._analyzeCartFeatures(document);
+      const cartUsability = this._analyzeCartUsability(cartElements, document);
+      const cartAccessibility = this._analyzeCartAccessibility(cartElements, document);
+
+      // Calculate scoring
+      const score = this._calculateCartScore(cartFeatures, cartUsability, cartAccessibility, addToCartButtons.length);
+
+      // Generate recommendations
+      const recommendations = this._generateRecommendations(cartFeatures, cartUsability, cartAccessibility, addToCartButtons.length);
+
+      // Create summary
+      const summary = this._generateSummary(cartElements.length, addToCartButtons.length, score, cartFeatures);
+
+      const result = {
+        hasCart: cartElements.length > 0,
+        cartCount: cartElements.length,
+        cartElements: cartElements.slice(0, this.options.maxCartElements).map(el => ({
+          tagName: el.tagName,
+          className: el.className || '',
+          id: el.id || '',
+          visible: this._isElementVisible(el),
+        })),
+        addToCartButtons: {
+          count: addToCartButtons.length,
+          buttons: addToCartButtons.slice(0, this.options.maxCartElements).map(btn => ({
+            text: btn.textContent?.trim() || '',
+            tagName: btn.tagName,
+            className: btn.className || '',
+            visible: this._isElementVisible(btn),
+          })),
+        },
+        features: cartFeatures,
+        usability: cartUsability,
+        accessibility: cartAccessibility,
+        score,
+        grade: this._getGradeFromScore(score),
+        recommendations,
+        summary,
+        metadata: this.getMetadata()
+      };
+
+      this.log('info', `Cart analysis completed. Score: ${score}%, Grade: ${result.grade}`);
+      return result;
+
+    } catch (error) {
+      return this.handleError(error, 'Cart analysis failed');
+    }
   }
 
   /**
@@ -83,8 +160,12 @@ export class CartAnalyzer {
     const elements = [];
 
     this.cartSelectors.forEach((selector) => {
-      const found = document.querySelectorAll(selector);
-      elements.push(...Array.from(found));
+      try {
+        const found = this.safeQuery(document, selector);
+        elements.push(...Array.from(found));
+      } catch (error) {
+        this.log('warn', `Failed to query cart selector ${selector}: ${error.message}`);
+      }
     });
 
     // Remove duplicates
@@ -98,8 +179,12 @@ export class CartAnalyzer {
     const buttons = [];
 
     this.addToCartSelectors.forEach((selector) => {
-      const found = document.querySelectorAll(selector);
-      buttons.push(...Array.from(found));
+      try {
+        const found = this.safeQuery(document, selector);
+        buttons.push(...Array.from(found));
+      } catch (error) {
+        this.log('warn', `Failed to query add-to-cart selector ${selector}: ${error.message}`);
+      }
     });
 
     return [...new Set(buttons)];
@@ -128,27 +213,27 @@ export class CartAnalyzer {
   /**
    * Analyze cart usability
    */
-  _analyzeCartUsability(cartElements) {
+  _analyzeCartUsability(cartElements, document) {
     return {
       cartVisibility: this._checkCartVisibility(cartElements),
       cartAccessibility: this._checkCartAccessibility(cartElements),
       mobileOptimization: this._checkMobileOptimization(cartElements),
       loadingStates: this._checkLoadingStates(cartElements),
       errorHandling: this._checkErrorHandling(cartElements),
-      cartPersistence: this._checkCartPersistence(cartElements),
-      quickView: this._hasQuickView(cartElements),
+      cartPersistence: this._checkCartPersistence(cartElements, document),
+      quickView: this._hasQuickView(cartElements, document),
     };
   }
 
   /**
    * Analyze cart accessibility
    */
-  _analyzeCartAccessibility(cartElements) {
+  _analyzeCartAccessibility(cartElements, document) {
     return {
       keyboardAccessible: this._isKeyboardAccessible(cartElements),
       ariaLabels: this._hasAriaLabels(cartElements),
       screenReaderFriendly: this._isScreenReaderFriendly(cartElements),
-      focusManagement: this._hasFocusManagement(cartElements),
+      focusManagement: this._hasFocusManagement(cartElements, document),
       colorContrast: this._hasGoodColorContrast(cartElements),
     };
   }
@@ -199,7 +284,7 @@ export class CartAnalyzer {
       'input[name="qty"]',
       '.quantity-controls',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0);
   }
 
   _hasRemoveItemControls(document) {
@@ -211,7 +296,7 @@ export class CartAnalyzer {
       '.remove-from-cart',
       'a[href*="remove"]',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0);
   }
 
   _hasUpdateCartControls(document) {
@@ -222,7 +307,7 @@ export class CartAnalyzer {
       '.refresh-cart',
       'button[name*="update"]',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0);
   }
 
   _hasSubtotalDisplay(document) {
@@ -233,8 +318,8 @@ export class CartAnalyzer {
       '.order-subtotal',
       '.cart-total',
     ];
-    const text = document.body.textContent.toLowerCase();
-    return selectors.some(selector => document.querySelector(selector) !== null) ||
+    const text = document.body?.textContent?.toLowerCase() || '';
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0) ||
            /subtotal|sub.?total/.test(text);
   }
 
@@ -246,8 +331,8 @@ export class CartAnalyzer {
       'input[name*="shipping"]',
       '.delivery-options',
     ];
-    const text = document.body.textContent.toLowerCase();
-    return selectors.some(selector => document.querySelector(selector) !== null) ||
+    const text = document.body?.textContent?.toLowerCase() || '';
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0) ||
            /calculate shipping|shipping estimate|delivery options/.test(text);
   }
 
@@ -260,11 +345,11 @@ export class CartAnalyzer {
       '.promo-code',
       '.discount-code',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0);
   }
 
   _hasGuestCheckoutOption(document) {
-    const text = document.body.textContent.toLowerCase();
+    const text = document.body?.textContent?.toLowerCase() || '';
     return /guest checkout|checkout as guest|continue without account/.test(text);
   }
 
@@ -275,8 +360,8 @@ export class CartAnalyzer {
       '.save-for-later',
       'button[data-action*="save"]',
     ];
-    const text = document.body.textContent.toLowerCase();
-    return selectors.some(selector => document.querySelector(selector) !== null) ||
+    const text = document.body?.textContent?.toLowerCase() || '';
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0) ||
            /save cart|save for later|add to wishlist/.test(text);
   }
 
@@ -287,7 +372,7 @@ export class CartAnalyzer {
       '.cart-totals',
       '.checkout-summary',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0);
   }
 
   _hasContinueShoppingLink(document) {
@@ -297,8 +382,8 @@ export class CartAnalyzer {
       'a[href*="products"]',
       'a[href*="catalog"]',
     ];
-    const text = document.body.textContent.toLowerCase();
-    return selectors.some(selector => document.querySelector(selector) !== null) ||
+    const text = document.body?.textContent?.toLowerCase() || '';
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0) ||
            /continue shopping|back to shop|keep shopping/.test(text);
   }
 
@@ -308,8 +393,8 @@ export class CartAnalyzer {
       '.clear-cart',
       'button[data-action*="clear"]',
     ];
-    const text = document.body.textContent.toLowerCase();
-    return selectors.some(selector => document.querySelector(selector) !== null) ||
+    const text = document.body?.textContent?.toLowerCase() || '';
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0) ||
            /empty cart|clear cart|remove all/.test(text);
   }
 
@@ -349,23 +434,23 @@ export class CartAnalyzer {
     });
   }
 
-  _checkCartPersistence(cartElements) {
+  _checkCartPersistence(cartElements, document) {
     // Check for localStorage, sessionStorage, or cookie usage indicators
-    const scripts = Array.from(document.querySelectorAll('script'));
+    const scripts = Array.from(this.safeQuery(document, 'script'));
     return scripts.some(script => {
-      const content = script.textContent;
+      const content = script.textContent || '';
       return /localStorage|sessionStorage|cookie.*cart/i.test(content);
     });
   }
 
-  _hasQuickView(cartElements) {
+  _hasQuickView(cartElements, document) {
     const selectors = [
       '.quick-view',
       '.mini-cart',
       '.cart-preview',
       '.cart-dropdown',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQuery(document, selector).length > 0);
   }
 
   // Accessibility checking methods
@@ -394,10 +479,10 @@ export class CartAnalyzer {
     });
   }
 
-  _hasFocusManagement(cartElements) {
-    const scripts = Array.from(document.querySelectorAll('script'));
+  _hasFocusManagement(cartElements, document) {
+    const scripts = Array.from(this.safeQuery(document, 'script'));
     return scripts.some(script => {
-      const content = script.textContent;
+      const content = script.textContent || '';
       return /focus\(\)|\.focus|tabindex/i.test(content);
     });
   }
@@ -405,7 +490,7 @@ export class CartAnalyzer {
   _hasGoodColorContrast(cartElements) {
     // Basic check for contrast-related CSS classes
     return cartElements.some(element => {
-      const classes = element.className.toLowerCase();
+      const classes = (element.className || '').toLowerCase();
       return /high-contrast|accessible|a11y/.test(classes);
     });
   }
@@ -426,5 +511,113 @@ export class CartAnalyzer {
     }
     
     return !element.hidden;
+  }
+
+  /**
+   * Generate recommendations based on analysis
+   * @private
+   */
+  _generateRecommendations(features, usability, accessibility, addToCartCount) {
+    const recommendations = [];
+
+    if (addToCartCount === 0) {
+      recommendations.push({
+        priority: 'critical',
+        category: 'functionality',
+        issue: 'No add to cart buttons found',
+        recommendation: 'Add clear and prominent "Add to Cart" buttons for products',
+        impact: 'High - Essential for e-commerce functionality'
+      });
+    }
+
+    if (!features.quantityControls) {
+      recommendations.push({
+        priority: 'high',
+        category: 'functionality',
+        issue: 'No quantity controls detected',
+        recommendation: 'Add quantity selectors for cart items',
+        impact: 'Medium - Improves user experience'
+      });
+    }
+
+    if (!features.subtotal) {
+      recommendations.push({
+        priority: 'high',
+        category: 'functionality',
+        issue: 'No subtotal display found',
+        recommendation: 'Display cart subtotal and total calculations',
+        impact: 'High - Essential for transparency'
+      });
+    }
+
+    if (!usability.cartVisibility) {
+      recommendations.push({
+        priority: 'high',
+        category: 'usability',
+        issue: 'Cart visibility issues detected',
+        recommendation: 'Ensure cart is clearly visible and accessible',
+        impact: 'High - Critical for user experience'
+      });
+    }
+
+    if (!accessibility.keyboardAccessible) {
+      recommendations.push({
+        priority: 'high',
+        category: 'accessibility',
+        issue: 'Cart not keyboard accessible',
+        recommendation: 'Implement keyboard navigation for cart functionality',
+        impact: 'High - Required for accessibility compliance'
+      });
+    }
+
+    if (!accessibility.ariaLabels) {
+      recommendations.push({
+        priority: 'medium',
+        category: 'accessibility',
+        issue: 'Missing ARIA labels',
+        recommendation: 'Add proper ARIA labels for screen readers',
+        impact: 'Medium - Improves accessibility'
+      });
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Generate summary of cart analysis
+   * @private
+   */
+  _generateSummary(cartCount, buttonCount, score, features) {
+    const featureCount = Object.values(features).filter(Boolean).length;
+    const totalFeatures = Object.keys(features).length;
+
+    return {
+      overallScore: score,
+      grade: this._getGradeFromScore(score),
+      cartCount,
+      buttonCount,
+      featuresImplemented: featureCount,
+      totalFeatures,
+      completionRate: Math.round((featureCount / totalFeatures) * 100),
+      status: score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'poor',
+      keyInsights: [
+        `Found ${cartCount} cart element(s) and ${buttonCount} add-to-cart button(s)`,
+        `${featureCount}/${totalFeatures} cart features implemented (${Math.round((featureCount / totalFeatures) * 100)}%)`,
+        score >= 80 ? 'Excellent cart implementation' : score >= 60 ? 'Good cart functionality with room for improvement' : 'Cart implementation needs significant enhancement'
+      ]
+    };
+  }
+
+  /**
+   * Get grade from numeric score
+   * @private
+   */
+  _getGradeFromScore(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 80) return 'A';
+    if (score >= 70) return 'B';
+    if (score >= 60) return 'C';
+    if (score >= 50) return 'D';
+    return 'F';
   }
 }

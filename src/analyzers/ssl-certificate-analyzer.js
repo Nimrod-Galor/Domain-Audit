@@ -18,28 +18,168 @@
 import https from 'https';
 import tls from 'tls';
 import { URL } from 'url';
+import { BaseAnalyzer } from './core/BaseAnalyzer.js';
+import { AnalyzerCategories } from './core/AnalyzerInterface.js';
 
-export class SSLCertificateAnalyzer {
+export class SSLCertificateAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = {
+    super('SSLCertificateAnalyzer', {
       timeout: options.timeout || 10000,
       validateHostname: options.validateHostname !== false,
       validateCA: options.validateCA !== false,
       checkExpiration: options.checkExpiration !== false,
       warningDays: options.warningDays || 30,
+      enableCertificateChainAnalysis: options.enableCertificateChainAnalysis !== false,
+      enableExpirationAnalysis: options.enableExpirationAnalysis !== false,
+      enableSecurityAnalysis: options.enableSecurityAnalysis !== false,
+      enableMixedContentDetection: options.enableMixedContentDetection !== false,
+      cacheDuration: options.cacheDuration || 300000, // 5 minutes
       ...options
-    };
-    
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.SECURITY;
     this.certificateCache = new Map();
   }
 
   /**
-   * Perform comprehensive SSL certificate analysis
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'SSLCertificateAnalyzer',
+      version: '1.0.0',
+      description: 'Comprehensive SSL certificate validation including chain analysis, expiration monitoring, and security assessment',
+      category: AnalyzerCategories.SECURITY,
+      priority: 'high',
+      capabilities: [
+        'certificate_chain_analysis',
+        'expiration_monitoring',
+        'security_strength_assessment',
+        'certificate_authority_validation',
+        'mixed_content_detection',
+        'hostname_validation',
+        'ssl_configuration_analysis'
+      ]
+    };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    try {
+      if (!context || typeof context !== 'object') {
+        return false;
+      }
+
+      const { url } = context;
+      if (!url || typeof url !== 'string') {
+        this.log('SSL analysis requires a valid URL', 'warn');
+        return false;
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch (error) {
+        this.log(`Invalid URL format: ${url}`, 'warn');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.handleError('Error validating SSL analysis context', error);
+      return false;
+    }
+  }
+
+  /**
+   * Perform comprehensive SSL certificate analysis with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing URL and optional page data
+   * @returns {Promise<Object>} SSL certificate analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      this.log('Starting SSL certificate analysis', 'info');
+
+      // Validate context
+      if (!this.validate(context)) {
+        return this.handleError('Invalid context for SSL analysis', new Error('Context validation failed'), {
+          hasSSL: false,
+          isHTTPS: false,
+          score: 0,
+          grade: 'F'
+        });
+      }
+
+      const { url, pageData = {}, document = null } = context;
+
+      // Perform SSL certificate analysis
+      const certificateData = await this._performCertificateAnalysis(url, pageData);
+      
+      // Calculate comprehensive score
+      const score = this._calculateComprehensiveScore(certificateData);
+      const grade = this._getGradeFromScore(score);
+      
+      // Generate recommendations
+      const recommendations = this._generateSSLRecommendations(certificateData);
+      
+      // Generate summary
+      const summary = this._generateSSLSummary(certificateData, score);
+
+      const result = {
+        success: true,
+        data: {
+          ...certificateData,
+          score,
+          grade,
+          recommendations,
+          summary,
+          metadata: this.getMetadata()
+        },
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      };
+
+      this.log(`SSL analysis completed in ${result.executionTime}ms with score ${score}`, 'info');
+      return result;
+
+    } catch (error) {
+      return this.handleError('SSL certificate analysis failed', error, {
+        hasSSL: false,
+        isHTTPS: false,
+        score: 0,
+        grade: 'F',
+        summary: 'SSL certificate analysis encountered an error'
+      });
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
    * @param {string} url - URL to analyze
    * @param {Object} pageData - Additional page data for mixed content detection
    * @returns {Promise<Object>} SSL certificate analysis results
    */
   async analyzeCertificate(url, pageData = {}) {
+    console.warn('analyzeCertificate() is deprecated. Use analyze() method instead.');
+    return this._performCertificateAnalysis(url, pageData);
+  }
+
+  /**
+   * Internal method to perform SSL certificate analysis
+   * @param {string} url - URL to analyze
+   * @param {Object} pageData - Additional page data for mixed content detection
+   * @returns {Promise<Object>} SSL certificate analysis results
+   */
+  async _performCertificateAnalysis(url, pageData = {}) {
     try {
       const urlObj = new URL(url);
       
@@ -59,11 +199,14 @@ export class SSLCertificateAnalyzer {
       const cacheKey = `${hostname}:${port}`;
       if (this.certificateCache.has(cacheKey)) {
         const cached = this.certificateCache.get(cacheKey);
-        if (Date.now() - cached.timestamp < 300000) { // 5 minutes cache
+        if (Date.now() - cached.timestamp < this.options.cacheDuration) {
+          this.log(`Using cached SSL data for ${hostname}:${port}`, 'info');
           return cached.data;
         }
       }
 
+      this.log(`Analyzing SSL certificate for ${hostname}:${port}`, 'info');
+      
       const certificateInfo = await this._getCertificateInfo(hostname, port);
       const analysis = this._analyzeCertificateChain(certificateInfo);
       const expirationAnalysis = this._analyzeExpiration(certificateInfo);
@@ -97,15 +240,15 @@ export class SSLCertificateAnalyzer {
         timestamp: Date.now()
       });
 
+      this.log(`SSL certificate analysis completed for ${hostname}`, 'info');
       return result;
 
     } catch (error) {
-      return {
-        error: true,
-        message: error.message,
-        analysis: 'Failed to analyze SSL certificate',
+      return this.handleError('SSL certificate analysis failed', error, {
+        isHTTPS: false,
+        error: error.message,
         recommendation: 'Check SSL certificate configuration and connectivity'
-      };
+      });
     }
   }
 
@@ -650,6 +793,235 @@ export class SSLCertificateAnalyzer {
       },
       recommendations: analysis.overall.recommendations,
       timestamp: analysis.timestamp
+    };
+  }
+
+  // BaseAnalyzer integration helper methods
+
+  /**
+   * Calculate comprehensive SSL score for BaseAnalyzer integration
+   */
+  _calculateComprehensiveScore(certificateData) {
+    try {
+      if (!certificateData || !certificateData.isHTTPS) {
+        return 0; // No HTTPS = 0 score
+      }
+
+      if (certificateData.error) {
+        return 10; // Error in analysis = very low score
+      }
+
+      const overall = certificateData.overall;
+      if (overall && typeof overall.score === 'number') {
+        return Math.round(overall.score);
+      }
+
+      // Fallback calculation if overall score not available
+      let score = 100;
+      
+      // Certificate chain issues
+      if (certificateData.chain && certificateData.chain.issues) {
+        score -= certificateData.chain.issues.length * 10;
+      }
+
+      // Expiration issues
+      if (certificateData.expiration) {
+        if (certificateData.expiration.daysUntilExpiration < 0) {
+          score -= 50; // Expired certificate
+        } else if (certificateData.expiration.daysUntilExpiration < 30) {
+          score -= 20; // Expiring soon
+        }
+      }
+
+      // Security issues
+      if (certificateData.security && certificateData.security.issues) {
+        score -= certificateData.security.issues.length * 15;
+      }
+
+      // Mixed content issues
+      if (certificateData.mixedContent && certificateData.mixedContent.issues) {
+        score -= certificateData.mixedContent.issues.length * 5;
+      }
+
+      return Math.max(0, Math.min(100, score));
+    } catch (error) {
+      this.handleError('Error calculating comprehensive SSL score', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get grade from score
+   */
+  _getGradeFromScore(score) {
+    try {
+      if (score >= 90) return 'A+';
+      if (score >= 85) return 'A';
+      if (score >= 80) return 'A-';
+      if (score >= 75) return 'B+';
+      if (score >= 70) return 'B';
+      if (score >= 65) return 'B-';
+      if (score >= 60) return 'C+';
+      if (score >= 55) return 'C';
+      if (score >= 50) return 'C-';
+      if (score >= 40) return 'D';
+      return 'F';
+    } catch (error) {
+      this.handleError('Error calculating SSL grade', error);
+      return 'F';
+    }
+  }
+
+  /**
+   * Generate SSL recommendations
+   */
+  _generateSSLRecommendations(certificateData) {
+    try {
+      const recommendations = [];
+
+      if (!certificateData.isHTTPS) {
+        recommendations.push({
+          type: 'critical',
+          title: 'Implement HTTPS',
+          description: 'Use HTTPS to encrypt data transmission and build user trust',
+          priority: 'high',
+          impact: 'High - Essential for security and SEO'
+        });
+        return recommendations;
+      }
+
+      if (certificateData.error) {
+        recommendations.push({
+          type: 'error',
+          title: 'Fix SSL Certificate Issues',
+          description: 'SSL certificate analysis failed - check certificate configuration',
+          priority: 'high',
+          impact: 'High - SSL errors prevent secure connections'
+        });
+        return recommendations;
+      }
+
+      // Expiration recommendations
+      if (certificateData.expiration) {
+        if (certificateData.expiration.daysUntilExpiration < 0) {
+          recommendations.push({
+            type: 'critical',
+            title: 'Renew Expired Certificate',
+            description: 'SSL certificate has expired and must be renewed immediately',
+            priority: 'critical',
+            impact: 'Critical - Site is not secure'
+          });
+        } else if (certificateData.expiration.daysUntilExpiration < 30) {
+          recommendations.push({
+            type: 'warning',
+            title: 'Certificate Renewal Due Soon',
+            description: `SSL certificate expires in ${certificateData.expiration.daysUntilExpiration} days`,
+            priority: 'medium',
+            impact: 'Medium - Plan renewal to prevent downtime'
+          });
+        }
+      }
+
+      // Chain recommendations
+      if (certificateData.chain && certificateData.chain.issues && certificateData.chain.issues.length > 0) {
+        recommendations.push({
+          type: 'security',
+          title: 'Fix Certificate Chain Issues',
+          description: `${certificateData.chain.issues.length} certificate chain issues detected`,
+          priority: 'medium',
+          impact: 'Medium - May cause trust warnings in browsers'
+        });
+      }
+
+      // Security recommendations
+      if (certificateData.security && certificateData.security.issues && certificateData.security.issues.length > 0) {
+        recommendations.push({
+          type: 'security',
+          title: 'Improve SSL Security Configuration',
+          description: `${certificateData.security.issues.length} security configuration issues found`,
+          priority: 'medium',
+          impact: 'Medium - Strengthen SSL security'
+        });
+      }
+
+      // Mixed content recommendations
+      if (certificateData.mixedContent && certificateData.mixedContent.issues && certificateData.mixedContent.issues.length > 0) {
+        recommendations.push({
+          type: 'mixed-content',
+          title: 'Fix Mixed Content Issues',
+          description: `${certificateData.mixedContent.issues.length} mixed content issues detected`,
+          priority: 'medium',
+          impact: 'Medium - Ensure all resources load over HTTPS'
+        });
+      }
+
+      return recommendations.slice(0, 5); // Limit to top 5 recommendations
+    } catch (error) {
+      this.handleError('Error generating SSL recommendations', error);
+      return [];
+    }
+  }
+
+  /**
+   * Generate SSL summary
+   */
+  _generateSSLSummary(certificateData, score) {
+    try {
+      const grade = this._getGradeFromScore(score);
+      
+      if (!certificateData.isHTTPS) {
+        return 'Site does not use HTTPS encryption. Implementing SSL/TLS is strongly recommended for security.';
+      }
+
+      if (certificateData.error) {
+        return 'SSL certificate analysis encountered errors. Check certificate configuration and server connectivity.';
+      }
+
+      let summary = `SSL certificate analysis completed with ${grade} grade (${score}/100 score). `;
+      
+      if (certificateData.hostname) {
+        summary += `Certificate issued for ${certificateData.hostname}. `;
+      }
+
+      if (certificateData.expiration && certificateData.expiration.daysUntilExpiration >= 0) {
+        summary += `Certificate expires in ${certificateData.expiration.daysUntilExpiration} days. `;
+      } else if (certificateData.expiration && certificateData.expiration.daysUntilExpiration < 0) {
+        summary += 'Certificate has expired and requires immediate renewal. ';
+      }
+
+      // Add issue summary
+      const totalIssues = (certificateData.chain?.issues?.length || 0) + 
+                         (certificateData.security?.issues?.length || 0) + 
+                         (certificateData.mixedContent?.issues?.length || 0);
+
+      if (totalIssues === 0) {
+        summary += 'No significant SSL issues detected.';
+      } else {
+        summary += `${totalIssues} SSL issue${totalIssues > 1 ? 's' : ''} detected requiring attention.`;
+      }
+
+      return summary;
+    } catch (error) {
+      this.handleError('Error generating SSL summary', error);
+      return 'SSL certificate analysis completed with errors.';
+    }
+  }
+
+  /**
+   * Create error result for consistency
+   */
+  createErrorResult(message) {
+    return {
+      success: false,
+      error: message,
+      data: {
+        hasSSL: false,
+        isHTTPS: false,
+        score: 0,
+        grade: 'F',
+        summary: `SSL analysis failed: ${message}`,
+        metadata: this.getMetadata()
+      }
     };
   }
 }

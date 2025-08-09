@@ -267,7 +267,14 @@ describe('Business Intelligence Minimal Analyzer', () => {
     });
 
     test('should handle errors gracefully', () => {
-      const result = analyzer._analyzeTrustSignals(null, testUrl);
+      // Create a mock document that throws an error during processing
+      const mockErrorDocument = {
+        querySelectorAll: () => {
+          throw new Error('Simulated DOM error');
+        }
+      };
+      
+      const result = analyzer._analyzeTrustSignals(mockErrorDocument, testUrl);
 
       expect(result.score).toBe(0);
       expect(result.error).toBeDefined();
@@ -316,7 +323,13 @@ describe('Business Intelligence Minimal Analyzer', () => {
     });
 
     test('should handle errors gracefully', () => {
-      const result = analyzer._analyzeContactInformation(null);
+      const mockErrorDocument = {
+        querySelectorAll: () => {
+          throw new Error('Simulated DOM error');
+        }
+      };
+      
+      const result = analyzer._analyzeContactInformation(mockErrorDocument);
 
       expect(result.score).toBe(0);
       expect(result.error).toBeDefined();
@@ -357,7 +370,13 @@ describe('Business Intelligence Minimal Analyzer', () => {
     });
 
     test('should handle errors gracefully', () => {
-      const result = analyzer._analyzeAboutPage(null, testUrl);
+      const mockErrorDocument = {
+        querySelectorAll: () => {
+          throw new Error('Simulated DOM error');
+        }
+      };
+      
+      const result = analyzer._analyzeAboutPage(mockErrorDocument, testUrl);
 
       expect(result.score).toBe(0);
       expect(result.error).toBeDefined();
@@ -398,7 +417,13 @@ describe('Business Intelligence Minimal Analyzer', () => {
     });
 
     test('should handle errors gracefully', () => {
-      const result = analyzer._analyzeCustomerSupport(null);
+      const mockErrorDocument = {
+        querySelectorAll: () => {
+          throw new Error('Simulated DOM error');
+        }
+      };
+      
+      const result = analyzer._analyzeCustomerSupport(mockErrorDocument);
 
       expect(result.score).toBe(0);
       expect(result.error).toBeDefined();
@@ -439,7 +464,13 @@ describe('Business Intelligence Minimal Analyzer', () => {
     });
 
     test('should handle errors gracefully', () => {
-      const result = analyzer._analyzeBusinessCredibility(null);
+      const mockErrorDocument = {
+        querySelectorAll: () => {
+          throw new Error('Simulated DOM error');
+        }
+      };
+      
+      const result = analyzer._analyzeBusinessCredibility(mockErrorDocument);
 
       expect(result.score).toBe(0);
       expect(result.error).toBeDefined();
@@ -480,7 +511,13 @@ describe('Business Intelligence Minimal Analyzer', () => {
     });
 
     test('should handle errors gracefully', () => {
-      const result = analyzer._analyzeLocationData(null);
+      const mockErrorDocument = {
+        querySelectorAll: () => {
+          throw new Error('Simulated DOM error');
+        }
+      };
+      
+      const result = analyzer._analyzeLocationData(mockErrorDocument);
 
       expect(result.score).toBe(0);
       expect(result.error).toBeDefined();

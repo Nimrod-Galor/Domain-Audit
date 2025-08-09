@@ -1,10 +1,18 @@
 /**
  * Social Proof Analyzer
  * Analyzes social proof elements like testimonials, reviews, and trust signals
+ * 
+ * @extends BaseAnalyzer
  */
 
-export class SocialProofAnalyzer {
+import { BaseAnalyzer } from '../core/base-analyzer.js';
+import { AnalyzerCategories } from '../utils/analyzer-categories.js';
+
+export class SocialProofAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('SocialProofAnalyzer');
+    
+    this.category = AnalyzerCategories.CONTENT;
     this.options = options;
     this.selectors = {
       testimonials: [".testimonial", ".review", ".feedback", ".quote", ".recommendation"],
@@ -16,40 +24,72 @@ export class SocialProofAnalyzer {
     };
   }
 
-  analyze(document) {
-    const testimonials = this._findTestimonials(document);
-    const ratings = this._findRatings(document);
-    const socialMetrics = this._findSocialMetrics(document);
-    const trustSignals = this._findTrustSignals(document);
-    const customerLogos = this._findCustomerLogos(document);
-    const socialMedia = this._findSocialMediaPresence(document);
-
-    const score = this._calculateSocialProofScore({
-      testimonials,
-      ratings,
-      socialMetrics,
-      trustSignals,
-      customerLogos,
-      socialMedia,
-    });
-
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
     return {
-      testimonials,
-      ratings,
-      socialMetrics,
-      trustSignals,
-      customerLogos,
-      socialMedia,
-      score,
-      summary: this._generateSocialProofSummary({
+      name: 'SocialProofAnalyzer',
+      version: '1.0.0',
+      category: AnalyzerCategories.CONTENT,
+      description: 'Analyzes social proof elements like testimonials, reviews, and trust signals',
+      author: 'Nimrod Galor',
+      capabilities: [
+        'Testimonial detection and analysis',
+        'Rating and review system analysis',
+        'Social media metrics evaluation',
+        'Trust signal identification',
+        'Customer logo and brand analysis',
+        'Social proof optimization recommendations'
+      ]
+    };
+  }
+
+  /**
+   * Validate the context before analysis
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether the context is valid
+   */
+  validate(context) {
+    return context && 
+           ((context.dom && context.dom.window && context.dom.window.document) ||
+            (context.document));
+  }
+
+  /**
+   * Analyze social proof elements on a page
+   * @param {Object} context - Analysis context containing document, etc.
+   * @returns {Object} Social proof analysis results
+   */
+  async analyze(context) {
+    try {
+      this.log('Starting social proof analysis');
+      
+      // Validate context
+      if (!this.validate(context)) {
+        throw new Error('Invalid context provided for social proof analysis');
+      }
+
+      const document = context.document || context.dom?.window?.document;
+
+      const testimonials = this._findTestimonials(document);
+      const ratings = this._findRatings(document);
+      const socialMetrics = this._findSocialMetrics(document);
+      const trustSignals = this._findTrustSignals(document);
+      const customerLogos = this._findCustomerLogos(document);
+      const socialMedia = this._findSocialMediaPresence(document);
+
+      const score = this._calculateSocialProofScore({
         testimonials,
         ratings,
         socialMetrics,
         trustSignals,
         customerLogos,
         socialMedia,
-      }),
-      recommendations: this._generateSocialProofRecommendations({
+      });
+
+      const result = {
         testimonials,
         ratings,
         socialMetrics,
@@ -57,7 +97,15 @@ export class SocialProofAnalyzer {
         customerLogos,
         socialMedia,
         score,
-        summary: this._calculateSocialProofSummary({
+        summary: this._generateSocialProofSummary({
+          testimonials,
+          ratings,
+          socialMetrics,
+          trustSignals,
+          customerLogos,
+          socialMedia,
+        }),
+        recommendations: this._generateSocialProofRecommendations({
           testimonials,
           ratings,
           socialMetrics,
@@ -65,9 +113,44 @@ export class SocialProofAnalyzer {
           customerLogos,
           socialMedia,
           score,
+          summary: this._calculateSocialProofSummary({
+            testimonials,
+            ratings,
+            socialMetrics,
+            trustSignals,
+            customerLogos,
+            socialMedia,
+            score,
+          }),
         }),
-      }),
-    };
+      };
+
+      // BaseAnalyzer integration: comprehensive scoring and summary
+      const comprehensiveScore = this._calculateComprehensiveScore(result);
+      const recommendations = this._generateSocialProofOptimizationRecommendations(result);
+      const summary = this._generateSocialProofAnalysisSummary(result);
+      
+      this.log('Social proof analysis completed successfully');
+      
+      return {
+        ...result,
+        score: comprehensiveScore,
+        recommendations: [...result.recommendations, ...recommendations],
+        enhancedSummary: summary,
+        metadata: this.getMetadata()
+      };
+    } catch (error) {
+      return this.handleError('Social proof analysis failed', error, {
+        testimonials: [],
+        ratings: [],
+        socialMetrics: [],
+        trustSignals: [],
+        customerLogos: [],
+        socialMedia: [],
+        score: 0,
+        recommendations: []
+      });
+    }
   }
 
   _findTestimonials(document) {
@@ -672,5 +755,331 @@ export class SocialProofAnalyzer {
   _identifyTrustSignalType(element, text) {
     // Implementation for identifying trust signal type
     return 'generic';
+  }
+
+  /**
+   * Calculate comprehensive social proof score for BaseAnalyzer integration
+   * @param {Object} analysis - Social proof analysis results
+   * @returns {number} Comprehensive score (0-100)
+   */
+  _calculateComprehensiveScore(analysis) {
+    try {
+      const weights = {
+        testimonials: 0.25,     // 25% - Customer testimonials
+        ratings: 0.20,          // 20% - Rating systems
+        socialMetrics: 0.20,    // 20% - Social media metrics
+        trustSignals: 0.15,     // 15% - Trust badges and signals
+        customerLogos: 0.10,    // 10% - Customer/partner logos
+        socialMedia: 0.10       // 10% - Social media presence
+      };
+
+      let totalScore = 0;
+      let totalWeight = 0;
+
+      // Testimonials score
+      if (analysis.testimonials) {
+        const testimonialCount = analysis.testimonials.length;
+        let testimonialScore = Math.min(testimonialCount * 20, 80); // Up to 80 points for testimonials
+        
+        // Quality bonus
+        const highQualityTestimonials = analysis.testimonials.filter(t => t.quality > 70);
+        if (highQualityTestimonials.length > 0) {
+          testimonialScore += Math.min(highQualityTestimonials.length * 5, 20);
+        }
+        
+        totalScore += Math.min(testimonialScore, 100) * weights.testimonials;
+        totalWeight += weights.testimonials;
+      }
+
+      // Ratings score
+      if (analysis.ratings) {
+        const ratingsCount = analysis.ratings.length;
+        let ratingsScore = Math.min(ratingsCount * 25, 75);
+        
+        // Average rating bonus
+        const avgRating = this._calculateAverageRating(analysis.ratings);
+        if (avgRating && avgRating >= 4.0) ratingsScore += 25;
+        else if (avgRating && avgRating >= 3.5) ratingsScore += 15;
+        
+        totalScore += Math.min(ratingsScore, 100) * weights.ratings;
+        totalWeight += weights.ratings;
+      }
+
+      // Social metrics score
+      if (analysis.socialMetrics) {
+        const metricsCount = analysis.socialMetrics.length;
+        const socialScore = Math.min(metricsCount * 30, 100);
+        totalScore += socialScore * weights.socialMetrics;
+        totalWeight += weights.socialMetrics;
+      }
+
+      // Trust signals score
+      if (analysis.trustSignals) {
+        const trustCount = analysis.trustSignals.length;
+        const trustScore = Math.min(trustCount * 25, 100);
+        totalScore += trustScore * weights.trustSignals;
+        totalWeight += weights.trustSignals;
+      }
+
+      // Customer logos score
+      if (analysis.customerLogos) {
+        const logoCount = analysis.customerLogos.length;
+        const logoScore = Math.min(logoCount * 20, 100);
+        totalScore += logoScore * weights.customerLogos;
+        totalWeight += weights.customerLogos;
+      }
+
+      // Social media presence score
+      if (analysis.socialMedia) {
+        const socialCount = analysis.socialMedia.length;
+        const socialScore = Math.min(socialCount * 20, 100);
+        totalScore += socialScore * weights.socialMedia;
+        totalWeight += weights.socialMedia;
+      }
+
+      return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+    } catch (error) {
+      this.log('Error calculating comprehensive score:', error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate comprehensive social proof optimization recommendations
+   * @param {Object} analysis - Social proof analysis results
+   * @returns {Array} Enhanced recommendations
+   */
+  _generateSocialProofOptimizationRecommendations(analysis) {
+    const recommendations = [];
+
+    try {
+      // Testimonial recommendations
+      if (!analysis.testimonials || analysis.testimonials.length < 3) {
+        recommendations.push({
+          category: 'testimonials',
+          priority: 'high',
+          title: 'Add Customer Testimonials',
+          description: `Only ${analysis.testimonials?.length || 0} testimonials found`,
+          impact: 'Customer trust and conversion rates',
+          actionItems: [
+            'Collect testimonials from satisfied customers',
+            'Include author photos and company information',
+            'Display testimonials prominently on key pages',
+            'Use video testimonials for higher impact',
+            'Add specific details and measurable results',
+            'Rotate testimonials to show variety'
+          ]
+        });
+      } else {
+        const lowQualityTestimonials = analysis.testimonials.filter(t => t.quality < 60);
+        if (lowQualityTestimonials.length > 0) {
+          recommendations.push({
+            category: 'testimonials',
+            priority: 'medium',
+            title: 'Improve Testimonial Quality',
+            description: `${lowQualityTestimonials.length} low-quality testimonials detected`,
+            impact: 'Testimonial credibility and effectiveness',
+            actionItems: [
+              'Add author photos to testimonials',
+              'Include company/position information',
+              'Request more specific and detailed testimonials',
+              'Add verifiable contact information',
+              'Include measurable results and outcomes'
+            ]
+          });
+        }
+      }
+
+      // Rating system recommendations
+      if (!analysis.ratings || analysis.ratings.length === 0) {
+        recommendations.push({
+          category: 'ratings',
+          priority: 'medium',
+          title: 'Implement Rating System',
+          description: 'No rating system detected',
+          impact: 'Social proof and purchase decisions',
+          actionItems: [
+            'Add star rating system to products/services',
+            'Display average ratings prominently',
+            'Show total number of reviews',
+            'Implement structured data for ratings',
+            'Encourage customers to leave ratings',
+            'Respond to ratings and reviews professionally'
+          ]
+        });
+      } else {
+        const avgRating = this._calculateAverageRating(analysis.ratings);
+        if (avgRating && avgRating < 4.0) {
+          recommendations.push({
+            category: 'ratings',
+            priority: 'high',
+            title: 'Improve Average Rating',
+            description: `Average rating is ${avgRating.toFixed(1)}/5`,
+            impact: 'Customer perception and conversion rates',
+            actionItems: [
+              'Address customer concerns from negative reviews',
+              'Improve product/service quality',
+              'Follow up with customers for feedback',
+              'Implement quality improvement processes',
+              'Train staff on customer service excellence'
+            ]
+          });
+        }
+      }
+
+      // Social media metrics recommendations
+      if (!analysis.socialMetrics || analysis.socialMetrics.length < 2) {
+        recommendations.push({
+          category: 'social-metrics',
+          priority: 'medium',
+          title: 'Display Social Media Metrics',
+          description: 'Limited social media metrics shown',
+          impact: 'Social validation and brand credibility',
+          actionItems: [
+            'Display follower counts from major platforms',
+            'Show social media engagement metrics',
+            'Add real-time social feeds',
+            'Include social sharing buttons with counts',
+            'Highlight social media achievements',
+            'Update metrics regularly for accuracy'
+          ]
+        });
+      }
+
+      // Trust signals recommendations
+      if (!analysis.trustSignals || analysis.trustSignals.length < 2) {
+        recommendations.push({
+          category: 'trust-signals',
+          priority: 'medium',
+          title: 'Add Trust Signals',
+          description: `Only ${analysis.trustSignals?.length || 0} trust signals found`,
+          impact: 'Customer confidence and security perception',
+          actionItems: [
+            'Add security badges and certifications',
+            'Display industry awards and recognitions',
+            'Include professional association memberships',
+            'Show guarantees and warranty information',
+            'Add customer support contact information',
+            'Display business credentials and licenses'
+          ]
+        });
+      }
+
+      // Customer logos recommendations
+      if (!analysis.customerLogos || analysis.customerLogos.length === 0) {
+        recommendations.push({
+          category: 'customer-logos',
+          priority: 'low',
+          title: 'Add Customer/Partner Logos',
+          description: 'No customer or partner logos displayed',
+          impact: 'Brand association and credibility',
+          actionItems: [
+            'Create a client/partner logo section',
+            'Obtain permission to display customer logos',
+            'Organize logos in attractive grid layout',
+            'Include brief case studies or success stories',
+            'Update logo section regularly',
+            'Link logos to detailed case studies where appropriate'
+          ]
+        });
+      }
+
+      return recommendations;
+    } catch (error) {
+      this.log('Error generating social proof optimization recommendations:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Generate comprehensive social proof analysis summary
+   * @param {Object} analysis - Social proof analysis results
+   * @returns {Object} Social proof summary
+   */
+  _generateSocialProofAnalysisSummary(analysis) {
+    try {
+      const summary = {
+        overallStrength: 'Weak',
+        testimonialCount: 0,
+        averageRating: null,
+        socialProofTypes: [],
+        trustLevel: 'Low',
+        keyFindings: []
+      };
+
+      // Count testimonials
+      if (analysis.testimonials) {
+        summary.testimonialCount = analysis.testimonials.length;
+        if (summary.testimonialCount > 0) {
+          summary.socialProofTypes.push('testimonials');
+          summary.keyFindings.push(`${summary.testimonialCount} customer testimonials found`);
+        }
+      }
+
+      // Calculate average rating
+      if (analysis.ratings && analysis.ratings.length > 0) {
+        summary.averageRating = this._calculateAverageRating(analysis.ratings);
+        summary.socialProofTypes.push('ratings');
+        summary.keyFindings.push(`Average rating: ${summary.averageRating?.toFixed(1) || 'N/A'}/5`);
+      }
+
+      // Check other social proof types
+      if (analysis.socialMetrics && analysis.socialMetrics.length > 0) {
+        summary.socialProofTypes.push('social-metrics');
+        summary.keyFindings.push(`${analysis.socialMetrics.length} social media metrics displayed`);
+      }
+
+      if (analysis.trustSignals && analysis.trustSignals.length > 0) {
+        summary.socialProofTypes.push('trust-signals');
+        summary.keyFindings.push(`${analysis.trustSignals.length} trust signals present`);
+      }
+
+      if (analysis.customerLogos && analysis.customerLogos.length > 0) {
+        summary.socialProofTypes.push('customer-logos');
+        summary.keyFindings.push(`${analysis.customerLogos.length} customer/partner logos shown`);
+      }
+
+      // Determine overall strength
+      const score = this._calculateComprehensiveScore(analysis);
+      if (score >= 80) summary.overallStrength = 'Strong';
+      else if (score >= 60) summary.overallStrength = 'Moderate';
+      else if (score >= 40) summary.overallStrength = 'Weak';
+      else summary.overallStrength = 'Very Weak';
+
+      // Determine trust level
+      if (summary.socialProofTypes.length >= 4) summary.trustLevel = 'High';
+      else if (summary.socialProofTypes.length >= 2) summary.trustLevel = 'Medium';
+      else summary.trustLevel = 'Low';
+
+      // Additional findings
+      if (summary.socialProofTypes.length === 0) {
+        summary.keyFindings.push('No social proof elements detected');
+      }
+
+      return summary;
+    } catch (error) {
+      this.log('Error generating social proof analysis summary:', error.message);
+      return {
+        overallStrength: 'Unknown',
+        testimonialCount: 0,
+        averageRating: null,
+        socialProofTypes: [],
+        trustLevel: 'Unknown',
+        keyFindings: ['Analysis error occurred']
+      };
+    }
+  }
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * @deprecated Use analyze() method instead
+   * Legacy method for backward compatibility
+   */
+  analyze(document) {
+    console.warn('SocialProofAnalyzer.analyze(document) is deprecated. Use analyze(context) method instead.');
+    return this.analyze({ document });
   }
 }

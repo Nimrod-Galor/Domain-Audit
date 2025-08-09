@@ -15,8 +15,13 @@
  * @version 1.0.0
  */
 
-export class TrustSignalAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerCategories.js';
+
+export class TrustSignalAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('TrustSignalAnalyzer');
+    
     this.options = {
       enableBadgeDetection: options.enableBadgeDetection !== false,
       enableTestimonialAnalysis: options.enableTestimonialAnalysis !== false,
@@ -60,12 +65,110 @@ export class TrustSignalAnalyzer {
   }
 
   /**
-   * Analyze trust signals on the page
+   * Get analyzer metadata for BaseAnalyzer integration
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'Trust Signal Analyzer',
+      category: AnalyzerCategories.BUSINESS,
+      description: 'Analyzes trust signals and credibility indicators including security badges, certifications, awards, testimonials, and compliance indicators',
+      version: '1.0.0',
+      author: 'Nimrod Galor',
+      tags: ['trust', 'credibility', 'security', 'badges', 'certifications', 'testimonials', 'compliance'],
+      capabilities: [
+        'trust-badge-detection',
+        'security-indicator-analysis',
+        'certification-validation',
+        'testimonial-analysis',
+        'compliance-assessment',
+        'third-party-validation'
+      ]
+    };
+  }
+
+  /**
+   * Validate input for trust signal analysis
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether input is valid
+   */
+  validate(context) {
+    if (!context || typeof context !== 'object') {
+      return this.handleError('Invalid context provided');
+    }
+
+    if (!context.document && !context.dom) {
+      return this.handleError('No document or DOM provided for trust signal analysis');
+    }
+
+    return true;
+  }
+
+  /**
+   * Enhanced analyze method with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing document, url, etc.
+   * @returns {Object} Enhanced analysis results with BaseAnalyzer structure
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      // Validate input
+      if (!this.validate(context)) {
+        return this.createErrorResult('Validation failed');
+      }
+
+      // Extract document and URL from context
+      const document = context.document || context.dom?.window?.document;
+      const url = context.url || '';
+
+      // Perform comprehensive trust signal analysis
+      const analysisResult = await this.performTrustSignalAnalysis(document, url);
+
+      // Calculate comprehensive score using BaseAnalyzer integration
+      const score = this._calculateComprehensiveScore(analysisResult);
+
+      // Generate optimization recommendations
+      const recommendations = this._generateTrustSignalRecommendations(analysisResult);
+
+      // Generate analysis summary
+      const summary = this._generateTrustSignalSummary(analysisResult);
+
+      // Return enhanced BaseAnalyzer-compatible result
+      return {
+        success: true,
+        analyzer: 'TrustSignalAnalyzer',
+        category: AnalyzerCategories.BUSINESS,
+        score: score,
+        data: {
+          ...analysisResult,
+          metadata: {
+            analysisTime: Date.now() - startTime,
+            timestamp: new Date().toISOString(),
+            version: this.getMetadata().version
+          }
+        },
+        recommendations: recommendations,
+        summary: summary,
+        errors: [],
+        warnings: analysisResult.warnings || []
+      };
+
+    } catch (error) {
+      return this.handleError(`Trust signal analysis failed: ${error.message}`, {
+        analyzer: 'TrustSignalAnalyzer',
+        duration: Date.now() - startTime
+      });
+    }
+  }
+
+  /**
+   * Perform comprehensive trust signal analysis
    * @param {Document} document - DOM document
    * @param {string} url - Page URL
    * @returns {Object} Trust signal analysis results
    */
-  analyze(document, url) {
+  async performTrustSignalAnalysis(document, url) {
     const trustSignals = this._findTrustSignals(document);
     const securityIndicators = this._findSecurityIndicators(document, url);
     const professionalCredentials = this._findProfessionalCredentials(document);
@@ -720,5 +823,416 @@ export class TrustSignalAnalyzer {
     }
     
     return recommendations;
+  }
+
+  // ============================================================================
+  // BASEANALYZER INTEGRATION HELPER METHODS
+  // ============================================================================
+
+  /**
+   * Calculate comprehensive trust signal score for BaseAnalyzer integration
+   * @param {Object} analysis - Trust signal analysis results
+   * @returns {number} Comprehensive score (0-100)
+   */
+  _calculateComprehensiveScore(analysis) {
+    try {
+      const weights = {
+        trustBadges: 0.25,        // 25% - Trust badges and security indicators
+        credentials: 0.20,        // 20% - Professional credentials and certifications
+        testimonials: 0.20,       // 20% - Customer testimonials and social proof
+        compliance: 0.15,         // 15% - Legal compliance and privacy
+        validation: 0.15,         // 15% - Third-party validations
+        security: 0.05           // 5% - Security indicators
+      };
+
+      let totalScore = 0;
+      let totalWeight = 0;
+
+      // Trust badges score
+      if (analysis.trustSignals) {
+        const badgeCount = analysis.trustSignals.totalCount || 0;
+        let badgeScore = Math.min(badgeCount * 20, 80); // Up to 80 points for badges
+        
+        // Quality bonus for recognized badges
+        const recognizedBadges = analysis.trustSignals.recognized || [];
+        if (recognizedBadges.length > 0) {
+          badgeScore += Math.min(recognizedBadges.length * 10, 20);
+        }
+        
+        totalScore += Math.min(badgeScore, 100) * weights.trustBadges;
+        totalWeight += weights.trustBadges;
+      }
+
+      // Professional credentials score
+      if (analysis.professionalCredentials) {
+        const credentialCount = analysis.professionalCredentials.count || 0;
+        const credentialScore = Math.min(credentialCount * 25, 100);
+        
+        totalScore += credentialScore * weights.credentials;
+        totalWeight += weights.credentials;
+      }
+
+      // Customer testimonials score
+      if (analysis.customerTestimonials) {
+        const testimonialCount = analysis.customerTestimonials.count || 0;
+        let testimonialScore = Math.min(testimonialCount * 20, 80);
+        
+        // Quality bonus for testimonials with photos
+        const withPhotos = analysis.customerTestimonials.withPhotos || 0;
+        if (withPhotos > 0) {
+          testimonialScore += Math.min(withPhotos * 10, 20);
+        }
+        
+        totalScore += Math.min(testimonialScore, 100) * weights.testimonials;
+        totalWeight += weights.testimonials;
+      }
+
+      // Legal compliance score
+      if (analysis.legalCompliance) {
+        let complianceScore = 0;
+        
+        if (analysis.legalCompliance.privacyPolicy) complianceScore += 40;
+        if (analysis.legalCompliance.termsOfService) complianceScore += 30;
+        if (analysis.legalCompliance.cookiePolicy) complianceScore += 20;
+        if (analysis.legalCompliance.gdprCompliant) complianceScore += 10;
+        
+        totalScore += Math.min(complianceScore, 100) * weights.compliance;
+        totalWeight += weights.compliance;
+      }
+
+      // Third-party validation score
+      if (analysis.thirdPartyValidations) {
+        const validationCount = analysis.thirdPartyValidations.count || 0;
+        const validationScore = Math.min(validationCount * 30, 100);
+        
+        totalScore += validationScore * weights.validation;
+        totalWeight += weights.validation;
+      }
+
+      // Security indicators score
+      if (analysis.securityIndicators) {
+        let securityScore = 0;
+        
+        if (analysis.securityIndicators.httpsEnabled) securityScore += 50;
+        if (analysis.securityIndicators.sslCertificate) securityScore += 30;
+        if (analysis.securityIndicators.securePayment) securityScore += 20;
+        
+        totalScore += Math.min(securityScore, 100) * weights.security;
+        totalWeight += weights.security;
+      }
+
+      return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+    } catch (error) {
+      this.log('Error calculating comprehensive score:', error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate comprehensive trust signal optimization recommendations
+   * @param {Object} analysis - Trust signal analysis results
+   * @returns {Array} Enhanced recommendations
+   */
+  _generateTrustSignalRecommendations(analysis) {
+    const recommendations = [];
+
+    try {
+      // Trust badges and security indicators
+      if (!analysis.trustSignals || analysis.trustSignals.totalCount < 3) {
+        recommendations.push({
+          category: 'trust-badges',
+          priority: 'high',
+          title: 'Add Security and Trust Badges',
+          description: `Only ${analysis.trustSignals?.totalCount || 0} trust badges detected`,
+          impact: 'Customer confidence and conversion rates',
+          actionItems: [
+            'Display SSL certificate badge prominently',
+            'Add recognized security badges (Norton, McAfee, etc.)',
+            'Include payment security badges (PCI DSS)',
+            'Show industry certifications and accreditations',
+            'Add money-back guarantee badges',
+            'Display customer satisfaction ratings'
+          ]
+        });
+      }
+
+      // Professional credentials
+      if (!analysis.professionalCredentials || analysis.professionalCredentials.count === 0) {
+        recommendations.push({
+          category: 'credentials',
+          priority: 'medium',
+          title: 'Display Professional Credentials',
+          description: 'No professional credentials or certifications detected',
+          impact: 'Professional credibility and authority',
+          actionItems: [
+            'Highlight relevant industry certifications',
+            'Display professional licenses and accreditations',
+            'Show membership in professional associations',
+            'Include educational credentials of key staff',
+            'Add partner certifications (Google, Microsoft, etc.)',
+            'Display years of experience and expertise'
+          ]
+        });
+      }
+
+      // Customer testimonials and social proof
+      if (!analysis.customerTestimonials || analysis.customerTestimonials.count < 3) {
+        recommendations.push({
+          category: 'testimonials',
+          priority: 'medium',
+          title: 'Add Customer Testimonials',
+          description: `Only ${analysis.customerTestimonials?.count || 0} customer testimonials found`,
+          impact: 'Social proof and purchase confidence',
+          actionItems: [
+            'Collect testimonials from satisfied customers',
+            'Include customer photos and company information',
+            'Add specific results and measurable outcomes',
+            'Include video testimonials for higher impact',
+            'Display customer logos and case studies',
+            'Add star ratings and review counts'
+          ]
+        });
+      } else {
+        const withPhotos = analysis.customerTestimonials.withPhotos || 0;
+        if (withPhotos < analysis.customerTestimonials.count / 2) {
+          recommendations.push({
+            category: 'testimonials',
+            priority: 'low',
+            title: 'Enhance Testimonial Credibility',
+            description: `${withPhotos} of ${analysis.customerTestimonials.count} testimonials include photos`,
+            impact: 'Testimonial authenticity and trust',
+            actionItems: [
+              'Request customer photos for testimonials',
+              'Add company information and titles',
+              'Include contact information when possible',
+              'Add LinkedIn profiles or verification',
+              'Use real names instead of initials'
+            ]
+          });
+        }
+      }
+
+      // Legal compliance
+      if (!analysis.legalCompliance || !analysis.legalCompliance.privacyPolicy) {
+        recommendations.push({
+          category: 'legal-compliance',
+          priority: 'high',
+          title: 'Add Privacy Policy',
+          description: 'No privacy policy detected - required for GDPR and legal compliance',
+          impact: 'Legal compliance and customer trust',
+          actionItems: [
+            'Create comprehensive privacy policy',
+            'Link privacy policy in footer and forms',
+            'Include GDPR compliance statements',
+            'Add cookie usage policies',
+            'Include data protection information',
+            'Ensure legal review and regular updates'
+          ]
+        });
+      }
+
+      if (!analysis.legalCompliance || !analysis.legalCompliance.termsOfService) {
+        recommendations.push({
+          category: 'legal-compliance',
+          priority: 'medium',
+          title: 'Add Terms of Service',
+          description: 'No terms of service page detected',
+          impact: 'Legal protection and business credibility',
+          actionItems: [
+            'Create detailed terms of service',
+            'Include service limitations and warranties',
+            'Add dispute resolution procedures',
+            'Include intellectual property terms',
+            'Link terms from all relevant pages',
+            'Ensure legal compliance for your jurisdiction'
+          ]
+        });
+      }
+
+      // Third-party validations
+      if (!analysis.thirdPartyValidations || analysis.thirdPartyValidations.count === 0) {
+        recommendations.push({
+          category: 'third-party-validation',
+          priority: 'low',
+          title: 'Add Third-Party Validations',
+          description: 'No third-party validations or endorsements detected',
+          impact: 'External credibility and authority',
+          actionItems: [
+            'Display industry awards and recognitions',
+            'Include press mentions and media coverage',
+            'Add customer review platform ratings',
+            'Show Better Business Bureau rating',
+            'Include Trustpilot or similar ratings',
+            'Display partner endorsements'
+          ]
+        });
+      }
+
+      // Security recommendations
+      if (analysis.securityIndicators) {
+        if (!analysis.securityIndicators.httpsEnabled) {
+          recommendations.push({
+            category: 'security',
+            priority: 'critical',
+            title: 'Enable HTTPS',
+            description: 'Website is not using HTTPS encryption',
+            impact: 'Security, SEO rankings, and browser warnings',
+            actionItems: [
+              'Install SSL certificate',
+              'Redirect all HTTP traffic to HTTPS',
+              'Update internal links to use HTTPS',
+              'Test all functionality over HTTPS',
+              'Update external service configurations'
+            ]
+          });
+        }
+
+        if (!analysis.securityIndicators.sslCertificate) {
+          recommendations.push({
+            category: 'security',
+            priority: 'high',
+            title: 'Display SSL Certificate Information',
+            description: 'SSL certificate not prominently displayed',
+            impact: 'Visible security assurance for customers',
+            actionItems: [
+              'Add SSL certificate badge to footer',
+              'Include certificate details on checkout pages',
+              'Display certificate authority information',
+              'Show certificate validity dates',
+              'Add security seal from certificate provider'
+            ]
+          });
+        }
+      }
+
+      return recommendations;
+    } catch (error) {
+      this.log('Error generating trust signal recommendations:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Generate comprehensive trust signal analysis summary
+   * @param {Object} analysis - Trust signal analysis results
+   * @returns {Object} Trust signal summary
+   */
+  _generateTrustSignalSummary(analysis) {
+    try {
+      const summary = {
+        overallTrustLevel: 'Low',
+        trustBadgeCount: 0,
+        credentialCount: 0,
+        testimonialCount: 0,
+        complianceLevel: 'Poor',
+        keyStrengths: [],
+        keyWeaknesses: []
+      };
+
+      // Trust badge assessment
+      if (analysis.trustSignals) {
+        summary.trustBadgeCount = analysis.trustSignals.totalCount || 0;
+        if (summary.trustBadgeCount > 0) {
+          summary.keyStrengths.push(`${summary.trustBadgeCount} trust badges displayed`);
+        }
+      }
+
+      // Credential assessment
+      if (analysis.professionalCredentials) {
+        summary.credentialCount = analysis.professionalCredentials.count || 0;
+        if (summary.credentialCount > 0) {
+          summary.keyStrengths.push(`${summary.credentialCount} professional credentials`);
+        }
+      }
+
+      // Testimonial assessment
+      if (analysis.customerTestimonials) {
+        summary.testimonialCount = analysis.customerTestimonials.count || 0;
+        if (summary.testimonialCount > 0) {
+          summary.keyStrengths.push(`${summary.testimonialCount} customer testimonials`);
+        }
+      }
+
+      // Compliance assessment
+      if (analysis.legalCompliance) {
+        let complianceItems = 0;
+        if (analysis.legalCompliance.privacyPolicy) complianceItems++;
+        if (analysis.legalCompliance.termsOfService) complianceItems++;
+        if (analysis.legalCompliance.cookiePolicy) complianceItems++;
+        if (analysis.legalCompliance.gdprCompliant) complianceItems++;
+        
+        if (complianceItems >= 3) summary.complianceLevel = 'Excellent';
+        else if (complianceItems >= 2) summary.complianceLevel = 'Good';
+        else if (complianceItems >= 1) summary.complianceLevel = 'Fair';
+        else summary.complianceLevel = 'Poor';
+        
+        if (complianceItems > 0) {
+          summary.keyStrengths.push(`${complianceItems} compliance policies present`);
+        }
+      }
+
+      // Security assessment
+      if (analysis.securityIndicators) {
+        if (analysis.securityIndicators.httpsEnabled) {
+          summary.keyStrengths.push('HTTPS encryption enabled');
+        } else {
+          summary.keyWeaknesses.push('No HTTPS encryption');
+        }
+        
+        if (analysis.securityIndicators.sslCertificate) {
+          summary.keyStrengths.push('SSL certificate displayed');
+        }
+      }
+
+      // Overall trust level assessment
+      const score = this._calculateComprehensiveScore(analysis);
+      if (score >= 80) summary.overallTrustLevel = 'High';
+      else if (score >= 60) summary.overallTrustLevel = 'Medium';
+      else if (score >= 40) summary.overallTrustLevel = 'Low';
+      else summary.overallTrustLevel = 'Very Low';
+
+      // Identify key weaknesses
+      if (summary.trustBadgeCount === 0) {
+        summary.keyWeaknesses.push('No trust badges detected');
+      }
+      
+      if (summary.credentialCount === 0) {
+        summary.keyWeaknesses.push('No professional credentials displayed');
+      }
+      
+      if (summary.testimonialCount === 0) {
+        summary.keyWeaknesses.push('No customer testimonials found');
+      }
+      
+      if (summary.complianceLevel === 'Poor') {
+        summary.keyWeaknesses.push('Missing legal compliance policies');
+      }
+
+      return summary;
+    } catch (error) {
+      this.log('Error generating trust signal summary:', error.message);
+      return {
+        overallTrustLevel: 'Unknown',
+        trustBadgeCount: 0,
+        credentialCount: 0,
+        testimonialCount: 0,
+        complianceLevel: 'Unknown',
+        keyStrengths: [],
+        keyWeaknesses: ['Analysis error occurred']
+      };
+    }
+  }
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * @deprecated Use analyze() method instead
+   * Legacy method for backward compatibility
+   */
+  analyzeTrustSignals(document, url) {
+    console.warn('TrustSignalAnalyzer.analyzeTrustSignals(document, url) is deprecated. Use analyze(context) method instead.');
+    return this.performTrustSignalAnalysis(document, url);
   }
 }

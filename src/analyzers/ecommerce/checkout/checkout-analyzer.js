@@ -14,9 +14,24 @@
  * @version 1.0.0
  */
 
-export class CheckoutAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
+export class CheckoutAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = options;
+    super('CheckoutAnalyzer', {
+      enableFlowAnalysis: options.enableFlowAnalysis !== false,
+      enableFormAnalysis: options.enableFormAnalysis !== false,
+      enableUXAnalysis: options.enableUXAnalysis !== false,
+      enableProgressAnalysis: options.enableProgressAnalysis !== false,
+      maxFormAnalysis: options.maxFormAnalysis || 20,
+      includeDetailedAnalysis: options.includeDetailedAnalysis !== false,
+      ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.ECOMMERCE;
+
     this.checkoutSelectors = [
       ".checkout",
       ".check-out",
@@ -38,11 +53,135 @@ export class CheckoutAnalyzer {
   }
 
   /**
-   * Analyze checkout process
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'CheckoutAnalyzer',
+      version: this.version,
+      description: 'Comprehensive checkout process optimization and user experience analysis',
+      category: this.category,
+      priority: 'high',
+      capabilities: [
+        'checkout_flow_analysis',
+        'form_validation_analysis',
+        'user_experience_optimization',
+        'progress_indicator_analysis',
+        'guest_checkout_detection',
+        'payment_optimization',
+        'checkout_scoring'
+      ]
+    };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    if (!context) {
+      this.handleError('Analysis context is required');
+      return false;
+    }
+
+    if (!context.document && !context.dom) {
+      this.handleError('DOM document is required for checkout analysis');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Perform comprehensive checkout analysis
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} Checkout analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+
+    try {
+      if (!this.validate(context)) {
+        return this.createErrorResult('Invalid analysis context');
+      }
+
+      this.log('info', 'Starting checkout process analysis');
+
+      const document = context.document || context.dom;
+      
+      const checkoutElements = this._findCheckoutElements(document);
+      const checkoutButtons = this._findCheckoutButtons(document);
+      const checkoutFlow = this._analyzeCheckoutFlow(document);
+      const formAnalysis = this._analyzeCheckoutForms(document);
+      const userExperience = this._analyzeUserExperience(document);
+      const progressIndicators = this._analyzeProgressIndicators(document);
+
+      // Calculate comprehensive score
+      const score = this._calculateCheckoutScore(checkoutFlow, formAnalysis, userExperience, progressIndicators);
+      const grade = this._getGradeFromScore(score);
+
+      // Generate recommendations
+      const recommendations = this._generateRecommendations(checkoutFlow, formAnalysis, userExperience, progressIndicators);
+
+      // Create summary
+      const summary = this._generateSummary(score, checkoutElements, checkoutButtons);
+
+      const data = {
+        hasCheckout: checkoutElements.length > 0 || checkoutButtons.length > 0,
+        checkoutElements: {
+          count: checkoutElements.length,
+          elements: checkoutElements.map(el => ({
+            tagName: el.tagName,
+            className: el.className,
+            id: el.id,
+          })),
+        },
+        checkoutButtons: {
+          count: checkoutButtons.length,
+          buttons: checkoutButtons.map(btn => ({
+            text: btn.textContent.trim(),
+            tagName: btn.tagName,
+            href: btn.href || null,
+          })),
+        },
+        flow: checkoutFlow,
+        forms: formAnalysis,
+        userExperience,
+        progressIndicators,
+        score,
+        grade,
+        recommendations,
+        summary,
+        metadata: this.getMetadata()
+      };
+
+      const endTime = Date.now();
+
+      this.log('info', `Checkout analysis completed. Score: ${score}%, Grade: ${grade}`);
+      
+      return {
+        success: true,
+        data,
+        performance: {
+          analysisTime: endTime - startTime,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+    } catch (error) {
+      return this.handleError('Checkout analysis failed', error);
+    }
+  }
+
+  /**
+   * Analyze checkout process (legacy method for backward compatibility)
+   * @deprecated Use analyze() method instead
    * @param {Document} document - DOM document
    * @returns {Object} Checkout analysis results
    */
-  analyze(document) {
+  analyzeCheckout(document) {
     const checkoutElements = this._findCheckoutElements(document);
     const checkoutButtons = this._findCheckoutButtons(document);
     const checkoutFlow = this._analyzeCheckoutFlow(document);
@@ -83,8 +222,10 @@ export class CheckoutAnalyzer {
     const elements = [];
 
     this.checkoutSelectors.forEach((selector) => {
-      const found = document.querySelectorAll(selector);
-      elements.push(...Array.from(found));
+      const found = this.safeQuery(document, selector);
+      if (found && found.length > 0) {
+        elements.push(...Array.from(found));
+      }
     });
 
     return [...new Set(elements)];
@@ -97,8 +238,10 @@ export class CheckoutAnalyzer {
     const buttons = [];
 
     this.checkoutButtonSelectors.forEach((selector) => {
-      const found = document.querySelectorAll(selector);
-      buttons.push(...Array.from(found));
+      const found = this.safeQuery(document, selector);
+      if (found && found.length > 0) {
+        buttons.push(...Array.from(found));
+      }
     });
 
     return [...new Set(buttons)];
@@ -208,7 +351,7 @@ export class CheckoutAnalyzer {
       '.one-page-checkout',
       '.checkout-onepage',
     ];
-    return singlePageIndicators.some(selector => document.querySelector(selector) !== null);
+    return singlePageIndicators.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _isMultiStepCheckout(document) {
@@ -218,8 +361,11 @@ export class CheckoutAnalyzer {
       '.multi-step',
       '.wizard-step',
     ];
-    return multiStepIndicators.some(selector => document.querySelector(selector) !== null) ||
-           document.querySelectorAll('[class*="step"]').length > 1;
+    const hasMultiStepElements = multiStepIndicators.some(selector => this.safeQueryOne(document, selector) !== null);
+    const stepElements = this.safeQuery(document, '[class*="step"]');
+    const hasMultipleSteps = stepElements && stepElements.length > 1;
+    
+    return hasMultiStepElements || hasMultipleSteps;
   }
 
   _hasGuestCheckout(document) {
@@ -241,17 +387,19 @@ export class CheckoutAnalyzer {
       'button[class*="facebook"]',
       'button[class*="google"]',
     ];
-    return socialSelectors.some(selector => document.querySelector(selector) !== null);
+    return socialSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _hasAutoFillSupport(document) {
-    const inputs = document.querySelectorAll('input');
+    const inputs = this.safeQuery(document, 'input');
+    if (!inputs || inputs.length === 0) return false;
     return Array.from(inputs).some(input => input.getAttribute('autocomplete'));
   }
 
   _hasAddressValidation(document) {
-    const scripts = Array.from(document.querySelectorAll('script'));
-    return scripts.some(script => {
+    const scripts = this.safeQuery(document, 'script');
+    if (!scripts || scripts.length === 0) return false;
+    return Array.from(scripts).some(script => {
       const content = script.textContent;
       return /address.*validation|postal.*code|zip.*validation/i.test(content);
     });
@@ -264,13 +412,14 @@ export class CheckoutAnalyzer {
       '.review-order',
       '.order-confirmation',
     ];
-    return selectors.some(selector => document.querySelector(selector) !== null);
+    return selectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   // Form analysis methods
   _findCheckoutForms(document) {
-    const forms = Array.from(document.querySelectorAll('form'));
-    return forms.filter(form => this._isCheckoutForm(form));
+    const forms = this.safeQuery(document, 'form');
+    if (!forms || forms.length === 0) return [];
+    return Array.from(forms).filter(form => this._isCheckoutForm(form));
   }
 
   _isCheckoutForm(form) {
@@ -284,17 +433,21 @@ export class CheckoutAnalyzer {
   }
 
   _analyzeForm(form) {
-    const inputs = form.querySelectorAll('input, select, textarea');
-    const requiredFields = form.querySelectorAll('[required]');
-    const labels = form.querySelectorAll('label');
+    const inputs = this.safeQuery(form, 'input, select, textarea');
+    const requiredFields = this.safeQuery(form, '[required]');
+    const labels = this.safeQuery(form, 'label');
+    
+    const inputsArray = inputs ? Array.from(inputs) : [];
+    const requiredArray = requiredFields ? Array.from(requiredFields) : [];
+    const labelsArray = labels ? Array.from(labels) : [];
     
     return {
-      fieldCount: inputs.length,
-      requiredFields: requiredFields.length,
-      hasLabels: labels.length > 0,
+      fieldCount: inputsArray.length,
+      requiredFields: requiredArray.length,
+      hasLabels: labelsArray.length > 0,
       hasValidation: form.getAttribute('novalidate') === null,
-      hasAutoComplete: Array.from(inputs).some(input => input.getAttribute('autocomplete')),
-      hasPlaceholders: Array.from(inputs).some(input => input.placeholder),
+      hasAutoComplete: inputsArray.some(input => input.getAttribute('autocomplete')),
+      hasPlaceholders: inputsArray.some(input => input.placeholder),
     };
   }
 
@@ -314,9 +467,11 @@ export class CheckoutAnalyzer {
 
   _hasClearLabels(forms) {
     return forms.some(form => {
-      const inputs = form.querySelectorAll('input, select, textarea');
-      const labels = form.querySelectorAll('label');
-      return labels.length >= inputs.length * 0.8; // At least 80% of inputs have labels
+      const inputs = this.safeQuery(form, 'input, select, textarea');
+      const labels = this.safeQuery(form, 'label');
+      const inputsArray = inputs ? Array.from(inputs) : [];
+      const labelsArray = labels ? Array.from(labels) : [];
+      return labelsArray.length >= inputsArray.length * 0.8; // At least 80% of inputs have labels
     });
   }
 
@@ -333,7 +488,7 @@ export class CheckoutAnalyzer {
       'img[alt*="secure"]',
       'img[alt*="ssl"]',
     ];
-    return securitySelectors.some(selector => document.querySelector(selector) !== null);
+    return securitySelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _hasTrustSignals(document) {
@@ -344,7 +499,7 @@ export class CheckoutAnalyzer {
   _hasReturnPolicy(document) {
     const text = document.body.textContent.toLowerCase();
     return /return policy|refund policy|satisfaction guarantee/.test(text) ||
-           document.querySelector('a[href*="return"], a[href*="refund"]');
+           this.safeQueryOne(document, 'a[href*="return"], a[href*="refund"]');
   }
 
   _hasShippingInfo(document) {
@@ -355,7 +510,7 @@ export class CheckoutAnalyzer {
   _hasContactInfo(document) {
     const text = document.body.textContent.toLowerCase();
     return /customer.*service|contact.*us|help.*desk|support/.test(text) ||
-           document.querySelector('a[href*="contact"], a[href*="support"]');
+           this.safeQueryOne(document, 'a[href*="contact"], a[href*="support"]');
   }
 
   _hasHelpSupport(document) {
@@ -367,12 +522,12 @@ export class CheckoutAnalyzer {
       'a[href*="help"]',
       'a[href*="faq"]',
     ];
-    return helpSelectors.some(selector => document.querySelector(selector) !== null);
+    return helpSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _isMobileOptimized(document) {
-    const viewport = document.querySelector('meta[name="viewport"]');
-    const responsiveClasses = document.querySelector('[class*="mobile"], [class*="responsive"]');
+    const viewport = this.safeQueryOne(document, 'meta[name="viewport"]');
+    const responsiveClasses = this.safeQueryOne(document, '[class*="mobile"], [class*="responsive"]');
     return viewport !== null || responsiveClasses !== null;
   }
 
@@ -383,7 +538,7 @@ export class CheckoutAnalyzer {
       '.progress',
       '.loader',
     ];
-    return loadingSelectors.some(selector => document.querySelector(selector) !== null);
+    return loadingSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   // Progress indicator methods
@@ -398,8 +553,10 @@ export class CheckoutAnalyzer {
     
     const elements = [];
     progressSelectors.forEach(selector => {
-      const found = document.querySelectorAll(selector);
-      elements.push(...Array.from(found));
+      const found = this.safeQuery(document, selector);
+      if (found && found.length > 0) {
+        elements.push(...Array.from(found));
+      }
     });
     
     return [...new Set(elements)];
@@ -412,7 +569,7 @@ export class CheckoutAnalyzer {
       '.checkout-step',
       '[class*="step-"]',
     ];
-    return stepSelectors.some(selector => document.querySelector(selector) !== null);
+    return stepSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _hasBreadcrumbs(document) {
@@ -422,7 +579,7 @@ export class CheckoutAnalyzer {
       'nav[aria-label*="breadcrumb"]',
       '.navigation-path',
     ];
-    return breadcrumbSelectors.some(selector => document.querySelector(selector) !== null);
+    return breadcrumbSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _hasCurrentStepIndicator(document) {
@@ -432,7 +589,7 @@ export class CheckoutAnalyzer {
       '.step.active',
       '.step.current',
     ];
-    return currentStepSelectors.some(selector => document.querySelector(selector) !== null);
+    return currentStepSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
   }
 
   _hasCompletionStatus(document) {
@@ -442,6 +599,147 @@ export class CheckoutAnalyzer {
       '.done',
       '.finished',
     ];
-    return completionSelectors.some(selector => document.querySelector(selector) !== null);
+    return completionSelectors.some(selector => this.safeQueryOne(document, selector) !== null);
+  }
+
+  /**
+   * Generate checkout optimization recommendations
+   */
+  _generateRecommendations(flow, forms, ux, progress) {
+    const recommendations = [];
+
+    // Flow recommendations
+    if (!flow.guestCheckout) {
+      recommendations.push({
+        type: 'flow',
+        priority: 'high',
+        title: 'Enable Guest Checkout',
+        description: 'Allow customers to checkout without creating an account to reduce friction',
+        impact: 'High - Can significantly reduce cart abandonment'
+      });
+    }
+
+    if (!flow.multiStep && forms.formCount > 1) {
+      recommendations.push({
+        type: 'flow',
+        priority: 'medium',
+        title: 'Implement Multi-Step Checkout',
+        description: 'Break complex forms into logical steps to improve user experience',
+        impact: 'Medium - Improves completion rates for complex checkouts'
+      });
+    }
+
+    if (!flow.autoFill) {
+      recommendations.push({
+        type: 'flow',
+        priority: 'medium',
+        title: 'Add AutoFill Support',
+        description: 'Implement autocomplete attributes to enable browser autofill',
+        impact: 'Medium - Speeds up form completion'
+      });
+    }
+
+    // Form recommendations
+    if (!forms.hasValidation) {
+      recommendations.push({
+        type: 'forms',
+        priority: 'high',
+        title: 'Add Form Validation',
+        description: 'Implement client-side validation to provide immediate feedback',
+        impact: 'High - Prevents submission errors and improves UX'
+      });
+    }
+
+    if (!forms.hasClearLabels) {
+      recommendations.push({
+        type: 'forms',
+        priority: 'high',
+        title: 'Improve Form Labels',
+        description: 'Ensure all form fields have clear, descriptive labels',
+        impact: 'High - Improves accessibility and usability'
+      });
+    }
+
+    // UX recommendations
+    if (!ux.securityBadges) {
+      recommendations.push({
+        type: 'trust',
+        priority: 'high',
+        title: 'Add Security Badges',
+        description: 'Display SSL certificates and security badges to build trust',
+        impact: 'High - Increases customer confidence and conversions'
+      });
+    }
+
+    if (!ux.returnPolicy) {
+      recommendations.push({
+        type: 'trust',
+        priority: 'medium',
+        title: 'Display Return Policy',
+        description: 'Make return and refund policies easily accessible',
+        impact: 'Medium - Reduces purchase hesitation'
+      });
+    }
+
+    if (!ux.mobileOptimized) {
+      recommendations.push({
+        type: 'mobile',
+        priority: 'high',
+        title: 'Optimize for Mobile',
+        description: 'Ensure checkout process works well on mobile devices',
+        impact: 'High - Critical for mobile conversions'
+      });
+    }
+
+    // Progress recommendations
+    if (!progress.hasProgress && flow.multiStep) {
+      recommendations.push({
+        type: 'progress',
+        priority: 'medium',
+        title: 'Add Progress Indicators',
+        description: 'Show customers their progress through the checkout process',
+        impact: 'Medium - Reduces abandonment in multi-step checkouts'
+      });
+    }
+
+    return recommendations.slice(0, 8); // Limit to top 8 recommendations
+  }
+
+  /**
+   * Generate checkout analysis summary
+   */
+  _generateSummary(score, checkoutElements, checkoutButtons) {
+    const hasCheckout = checkoutElements.length > 0 || checkoutButtons.length > 0;
+    
+    let summary = `Checkout analysis completed with a score of ${score}%.`;
+    
+    if (!hasCheckout) {
+      summary += ' No checkout functionality detected on this page.';
+    } else {
+      summary += ` Found ${checkoutElements.length} checkout elements and ${checkoutButtons.length} checkout buttons.`;
+      
+      if (score >= 80) {
+        summary += ' Checkout process is well-optimized with excellent user experience.';
+      } else if (score >= 60) {
+        summary += ' Checkout process has good functionality but could benefit from optimization.';
+      } else if (score >= 40) {
+        summary += ' Checkout process needs significant improvements for better conversion rates.';
+      } else {
+        summary += ' Checkout process requires major optimization to reduce abandonment.';
+      }
+    }
+    
+    return summary;
+  }
+
+  /**
+   * Get grade from score
+   */
+  _getGradeFromScore(score) {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'F';
   }
 }

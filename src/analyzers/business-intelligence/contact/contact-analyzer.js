@@ -15,8 +15,13 @@
  * @version 1.0.0
  */
 
-export class ContactAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerCategories.js';
+
+export class ContactAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('ContactAnalyzer');
+    
     this.options = {
       enableFormAnalysis: options.enableFormAnalysis !== false,
       enablePhoneAnalysis: options.enablePhoneAnalysis !== false,
@@ -73,62 +78,126 @@ export class ContactAnalyzer {
    * @param {string} url - Page URL
    * @returns {Object} Contact analysis results
    */
-  analyze(document, url) {
-    const contactForms = this._analyzeContactForms(document);
-    const phoneNumbers = this._analyzePhoneNumbers(document);
-    const emailAddresses = this._analyzeEmailAddresses(document);
-    const physicalAddress = this._analyzePhysicalAddress(document);
-    const socialMedia = this._analyzeSocialMedia(document);
-    const supportChannels = this._analyzeSupportChannels(document);
-    const accessibility = this._analyzeAccessibility(document);
 
-    const score = this._calculateContactScore({
-      contactForms,
-      phoneNumbers,
-      emailAddresses,
-      physicalAddress,
-      socialMedia,
-      supportChannels,
-      accessibility,
-    });
-
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
     return {
-      contactForms,
-      phoneNumbers,
-      emailAddresses,
-      physicalAddress,
-      socialMedia,
-      supportChannels,
-      accessibility,
-      score,
-      grade: this._assignGrade(score),
-      contactChannels: this._countContactChannels({
-        contactForms,
-        phoneNumbers,
-        emailAddresses,
-        physicalAddress,
-        socialMedia,
-        supportChannels,
-      }),
-      strengths: this._identifyContactStrengths({
-        contactForms,
-        phoneNumbers,
-        emailAddresses,
-        physicalAddress,
-        socialMedia,
-        supportChannels,
-        accessibility,
-      }),
-      recommendations: this._generateContactRecommendations({
-        contactForms,
-        phoneNumbers,
-        emailAddresses,
-        physicalAddress,
-        socialMedia,
-        supportChannels,
-        accessibility,
-      }),
+      name: this.name,
+      category: AnalyzerCategories.BUSINESS,
+      description: 'Analyzes contact information quality and accessibility including forms, phone numbers, emails, and social media presence',
+      version: '1.0.0',
+      author: 'Nimrod Galor',
+      priority: 'high',
+      type: 'business-intelligence',
+      capabilities: [
+        'contact-form-analysis',
+        'phone-number-detection',
+        'email-validation',
+        'physical-address-analysis',
+        'social-media-presence',
+        'support-channels-analysis',
+        'accessibility-assessment'
+      ],
+      metrics: [
+        'contact_forms_count',
+        'phone_numbers_count',
+        'email_addresses_count',
+        'social_media_platforms',
+        'support_channels_count',
+        'accessibility_score',
+        'overall_contact_score'
+      ],
+      dependencies: ['cheerio'],
+      performanceImpact: 'medium'
     };
+  }
+
+  /**
+   * Validate input parameters
+   * @param {Document} document - The DOM document
+   * @param {string} url - The page URL
+   * @returns {boolean} True if inputs are valid
+   */
+  validate(document, url) {
+    if (!document) {
+      this.handleError('Document is required for contact analysis');
+      return false;
+    }
+
+    if (!url || typeof url !== 'string') {
+      this.handleError('Valid URL is required for contact analysis');
+      return false;
+    }
+
+    try {
+      new URL(url);
+    } catch (error) {
+      this.handleError(`Invalid URL format: ${url}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Analyzes contact information on a webpage
+   * @param {Document} document - The DOM document
+   * @param {string} url - The page URL
+   * @returns {Object} Analysis results
+   */
+  async analyze(document, url) {
+    if (!this.validate(document, url)) {
+      return this.createErrorResult('Validation failed for contact analysis');
+    }
+
+    const startTime = performance.now();
+    try {
+      const contactForms = this._analyzeContactForms(document);
+      const phoneNumbers = this._analyzePhoneNumbers(document);
+      const emailAddresses = this._analyzeEmailAddresses(document);
+      const physicalAddress = this._analyzePhysicalAddress(document);
+      const socialMedia = this._analyzeSocialMedia(document);
+      const supportChannels = this._analyzeSupportChannels(document);
+      const accessibility = this._analyzeAccessibility(document);
+
+      const analysis = {
+        contactForms,
+        phoneNumbers,
+        emailAddresses,
+        physicalAddress,
+        socialMedia,
+        supportChannels,
+        accessibility,
+      };
+
+      const score = this._calculateContactScore(analysis);
+      const performance = performance.now() - startTime;
+
+      const result = {
+        ...analysis,
+        score,
+        grade: this._assignGrade(score),
+        contactChannels: this._countContactChannels(analysis),
+        strengths: this._identifyContactStrengths(analysis),
+        recommendations: this._generateContactRecommendations(analysis),
+        summary: this._generateExecutiveSummary(analysis, score),
+        metadata: {
+          ...this.getMetadata(),
+          analysisDate: new Date().toISOString(),
+          performanceMs: Math.round(performance),
+          url: url
+        }
+      };
+
+      return result;
+
+    } catch (error) {
+      this.handleError(`Contact analysis failed: ${error.message}`);
+      return this.createErrorResult('Contact analysis failed');
+    }
   }
 
   /**
@@ -775,5 +844,102 @@ export class ContactAnalyzer {
     }
     
     return recommendations;
+  }
+
+  /**
+   * Generate executive summary
+   * @param {Object} analysis - Analysis results
+   * @param {number} score - Overall score
+   * @returns {string} Executive summary
+   */
+  _generateExecutiveSummary(analysis, score) {
+    const contactChannels = this._countContactChannels(analysis);
+    const grade = this._assignGrade(score);
+    
+    let summary = `Contact Information Analysis (Grade: ${grade}, Score: ${score}/100)\n\n`;
+    
+    summary += `Overall Assessment: `;
+    if (score >= 80) {
+      summary += `Excellent contact information setup with ${contactChannels} accessible contact channels. `;
+    } else if (score >= 60) {
+      summary += `Good contact information with ${contactChannels} contact channels, but some improvements needed. `;
+    } else if (score >= 40) {
+      summary += `Basic contact information present with ${contactChannels} channels, requires enhancement. `;
+    } else {
+      summary += `Limited contact information available with only ${contactChannels} channels, needs significant improvement. `;
+    }
+    
+    // Contact forms summary
+    if (analysis.contactForms.forms.length > 0) {
+      summary += `Found ${analysis.contactForms.forms.length} contact form(s) with ${Math.round(analysis.contactForms.averageQuality * 100)}% average quality. `;
+    } else {
+      summary += `No contact forms detected. `;
+    }
+    
+    // Phone numbers summary
+    if (analysis.phoneNumbers.phoneElements.length > 0) {
+      summary += `${analysis.phoneNumbers.phoneElements.length} phone number(s) found, ${analysis.phoneNumbers.clickableCount} clickable. `;
+    }
+    
+    // Email addresses summary
+    if (analysis.emailAddresses.emailElements.length > 0) {
+      summary += `${analysis.emailAddresses.emailElements.length} email address(es) found, ${analysis.emailAddresses.protectedCount} protected. `;
+    }
+    
+    // Social media summary
+    if (analysis.socialMedia.platforms.length > 0) {
+      summary += `Present on ${analysis.socialMedia.platforms.length} social platform(s). `;
+    }
+    
+    // Support channels summary
+    if (analysis.supportChannels.hasLiveChat || analysis.supportChannels.hasFAQ || analysis.supportChannels.hasKnowledgeBase) {
+      summary += `Additional support channels available including ${[
+        analysis.supportChannels.hasLiveChat && 'live chat',
+        analysis.supportChannels.hasFAQ && 'FAQ',
+        analysis.supportChannels.hasKnowledgeBase && 'knowledge base'
+      ].filter(Boolean).join(', ')}. `;
+    }
+    
+    return summary.trim();
+  }
+
+  /**
+   * Assign letter grade based on score
+   * @param {number} score - Numerical score
+   * @returns {string} Letter grade
+   */
+  _assignGrade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 45) return 'D+';
+    if (score >= 40) return 'D';
+    return 'F';
+  }
+
+  /**
+   * Count total contact channels
+   * @param {Object} analysis - Analysis results
+   * @returns {number} Number of contact channels
+   */
+  _countContactChannels(analysis) {
+    let channels = 0;
+    
+    if (analysis.contactForms?.forms?.length > 0) channels++;
+    if (analysis.phoneNumbers?.phoneElements?.length > 0) channels++;
+    if (analysis.emailAddresses?.emailElements?.length > 0) channels++;
+    if (analysis.physicalAddress?.addresses?.length > 0) channels++;
+    if (analysis.socialMedia?.platforms?.length > 0) channels++;
+    if (analysis.supportChannels?.hasLiveChat) channels++;
+    if (analysis.supportChannels?.hasFAQ) channels++;
+    if (analysis.supportChannels?.hasKnowledgeBase) channels++;
+    
+    return channels;
   }
 }

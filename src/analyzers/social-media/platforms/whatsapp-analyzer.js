@@ -1,34 +1,198 @@
 /**
- * WhatsApp Analyzer
- * WhatsApp preview optimization analysis
+ * Enhanced WhatsApp Analyzer
+ * Comprehensive analysis of WhatsApp link preview optimization with BaseAnalyzer integration
+ * 
+ * @extends BaseAnalyzer
+ * @version 1.0.0
+ * @author Nimrod Galor
+ * @date 2025-08-08
  */
 
-export class WhatsAppAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
+export class WhatsAppAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = options;
+    super('WhatsAppAnalyzer', {
+      enablePreviewOptimization: options.enablePreviewOptimization !== false,
+      enableImageAnalysis: options.enableImageAnalysis !== false,
+      enableContentValidation: options.enableContentValidation !== false,
+      enableSharingAnalysis: options.enableSharingAnalysis !== false,
+      strictValidation: options.strictValidation || false,
+      validateImageDimensions: options.validateImageDimensions !== false,
+      includeRecommendations: options.includeRecommendations !== false,
+      ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.CONTENT;
+    
     this.whatsappLimits = {
       title: 65,
       description: 160,
       imageSize: 300, // KB
+      imageWidth: 400,
+      imageHeight: 400
+    };
+    
+    this.requiredMetaTags = ['og:title', 'og:description', 'og:image'];
+    this.recommendedMetaTags = ['og:url', 'og:type', 'og:site_name'];
+  }
+
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'WhatsAppAnalyzer',
+      version: '1.0.0',
+      description: 'Comprehensive WhatsApp link preview optimization and sharing analysis',
+      category: AnalyzerCategories.CONTENT,
+      priority: 'high',
+      capabilities: [
+        'whatsapp_preview_optimization',
+        'link_sharing_analysis',
+        'image_preview_validation',
+        'content_length_optimization',
+        'social_sharing_enhancement',
+        'preview_quality_assessment',
+        'recommendation_generation'
+      ]
     };
   }
 
-  async analyze(document, url) {
-    const preview = this._analyzeWhatsAppPreview(document);
-    const optimization = this._analyzeWhatsAppOptimization(document);
-    const validation = this._validateWhatsAppTags(document);
-    const sharing = this._analyzeWhatsAppSharing(document);
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    try {
+      if (!context || typeof context !== 'object') {
+        return false;
+      }
 
-    const score = this._calculateWhatsAppScore(preview, optimization, sharing);
+      const { document } = context;
+      if (!document || !document.querySelector) {
+        this.log('WhatsApp analysis requires a valid DOM document', 'warn');
+        return false;
+      }
 
-    return {
-      preview,
-      optimization,
-      validation,
-      sharing,
-      score,
-      recommendations: this._generateWhatsAppRecommendations(preview, optimization, validation),
-    };
+      return true;
+    } catch (error) {
+      this.handleError('Error validating WhatsApp analysis context', error);
+      return false;
+    }
+  }
+
+  /**
+   * Perform comprehensive WhatsApp analysis with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} WhatsApp analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      this.log('Starting WhatsApp analysis', 'info');
+
+      // Validate context
+      if (!this.validate(context)) {
+        return this.handleError('Invalid context for WhatsApp analysis', new Error('Context validation failed'), {
+          hasWhatsAppOptimization: false,
+          score: 0,
+          grade: 'F'
+        });
+      }
+
+      const { document, url = '', pageData = {} } = context;
+
+      // Perform WhatsApp analysis
+      const whatsappData = await this._performWhatsAppAnalysis(document, url);
+      
+      // Calculate comprehensive score
+      const score = this._calculateComprehensiveScore(whatsappData);
+      const grade = this._getGradeFromScore ? this._getGradeFromScore(score) : this._calculateGrade(score);
+      
+      // Generate recommendations
+      const recommendations = this._generateWhatsAppRecommendations(whatsappData);
+      
+      // Generate summary
+      const summary = this._generateWhatsAppSummary(whatsappData, score);
+
+      const result = {
+        success: true,
+        data: {
+          ...whatsappData,
+          score,
+          grade,
+          recommendations,
+          summary,
+          metadata: this.getMetadata()
+        },
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      };
+
+      this.log(`WhatsApp analysis completed in ${result.executionTime}ms with score ${score}`, 'info');
+      return result;
+
+    } catch (error) {
+      return this.handleError('WhatsApp analysis failed', error, {
+        hasWhatsAppOptimization: false,
+        score: 0,
+        grade: 'F',
+        summary: 'WhatsApp analysis encountered an error'
+      });
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
+   * @param {Document} document - DOM document
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} WhatsApp analysis results
+   */
+  async analyzeWhatsApp(document, url) {
+    console.warn('analyzeWhatsApp() is deprecated. Use analyze() method instead.');
+    return this._performWhatsAppAnalysis(document, url);
+  }
+
+  /**
+   * Internal method to perform WhatsApp analysis
+   * @param {Document} document - DOM document
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} WhatsApp analysis results
+   */
+  async _performWhatsAppAnalysis(document, url) {
+    try {
+      this.log('Analyzing WhatsApp preview optimization', 'info');
+      
+      const preview = this._analyzeWhatsAppPreview(document);
+      const optimization = this._analyzeWhatsAppOptimization(document);
+      const validation = this._validateWhatsAppTags(document);
+      const sharing = this._analyzeWhatsAppSharing(document);
+      const imageAnalysis = this._analyzeWhatsAppImages(document);
+
+      const score = this._calculateWhatsAppScore(preview, optimization, sharing, validation);
+
+      return {
+        preview,
+        optimization,
+        validation,
+        sharing,
+        imageAnalysis,
+        score,
+        recommendations: this._generateWhatsAppRecommendationsLegacy(preview, optimization, validation),
+        hasWhatsAppOptimization: preview.isOptimized || optimization.contentOptimized,
+        completeness: this._calculateWhatsAppCompleteness(preview, optimization, validation)
+      };
+    } catch (error) {
+      throw new Error(`WhatsApp analysis failed: ${error.message}`);
+    }
+  }
   }
 
   _analyzeWhatsAppPreview(document) {
@@ -468,7 +632,7 @@ export class WhatsAppAnalyzer {
     return Math.min(100, score);
   }
 
-  _calculateWhatsAppScore(preview, optimization, sharing) {
+  _calculateWhatsAppScore(preview, optimization, sharing, validation) {
     let score = 0;
 
     // Preview completeness (50%)
@@ -482,13 +646,238 @@ export class WhatsAppAnalyzer {
     
     score += optimizationScore * 0.3;
 
-    // Sharing features (20%)
-    score += sharing.sharingScore * 0.2;
+    // Sharing features (15%)
+    score += sharing.sharingScore * 0.15;
+
+    // Validation (5%)
+    if (validation && validation.errors.length === 0) {
+      score += 5;
+    }
 
     return Math.round(score);
   }
 
-  _generateWhatsAppRecommendations(preview, optimization, validation) {
+  // ============================================================================
+  // BaseAnalyzer Integration Helper Methods
+  // ============================================================================
+
+  /**
+   * Calculate comprehensive WhatsApp score
+   * @param {Object} whatsappData - Complete WhatsApp analysis data
+   * @returns {number} Score (0-100)
+   */
+  _calculateComprehensiveScore(whatsappData) {
+    const weights = {
+      preview: 0.4,
+      optimization: 0.3,
+      validation: 0.2,
+      sharing: 0.1
+    };
+    
+    // Preview score
+    const previewScore = whatsappData.preview.completeness || 0;
+    
+    // Optimization score
+    let optimizationScore = 0;
+    if (whatsappData.optimization.titleOptimization?.optimized) optimizationScore += 35;
+    if (whatsappData.optimization.descriptionOptimization?.optimized) optimizationScore += 35;
+    if (whatsappData.optimization.imageOptimization?.optimized) optimizationScore += 30;
+    
+    // Validation score
+    const validationScore = whatsappData.validation.errors.length === 0 ? 100 : 
+      Math.max(0, 100 - (whatsappData.validation.errors.length * 25));
+    
+    // Sharing score
+    const sharingScore = whatsappData.sharing.sharingScore || 0;
+    
+    const totalScore = Math.round(
+      (previewScore * weights.preview) +
+      (optimizationScore * weights.optimization) +
+      (validationScore * weights.validation) +
+      (sharingScore * weights.sharing)
+    );
+    
+    return Math.min(100, Math.max(0, totalScore));
+  }
+
+  /**
+   * Generate comprehensive WhatsApp recommendations
+   * @param {Object} whatsappData - Complete WhatsApp analysis data
+   * @returns {Array} Array of recommendation objects
+   */
+  _generateWhatsAppRecommendations(whatsappData) {
+    const recommendations = [];
+    
+    // Preview optimization recommendations
+    if (!whatsappData.preview.isOptimized) {
+      recommendations.push({
+        category: 'critical',
+        title: 'Optimize WhatsApp Preview',
+        description: 'Implement proper Open Graph tags for optimal WhatsApp link previews',
+        impact: 'high',
+        implementation: 'Add og:title, og:description, and og:image meta tags'
+      });
+    }
+    
+    // Title optimization
+    if (!whatsappData.optimization.titleOptimization?.optimized) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Optimize Title Length',
+        description: `Keep title under ${this.whatsappLimits.title} characters for optimal WhatsApp preview`,
+        impact: 'medium',
+        implementation: 'Shorten og:title to 65 characters or less'
+      });
+    }
+    
+    // Description optimization
+    if (!whatsappData.optimization.descriptionOptimization?.optimized) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Optimize Description Length',
+        description: `Keep description under ${this.whatsappLimits.description} characters for optimal WhatsApp preview`,
+        impact: 'medium',
+        implementation: 'Optimize og:description to 160 characters or less'
+      });
+    }
+    
+    // Image optimization
+    if (!whatsappData.optimization.imageOptimization?.optimized) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Optimize Image for WhatsApp',
+        description: 'Use HTTPS images with mobile-friendly dimensions (400x400px recommended)',
+        impact: 'medium',
+        implementation: 'Use square images with HTTPS URLs for og:image'
+      });
+    }
+    
+    // Validation error recommendations
+    whatsappData.validation.errors.forEach(error => {
+      recommendations.push({
+        category: 'error',
+        title: 'Fix WhatsApp Issue',
+        description: error,
+        impact: 'high',
+        implementation: 'Review and fix the mentioned WhatsApp optimization issue'
+      });
+    });
+    
+    // Sharing feature recommendations
+    if (whatsappData.sharing.sharingScore < 50) {
+      recommendations.push({
+        category: 'enhancement',
+        title: 'Add WhatsApp Sharing Features',
+        description: 'Implement WhatsApp share buttons or click-to-chat functionality',
+        impact: 'medium',
+        implementation: 'Add WhatsApp sharing buttons or click-to-chat links'
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Generate WhatsApp analysis summary
+   * @param {Object} whatsappData - Complete WhatsApp analysis data
+   * @param {number} score - Overall score
+   * @returns {string} Analysis summary
+   */
+  _generateWhatsAppSummary(whatsappData, score) {
+    const { preview, optimization, validation, sharing } = whatsappData;
+    
+    if (validation.errors.length > 0) {
+      return `WhatsApp optimization has ${validation.errors.length} critical issue(s) that affect link preview functionality.`;
+    }
+    
+    if (!preview.isOptimized) {
+      return `WhatsApp link previews not optimized. Add Open Graph meta tags to enable proper previews when shared.`;
+    }
+    
+    const completeness = whatsappData.completeness.percentage;
+    
+    if (score >= 90) {
+      return `Excellent WhatsApp optimization with ${completeness}% completeness and optimal link preview functionality.`;
+    } else if (score >= 70) {
+      return `Good WhatsApp setup with ${completeness}% completeness but could benefit from content length optimization.`;
+    } else if (score >= 50) {
+      return `Basic WhatsApp optimization detected. Focus on preview optimization and content length limits.`;
+    } else {
+      return `Limited WhatsApp optimization. Implement Open Graph tags and optimize content for mobile sharing.`;
+    }
+  }
+
+  /**
+   * Analyze WhatsApp image optimization
+   * @param {Document} document - DOM document
+   * @returns {Object} Image analysis results
+   */
+  _analyzeWhatsAppImages(document) {
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    const analysis = {
+      hasImage: !!ogImage,
+      imageUrl: ogImage ? ogImage.getAttribute('content') : null,
+      isSecure: false,
+      isOptimalSize: false,
+      isMobileFriendly: false,
+      recommendations: []
+    };
+    
+    if (ogImage) {
+      const imageUrl = ogImage.getAttribute('content');
+      analysis.isSecure = imageUrl && imageUrl.startsWith('https://');
+      analysis.isMobileFriendly = this._isMobileOptimizedImage(imageUrl);
+      
+      if (!analysis.isSecure) {
+        analysis.recommendations.push('Use HTTPS for WhatsApp image URLs');
+      }
+      
+      if (!analysis.isMobileFriendly) {
+        analysis.recommendations.push('Use square images (400x400px) for better WhatsApp previews');
+      }
+    } else {
+      analysis.recommendations.push('Add og:image for WhatsApp link previews');
+    }
+    
+    return analysis;
+  }
+
+  /**
+   * Calculate WhatsApp completeness percentage
+   * @param {Object} preview - Preview analysis
+   * @param {Object} optimization - Optimization analysis
+   * @param {Object} validation - Validation results
+   * @returns {Object} Completeness analysis
+   */
+  _calculateWhatsAppCompleteness(preview, optimization, validation) {
+    const factors = [
+      { name: 'Open Graph Title', weight: 25, present: !!preview.title },
+      { name: 'Open Graph Description', weight: 25, present: !!preview.description },
+      { name: 'Open Graph Image', weight: 20, present: !!preview.image },
+      { name: 'Title Optimization', weight: 15, present: optimization.titleOptimization?.optimized },
+      { name: 'Description Optimization', weight: 10, present: optimization.descriptionOptimization?.optimized },
+      { name: 'No Validation Errors', weight: 5, present: validation.errors.length === 0 }
+    ];
+    
+    const totalWeight = factors.reduce((sum, factor) => sum + factor.weight, 0);
+    const achievedWeight = factors.reduce((sum, factor) => sum + (factor.present ? factor.weight : 0), 0);
+    
+    return {
+      percentage: Math.round((achievedWeight / totalWeight) * 100),
+      factors: factors,
+      achieved: achievedWeight,
+      total: totalWeight
+    };
+  }
+
+  /**
+   * Legacy WhatsApp recommendations method for backward compatibility
+   * @param {Object} preview - Preview analysis
+   * @param {Object} optimization - Optimization analysis
+   * @param {Object} validation - Validation results
+   * @returns {Array} Array of recommendation objects
+   */
+  _generateWhatsAppRecommendationsLegacy(preview, optimization, validation) {
     const recommendations = [];
 
     // Error-based recommendations
@@ -547,13 +936,23 @@ export class WhatsAppAnalyzer {
     return recommendations;
   }
 
-  _isValidImageUrl(url) {
-    try {
-      const urlObj = new URL(url);
-      return (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') &&
-             /\.(jpg|jpeg|png|gif|webp)$/i.test(urlObj.pathname);
-    } catch {
-      return false;
-    }
+  /**
+   * Calculate grade from score (fallback method)
+   * @param {number} score - Score (0-100)
+   * @returns {string} Grade letter
+   */
+  _calculateGrade(score) {
+    if (score >= 97) return 'A+';
+    if (score >= 93) return 'A';
+    if (score >= 90) return 'A-';
+    if (score >= 87) return 'B+';
+    if (score >= 83) return 'B';
+    if (score >= 80) return 'B-';
+    if (score >= 77) return 'C+';
+    if (score >= 73) return 'C';
+    if (score >= 70) return 'C-';
+    if (score >= 67) return 'D+';
+    if (score >= 60) return 'D';
+    return 'F';
   }
 }

@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * CONTENT INTELLIGENCE ANALYZER MODULE
+ * CONTENT INTELLIGENCE ANALYZER MODULE - BaseAnalyzer Implementation
  * ============================================================================
  * 
  * Advanced content intelligence analysis including:
@@ -9,15 +9,17 @@
  * - Content similarity analysis
  * - Plagiarism detection patterns
  * - Content originality scoring
+ * - BaseAnalyzer architecture integration
  * 
- * This module addresses the remaining 1.5% coverage gap in Content Intelligence
- * 
+ * @extends BaseAnalyzer
  * @author Nimrod Galor
  * @AI assistant Claude Sonnet 4
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 import crypto from 'crypto';
+import { BaseAnalyzer } from './core/BaseAnalyzer.js';
+import { AnalyzerCategories } from './core/AnalyzerInterface.js';
 
 /**
  * Content Intelligence Configuration
@@ -50,83 +52,186 @@ export const CONTENT_INTELLIGENCE_CONFIG = {
 
 /**
  * Content Intelligence Analyzer Class
+ * Comprehensive content intelligence analysis with BaseAnalyzer integration
  */
-export class ContentIntelligenceAnalyzer {
+export class ContentIntelligenceAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = { ...CONTENT_INTELLIGENCE_CONFIG, ...options };
+    super('ContentIntelligenceAnalyzer', {
+      enableUniquenessAnalysis: options.enableUniquenessAnalysis !== false,
+      enableDuplicateDetection: options.enableDuplicateDetection !== false,
+      enableSimilarityAnalysis: options.enableSimilarityAnalysis !== false,
+      enablePlagiarismDetection: options.enablePlagiarismDetection !== false,
+      enableQualityAnalysis: options.enableQualityAnalysis !== false,
+      minContentLength: options.minContentLength || CONTENT_INTELLIGENCE_CONFIG.FINGERPRINTING.MIN_CONTENT_LENGTH,
+      maxAnalysisPages: options.maxAnalysisPages || 1000,
+      detailedAnalysis: options.detailedAnalysis !== false,
+      includeRecommendations: options.includeRecommendations !== false,
+      ...options,
+    });
+
+    this.name = 'ContentIntelligenceAnalyzer';
+    this.version = '2.0.0';
     this.contentDatabase = new Map(); // In-memory content database for site-wide analysis
     this.fingerprintCache = new Map(); // Cache for content fingerprints
+    
+    // Merge configuration
+    this.config = { ...CONTENT_INTELLIGENCE_CONFIG, ...options };
   }
 
   /**
-   * Perform comprehensive content intelligence analysis
-   * @param {Object} dom - JSDOM document object
-   * @param {Object} pageData - Existing page data
-   * @param {string} url - Page URL
-   * @param {Object} siteData - Site-wide data for cross-page analysis
-   * @returns {Object} Content intelligence analysis
+   * Perform comprehensive content intelligence analysis (BaseAnalyzer interface)
+   * @param {Object} context - Analysis context containing DOM, URL, and page data
+   * @returns {Promise<Object>} Content intelligence analysis results
+   */
+  async analyze(context) {
+    return this.measureTime(async () => {
+      try {
+        this.log('Starting content intelligence analysis', 'info');
+        
+        const { dom, url, pageData = {}, siteData = {} } = context;
+        if (!dom || !dom.window || !dom.window.document) {
+          throw new Error('Invalid DOM context provided');
+        }
+        
+        const document = dom.window.document;
+        const textContent = this._extractCleanTextContent(document);
+        
+        if (textContent.length < this.options.minContentLength) {
+          return this.handleError(
+            'Content too short for meaningful analysis',
+            new Error(`Content length ${textContent.length} below minimum ${this.options.minContentLength}`),
+            this._createMinimalAnalysis('Content too short for meaningful analysis')
+          );
+        }
+
+        const analysis = {
+          // Enhanced uniqueness analysis
+          uniquenessAnalysis: this.options.enableUniquenessAnalysis ? 
+            this._analyzeEnhancedUniqueness(textContent, url) : null,
+          
+          // Content fingerprinting
+          contentFingerprint: this.options.enableDuplicateDetection ? 
+            this._generateContentFingerprint(textContent) : null,
+          
+          // Duplicate content detection
+          duplicateDetection: this.options.enableDuplicateDetection ? 
+            this._detectDuplicateContent(textContent, url, siteData) : null,
+          
+          // Content similarity analysis
+          similarityAnalysis: this.options.enableSimilarityAnalysis ? 
+            this._analyzeSimilarity(textContent, siteData) : null,
+          
+          // Originality scoring
+          originalityScore: 0,
+          
+          // Content quality indicators
+          qualityIndicators: this.options.enableQualityAnalysis ? 
+            this._analyzeQualityIndicators(textContent, document) : null,
+          
+          // Plagiarism risk assessment
+          plagiarismRisk: this.options.enablePlagiarismDetection ? 
+            this._assessPlagiarismRisk(textContent) : null,
+          
+          // Recommendations
+          recommendations: [],
+          
+          // Analysis metadata
+          contentLength: textContent.length,
+          existingData: pageData.contentIntelligence || {},
+          analysisTimestamp: new Date().toISOString(),
+          analyzerVersion: this.version
+        };
+
+        // Calculate overall originality score
+        analysis.originalityScore = this._calculateOriginalityScore(analysis);
+        
+        // Generate recommendations if enabled
+        if (this.options.includeRecommendations) {
+          analysis.recommendations = this._generateIntelligenceRecommendations(analysis);
+        }
+        
+        // Store content for site-wide analysis
+        this._storeContentData(url, textContent, analysis);
+        
+        // Generate summary metrics
+        analysis.summary = this._generateContentIntelligenceSummary(analysis);
+        analysis.metrics = this._analyzeContentIntelligenceMetrics(analysis);
+        
+        this.log(`Content intelligence analysis completed - Originality score: ${analysis.originalityScore}/100`, 'info');
+        
+        return {
+          success: true,
+          data: analysis,
+          metadata: this.getMetadata(),
+          timestamp: new Date().toISOString()
+        };
+        
+      } catch (error) {
+        return this.handleError('Content intelligence analysis failed', error, {
+          uniquenessAnalysis: null,
+          contentFingerprint: null,
+          duplicateDetection: null,
+          similarityAnalysis: null,
+          originalityScore: 0,
+          recommendations: [],
+          summary: {},
+          metrics: {}
+        });
+      }
+    });
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
    */
   analyzeContentIntelligence(dom, pageData, url, siteData = {}) {
-    try {
-      const document = dom.window.document;
-      const textContent = this._extractCleanTextContent(document);
-      
-      if (textContent.length < this.options.FINGERPRINTING.MIN_CONTENT_LENGTH) {
-        return this._createMinimalAnalysis('Content too short for meaningful analysis');
-      }
+    this.log('Using deprecated analyzeContentIntelligence method, please migrate to analyze()', 'warn');
+    return this.analyze({ dom, url, pageData, siteData });
+  }
 
-      const analysis = {
-        // Enhanced uniqueness analysis
-        uniquenessAnalysis: this._analyzeEnhancedUniqueness(textContent, url),
-        
-        // Content fingerprinting
-        contentFingerprint: this._generateContentFingerprint(textContent),
-        
-        // Duplicate content detection
-        duplicateDetection: this._detectDuplicateContent(textContent, url, siteData),
-        
-        // Content similarity analysis
-        similarityAnalysis: this._analyzeSimilarity(textContent, siteData),
-        
-        // Originality scoring
-        originalityScore: 0,
-        
-        // Content quality indicators
-        qualityIndicators: this._analyzeQualityIndicators(textContent, document),
-        
-        // Plagiarism risk assessment
-        plagiarismRisk: this._assessPlagiarismRisk(textContent),
-        
-        // Recommendations
-        recommendations: [],
-        
-        // Analysis metadata
-        analysisTimestamp: new Date().toISOString(),
-        contentLength: textContent.length,
-        url: url
-      };
-
-      // Calculate overall originality score
-      analysis.originalityScore = this._calculateOriginalityScore(analysis);
-      
-      // Generate recommendations
-      analysis.recommendations = this._generateIntelligenceRecommendations(analysis);
-      
-      // Store content for site-wide analysis
-      this._storeContentData(url, textContent, analysis);
-      
-      return analysis;
-      
-    } catch (error) {
-      return this._createErrorAnalysis(error.message);
-    }
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: this.name,
+      version: this.version,
+      description: 'Advanced content intelligence analysis with uniqueness scoring, duplicate detection, and plagiarism risk assessment',
+      category: AnalyzerCategories.CONTENT,
+      priority: 'high',
+      features: [
+        'Content uniqueness analysis with fingerprinting',
+        'Cross-site duplicate content detection',
+        'Content similarity analysis',
+        'Plagiarism risk assessment',
+        'Content quality indicators',
+        'Originality scoring and recommendations'
+      ],
+      analysisCapabilities: [
+        'Lexical diversity analysis',
+        'Structural diversity assessment',
+        'Semantic diversity evaluation',
+        'N-gram fingerprinting',
+        'Shingle-based similarity detection',
+        'Authority signals detection'
+      ],
+      outputMetrics: [
+        'Overall originality score',
+        'Content uniqueness percentage',
+        'Duplicate content detection',
+        'Plagiarism risk level',
+        'Content intelligence recommendations'
+      ]
+    };
   }
 
   /**
    * Extract clean text content optimized for content analysis
    */
   _extractCleanTextContent(document) {
-    // Remove noise elements
+    // Remove noise elements using BaseAnalyzer's safeQuery
     const noiseSelectors = [
       'script', 'style', 'noscript', 'iframe', 'embed', 'object',
       '.advertisement', '.ads', '.sidebar', '.footer', '.header',
@@ -135,8 +240,8 @@ export class ContentIntelligenceAnalyzer {
     ];
     
     noiseSelectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(el => el.remove());
+      const elements = this.safeQuery(document, selector);
+      elements.forEach(el => el.remove && el.remove());
     });
 
     // Focus on main content areas
@@ -149,7 +254,7 @@ export class ContentIntelligenceAnalyzer {
     
     // Try to find main content area
     for (const selector of contentSelectors) {
-      const contentArea = document.querySelector(selector);
+      const contentArea = this.safeQuery(document, selector)[0];
       if (contentArea) {
         textContent = contentArea.textContent || '';
         break;
@@ -203,7 +308,7 @@ export class ContentIntelligenceAnalyzer {
    * Generate content fingerprint for duplicate detection
    */
   _generateContentFingerprint(textContent) {
-    const shingles = this._generateShingles(textContent, this.options.FINGERPRINTING.SHINGLE_SIZE);
+    const shingles = this._generateShingles(textContent, this.config.FINGERPRINTING.SHINGLE_SIZE);
     const fingerprint = this._createHashFingerprint(shingles);
     
     return {
@@ -211,7 +316,7 @@ export class ContentIntelligenceAnalyzer {
       shingleHashes: fingerprint.shingleHashes,
       shingleCount: shingles.length,
       fingerprintMethod: 'rolling-hash-shingles',
-      algorithm: this.options.FINGERPRINTING.HASH_ALGORITHM
+      algorithm: this.config.FINGERPRINTING.HASH_ALGORITHM
     };
   }
 
@@ -232,14 +337,14 @@ export class ContentIntelligenceAnalyzer {
         cachedData.fingerprint
       );
       
-      if (similarity >= this.options.DUPLICATE_DETECTION.EXACT_MATCH_THRESHOLD) {
+      if (similarity >= this.config.DUPLICATE_DETECTION.EXACT_MATCH_THRESHOLD) {
         duplicates.push({
           url: cachedUrl,
           similarity: similarity,
           type: 'exact-duplicate',
           matchedSegments: this._findMatchingSegments(textContent, cachedData.content)
         });
-      } else if (similarity >= this.options.DUPLICATE_DETECTION.FUZZY_MATCH_THRESHOLD) {
+      } else if (similarity >= this.config.DUPLICATE_DETECTION.FUZZY_MATCH_THRESHOLD) {
         nearDuplicates.push({
           url: cachedUrl,
           similarity: similarity,
@@ -364,28 +469,36 @@ export class ContentIntelligenceAnalyzer {
    * Calculate overall originality score
    */
   _calculateOriginalityScore(analysis) {
-    const weights = this.options.CONTENT_ANALYSIS;
+    const weights = this.config.CONTENT_ANALYSIS;
     let score = 100; // Start with perfect score
     
     // Penalize for duplicates
-    if (analysis.duplicateDetection.exactDuplicates.length > 0) {
-      score -= 50; // Heavy penalty for exact duplicates
-    }
-    
-    if (analysis.duplicateDetection.nearDuplicates.length > 0) {
-      score -= analysis.duplicateDetection.nearDuplicates.length * 10; // 10 points per near duplicate
+    if (analysis.duplicateDetection) {
+      if (analysis.duplicateDetection.exactDuplicates.length > 0) {
+        score -= 50; // Heavy penalty for exact duplicates
+      }
+      
+      if (analysis.duplicateDetection.nearDuplicates.length > 0) {
+        score -= analysis.duplicateDetection.nearDuplicates.length * 10; // 10 points per near duplicate
+      }
     }
     
     // Factor in uniqueness analysis
-    const uniquenessScore = analysis.uniquenessAnalysis.overallUniquenessScore;
-    score = (score + uniquenessScore) / 2; // Average with uniqueness
+    if (analysis.uniquenessAnalysis) {
+      const uniquenessScore = analysis.uniquenessAnalysis.overallUniquenessScore;
+      score = (score + uniquenessScore) / 2; // Average with uniqueness
+    }
     
     // Factor in plagiarism risk
-    score -= analysis.plagiarismRisk.riskScore * 0.3; // 30% weight for plagiarism risk
+    if (analysis.plagiarismRisk) {
+      score -= analysis.plagiarismRisk.riskScore * 0.3; // 30% weight for plagiarism risk
+    }
     
     // Factor in quality indicators
-    const qualityScore = this._calculateQualityScore(analysis.qualityIndicators);
-    score = score * 0.7 + qualityScore * 0.3; // 70/30 weighted average
+    if (analysis.qualityIndicators) {
+      const qualityScore = this._calculateQualityScore(analysis.qualityIndicators);
+      score = score * 0.7 + qualityScore * 0.3; // 70/30 weighted average
+    }
     
     return Math.max(0, Math.min(100, Math.round(score)));
   }
@@ -511,12 +624,12 @@ export class ContentIntelligenceAnalyzer {
    */
   _createHashFingerprint(shingles) {
     const shingleHashes = shingles.map(shingle => 
-      crypto.createHash(this.options.FINGERPRINTING.HASH_ALGORITHM)
+      crypto.createHash(this.config.FINGERPRINTING.HASH_ALGORITHM)
         .update(shingle)
         .digest('hex')
     );
     
-    const contentHash = crypto.createHash(this.options.FINGERPRINTING.HASH_ALGORITHM)
+    const contentHash = crypto.createHash(this.config.FINGERPRINTING.HASH_ALGORITHM)
       .update(shingleHashes.join(''))
       .digest('hex');
     
@@ -653,6 +766,134 @@ export class ContentIntelligenceAnalyzer {
     score += patterns.uniquenessRatio * 100 * weights.patterns;
     
     return Math.min(100, Math.max(0, Math.round(score)));
+  }
+
+  /**
+   * Generate content intelligence summary
+   * @param {Object} analysis - Complete content intelligence analysis
+   * @returns {Object} Content intelligence summary
+   * @private
+   */
+  _generateContentIntelligenceSummary(analysis) {
+    const summary = {
+      overallScore: analysis.originalityScore,
+      contentLength: analysis.contentLength,
+      uniquenessLevel: this._getUniquenessLevel(analysis.originalityScore),
+      duplicateStatus: 'unique',
+      plagiarismRisk: 'low',
+      qualityGrade: this._getQualityGrade(analysis.originalityScore),
+      keyFindings: [],
+      topIssues: [],
+      strengths: []
+    };
+
+    try {
+      // Determine duplicate status
+      if (analysis.duplicateDetection) {
+        if (analysis.duplicateDetection.exactDuplicates.length > 0) {
+          summary.duplicateStatus = 'exact-duplicates-found';
+          summary.keyFindings.push(`${analysis.duplicateDetection.exactDuplicates.length} exact duplicate(s) detected`);
+        } else if (analysis.duplicateDetection.nearDuplicates.length > 0) {
+          summary.duplicateStatus = 'similar-content-found';
+          summary.keyFindings.push(`${analysis.duplicateDetection.nearDuplicates.length} similar page(s) found`);
+        }
+      }
+
+      // Determine plagiarism risk
+      if (analysis.plagiarismRisk) {
+        summary.plagiarismRisk = analysis.plagiarismRisk.riskLevel;
+        if (analysis.plagiarismRisk.riskScore > 30) {
+          summary.topIssues.push(`High plagiarism risk: ${analysis.plagiarismRisk.riskScore}/100`);
+        }
+      }
+
+      // Identify strengths
+      if (analysis.uniquenessAnalysis && analysis.uniquenessAnalysis.overallUniquenessScore > 80) {
+        summary.strengths.push('High content uniqueness');
+      }
+      if (analysis.originalityScore > 85) {
+        summary.strengths.push('Excellent originality score');
+      }
+
+      // Top issues
+      if (analysis.originalityScore < 60) {
+        summary.topIssues.push('Low content originality score');
+      }
+      if (analysis.duplicateDetection && analysis.duplicateDetection.duplicateCount > 0) {
+        summary.topIssues.push('Duplicate content detected');
+      }
+
+    } catch (error) {
+      this.log(`Summary generation error: ${error.message}`, 'warn');
+    }
+
+    return summary;
+  }
+
+  /**
+   * Analyze content intelligence metrics
+   * @param {Object} analysis - Complete content intelligence analysis
+   * @returns {Object} Content intelligence metrics
+   * @private
+   */
+  _analyzeContentIntelligenceMetrics(analysis) {
+    return {
+      totalAnalysisAreas: Object.keys(analysis).filter(key => 
+        analysis[key] && typeof analysis[key] === 'object' && key !== 'summary' && key !== 'metrics'
+      ).length,
+      contentProcessed: analysis.contentLength > 0,
+      fingerprintGenerated: !!analysis.contentFingerprint,
+      duplicateDetectionEnabled: !!analysis.duplicateDetection,
+      similarityAnalysisEnabled: !!analysis.similarityAnalysis,
+      plagiarismDetectionEnabled: !!analysis.plagiarismRisk,
+      analysisDepth: analysis.originalityScore > 0 ? 'comprehensive' : 'limited',
+      contentIntelligenceLevel: this._getIntelligenceLevel(analysis.originalityScore)
+    };
+  }
+
+  /**
+   * Get uniqueness level from score
+   * @param {number} score - Originality score
+   * @returns {string} Uniqueness level
+   * @private
+   */
+  _getUniquenessLevel(score) {
+    if (score >= 90) return 'excellent';
+    if (score >= 75) return 'good';
+    if (score >= 60) return 'fair';
+    if (score >= 40) return 'poor';
+    return 'very-poor';
+  }
+
+  /**
+   * Get quality grade from score
+   * @param {number} score - Originality score
+   * @returns {string} Quality grade
+   * @private
+   */
+  _getQualityGrade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'B+';
+    if (score >= 75) return 'B';
+    if (score >= 70) return 'C+';
+    if (score >= 65) return 'C';
+    if (score >= 60) return 'D+';
+    if (score >= 55) return 'D';
+    return 'F';
+  }
+
+  /**
+   * Get intelligence level from score
+   * @param {number} score - Originality score
+   * @returns {string} Intelligence level
+   * @private
+   */
+  _getIntelligenceLevel(score) {
+    if (score >= 85) return 'advanced';
+    if (score >= 70) return 'intermediate';
+    if (score >= 50) return 'basic';
+    return 'minimal';
   }
 
   _analyzeContentPatterns(text) {

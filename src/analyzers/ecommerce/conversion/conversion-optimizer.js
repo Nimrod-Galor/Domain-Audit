@@ -3,19 +3,22 @@
  * Analyzes and optimizes e-commerce conversion factors
  */
 
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
 /**
  * Conversion Optimizer
  * Analyzes conversion factors and provides optimization recommendations
  */
-export class ConversionOptimizer {
+export class ConversionOptimizer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = {
+    super('ConversionOptimizer', {
       enableAdvancedAnalysis: options.enableAdvancedAnalysis !== false,
       analyzeUserExperience: options.analyzeUserExperience !== false,
       checkMobileOptimization: options.checkMobileOptimization !== false,
       analyzeTrustSignals: options.analyzeTrustSignals !== false,
       ...options
-    };
+    });
 
     // Conversion factor weights for scoring
     this.conversionFactors = {
@@ -72,13 +75,98 @@ export class ConversionOptimizer {
   }
 
   /**
-   * Analyze conversion optimization factors
+   * Main analysis method for BaseAnalyzer compliance
+   * @param {Object} context - Analysis context containing DOM and metadata
+   * @returns {Promise<Object>} Analysis results
+   */
+  async analyze(context) {
+    return this.measureTime(async () => {
+      try {
+        this.log('Starting conversion optimization analysis', 'info');
+        
+        const { dom, url = '', pageData = {} } = context;
+        
+        if (!dom) {
+          throw new Error('DOM context is required for conversion analysis');
+        }
+
+        // Perform conversion analysis synchronously but wrapped in async function
+        const analysis = {
+          overallScore: 0,
+          factors: {
+            trustSignals: this._analyzeTrustSignals(dom, url),
+            userExperience: this._analyzeUserExperience(dom),
+            productPresentation: this._analyzeProductPresentation(dom),
+            checkoutProcess: this._analyzeCheckoutProcess(dom),
+            socialProof: this._analyzeSocialProof(dom),
+            mobileOptimization: this._analyzeMobileOptimization(dom),
+            loadingSpeed: this._analyzeLoadingSpeed(dom, pageData)
+          },
+          recommendations: [],
+          optimizationOpportunities: [],
+          competitiveAdvantages: [],
+          metadata: {
+            analysisMethod: 'comprehensive',
+            timestamp: new Date().toISOString(),
+            url: url
+          }
+        };
+
+        // Calculate overall score
+        analysis.overallScore = this._calculateOverallScore(analysis.factors);
+
+        // Generate recommendations
+        analysis.recommendations = this._generateRecommendations(analysis.factors);
+
+        // Identify optimization opportunities
+        analysis.optimizationOpportunities = this._identifyOptimizationOpportunities(analysis.factors);
+
+        // Identify competitive advantages
+        analysis.competitiveAdvantages = this._identifyCompetitiveAdvantages(analysis.factors);
+        
+        const result = {
+          data: analysis,
+          summary: this._generateConversionSummary(analysis),
+          metrics: this._generateConversionMetrics(analysis),
+          recommendations: analysis.recommendations || [],
+          score: analysis.overallScore || 0,
+          metadata: {
+            ...analysis.metadata,
+            analyzer: 'ConversionOptimizer',
+            version: '1.0.0',
+            category: 'ECOMMERCE'
+          }
+        };
+
+        this.log(`Conversion analysis completed with score: ${result.score}/100`, 'info');
+        return result;
+
+      } catch (error) {
+        return this.handleError(error, 'Conversion optimization analysis failed');
+      }
+    });
+  }
+
+  /**
+   * Core conversion analysis method (legacy method maintained for compatibility)
    * @param {Object} dom - Cheerio DOM object
    * @param {Object} pageData - Additional page data
    * @param {string} url - Page URL
    * @returns {Object} Conversion analysis results
    */
   analyzeConversion(dom, pageData = {}, url = '') {
+    return this._analyzeConversionFactors(dom, pageData, url);
+  }
+
+  /**
+   * Internal conversion analysis implementation
+   * @param {Object} dom - Cheerio DOM object
+   * @param {Object} pageData - Additional page data
+   * @param {string} url - Page URL
+   * @returns {Object} Conversion analysis results
+   * @private
+   */
+  _analyzeConversionFactors(dom, pageData = {}, url = '') {
     try {
       const analysis = {
         overallScore: 0,
@@ -684,5 +772,167 @@ export class ConversionOptimizer {
     }
 
     return advantages;
+  }
+
+  /**
+   * Generate conversion summary
+   * @param {Object} analysis - Conversion analysis results
+   * @returns {Object} Conversion summary
+   * @private
+   */
+  _generateConversionSummary(analysis) {
+    const score = analysis.overallScore || 0;
+    const grade = this._getConversionGrade(score);
+    const status = this._getConversionStatus(score);
+    
+    return {
+      overallScore: score,
+      grade,
+      status,
+      totalFactors: Object.keys(analysis.factors || {}).length,
+      optimizationOpportunities: analysis.optimizationOpportunities?.length || 0,
+      competitiveAdvantages: analysis.competitiveAdvantages?.length || 0,
+      trustSignalsScore: analysis.factors?.trustSignals?.score || 0,
+      userExperienceScore: analysis.factors?.userExperience?.score || 0,
+      mobileOptimizationScore: analysis.factors?.mobileOptimization?.score || 0,
+      checkoutProcessScore: analysis.factors?.checkoutProcess?.score || 0,
+      socialProofScore: analysis.factors?.socialProof?.score || 0,
+      productPresentationScore: analysis.factors?.productPresentation?.score || 0,
+      loadingSpeedScore: analysis.factors?.loadingSpeed?.score || 0
+    };
+  }
+
+  /**
+   * Generate conversion metrics
+   * @param {Object} analysis - Conversion analysis results
+   * @returns {Object} Conversion metrics
+   * @private
+   */
+  _generateConversionMetrics(analysis) {
+    const factors = analysis.factors || {};
+    
+    const metrics = {
+      conversionFactorScores: {},
+      trustMetrics: {
+        signalsDetected: factors.trustSignals?.signals?.length || 0,
+        signalsMissing: factors.trustSignals?.missing?.length || 0,
+        securityBadges: factors.trustSignals?.details?.securityBadges || 0,
+        contactInfo: factors.trustSignals?.details?.contactInfo || 0
+      },
+      uxMetrics: {
+        featuresDetected: factors.userExperience?.features?.length || 0,
+        featuresMissing: factors.userExperience?.missing?.length || 0,
+        searchBoxes: factors.userExperience?.details?.searchBox || 0,
+        navigationMenus: factors.userExperience?.details?.navigationMenu || 0,
+        addToCartButtons: factors.userExperience?.details?.addToCartButtons || 0
+      },
+      productMetrics: {
+        strengthsCount: factors.productPresentation?.strengths?.length || 0,
+        weaknessesCount: factors.productPresentation?.weaknesses?.length || 0,
+        productImages: factors.productPresentation?.details?.productImages || 0,
+        priceElements: factors.productPresentation?.details?.priceElements || 0,
+        reviewElements: factors.productPresentation?.details?.productReviews || 0
+      },
+      checkoutMetrics: {
+        featuresDetected: factors.checkoutProcess?.features?.length || 0,
+        issuesFound: factors.checkoutProcess?.issues?.length || 0,
+        cartAccessibility: factors.checkoutProcess?.details?.cartIcon || 0,
+        checkoutButtons: factors.checkoutProcess?.details?.checkoutButton || 0
+      },
+      socialProofMetrics: {
+        elementsDetected: factors.socialProof?.elements?.length || 0,
+        elementsMissing: factors.socialProof?.missing?.length || 0,
+        reviewStars: factors.socialProof?.details?.reviewStars || 0,
+        socialButtons: factors.socialProof?.details?.socialButtons || 0
+      },
+      mobileMetrics: {
+        featuresDetected: factors.mobileOptimization?.features?.length || 0,
+        issuesFound: factors.mobileOptimization?.issues?.length || 0,
+        touchTargets: factors.mobileOptimization?.details?.touchTargets || 0,
+        mobileFriendlyForms: factors.mobileOptimization?.details?.mobileFriendlyForms || 0
+      },
+      performanceMetrics: {
+        loadingSpeedFactors: factors.loadingSpeed?.factors?.length || 0,
+        optimizationNeeded: factors.loadingSpeed?.optimizations?.length || 0,
+        imageCount: factors.loadingSpeed?.details?.imageCount || 0,
+        scriptCount: factors.loadingSpeed?.details?.scriptCount || 0
+      }
+    };
+
+    // Calculate factor scores
+    Object.keys(factors).forEach(factorName => {
+      if (factors[factorName] && typeof factors[factorName].score === 'number') {
+        metrics.conversionFactorScores[factorName] = factors[factorName].score;
+      }
+    });
+
+    return metrics;
+  }
+
+  /**
+   * Get conversion grade from score
+   * @param {number} score - Conversion score
+   * @returns {string} Grade letter
+   * @private
+   */
+  _getConversionGrade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 40) return 'D';
+    return 'F';
+  }
+
+  /**
+   * Get conversion status from score
+   * @param {number} score - Conversion score
+   * @returns {string} Status description
+   * @private
+   */
+  _getConversionStatus(score) {
+    if (score >= 85) return 'Excellent conversion optimization';
+    if (score >= 75) return 'Good conversion potential';
+    if (score >= 65) return 'Moderate conversion optimization';
+    if (score >= 50) return 'Needs conversion improvements';
+    return 'Critical conversion issues';
+  }
+
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'ConversionOptimizer',
+      version: '1.0.0',
+      category: 'ECOMMERCE',
+      description: 'Comprehensive e-commerce conversion factor analysis with optimization recommendations',
+      features: [
+        'Trust signals analysis',
+        'User experience evaluation',
+        'Product presentation assessment',
+        'Checkout process optimization',
+        'Social proof detection',
+        'Mobile optimization analysis',
+        'Loading speed assessment',
+        'Conversion factor scoring',
+        'Optimization recommendations',
+        'Competitive advantage identification'
+      ],
+      supportedContexts: ['dom', 'url', 'pageData'],
+      outputFormat: {
+        score: 'number',
+        data: 'object',
+        summary: 'object',
+        metrics: 'object',
+        recommendations: 'array'
+      }
+    };
   }
 }

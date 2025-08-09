@@ -1,11 +1,32 @@
 /**
  * Enhanced Open Graph Analyzer
- * Comprehensive analysis of Open Graph meta tags
+ * Comprehensive analysis of Open Graph meta tags with BaseAnalyzer integration
+ * 
+ * @extends BaseAnalyzer
+ * @version 1.0.0
+ * @author Nimrod Galor
+ * @date 2025-08-08
  */
 
-export class OpenGraphAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+
+export class OpenGraphAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.options = options;
+    super('OpenGraphAnalyzer', {
+      enableBasicValidation: options.enableBasicValidation !== false,
+      enableExtendedAnalysis: options.enableExtendedAnalysis !== false,
+      enableImageValidation: options.enableImageValidation !== false,
+      enableOptimizationAnalysis: options.enableOptimizationAnalysis !== false,
+      strictValidation: options.strictValidation || false,
+      validateImageDimensions: options.validateImageDimensions !== false,
+      includeRecommendations: options.includeRecommendations !== false,
+      ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.CONTENT;
+    
     this.requiredTags = ['og:title', 'og:description', 'og:image', 'og:url'];
     this.recommendedTags = ['og:type', 'og:site_name', 'og:locale'];
     this.imageDimensions = {
@@ -14,22 +35,157 @@ export class OpenGraphAnalyzer {
     };
   }
 
-  async analyze(document, url) {
-    const basic = this._analyzeBasicOG(document);
-    const extended = this._analyzeExtendedOG(document);
-    const validation = this._validateOGTags(document);
-    const optimization = this._checkOptimization(document, url);
-
-    const score = this._calculateOGScore(basic, extended, validation);
-
+  /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
     return {
-      basic,
-      extended,
-      validation,
-      optimization,
-      score,
-      recommendations: this._generateOGRecommendations(validation, optimization),
+      name: 'OpenGraphAnalyzer',
+      version: '1.0.0',
+      description: 'Comprehensive Open Graph meta tag analysis for social media optimization',
+      category: AnalyzerCategories.CONTENT,
+      priority: 'high',
+      capabilities: [
+        'open_graph_validation',
+        'meta_tag_analysis',
+        'image_optimization_analysis',
+        'social_sharing_optimization',
+        'og_completeness_scoring',
+        'recommendation_generation',
+        'tag_validation'
+      ]
     };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    try {
+      if (!context || typeof context !== 'object') {
+        return false;
+      }
+
+      const { document } = context;
+      if (!document || !document.querySelector) {
+        this.log('Open Graph analysis requires a valid DOM document', 'warn');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.handleError('Error validating Open Graph analysis context', error);
+      return false;
+    }
+  }
+
+  /**
+   * Perform comprehensive Open Graph analysis with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} Open Graph analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      this.log('Starting Open Graph analysis', 'info');
+
+      // Validate context
+      if (!this.validate(context)) {
+        return this.handleError('Invalid context for Open Graph analysis', new Error('Context validation failed'), {
+          hasOpenGraph: false,
+          score: 0,
+          grade: 'F'
+        });
+      }
+
+      const { document, url = '', pageData = {} } = context;
+
+      // Perform Open Graph analysis
+      const ogData = await this._performOpenGraphAnalysis(document, url);
+      
+      // Calculate comprehensive score
+      const score = this._calculateComprehensiveScore(ogData);
+      const grade = this._getGradeFromScore(score);
+      
+      // Generate recommendations
+      const recommendations = this._generateOpenGraphRecommendations(ogData);
+      
+      // Generate summary
+      const summary = this._generateOpenGraphSummary(ogData, score);
+
+      const result = {
+        success: true,
+        data: {
+          ...ogData,
+          score,
+          grade,
+          recommendations,
+          summary,
+          metadata: this.getMetadata()
+        },
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      };
+
+      this.log(`Open Graph analysis completed in ${result.executionTime}ms with score ${score}`, 'info');
+      return result;
+
+    } catch (error) {
+      return this.handleError('Open Graph analysis failed', error, {
+        hasOpenGraph: false,
+        score: 0,
+        grade: 'F',
+        summary: 'Open Graph analysis encountered an error'
+      });
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
+   * @param {Document} document - DOM document
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} Open Graph analysis results
+   */
+  async analyzeOpenGraph(document, url) {
+    console.warn('analyzeOpenGraph() is deprecated. Use analyze() method instead.');
+    return this._performOpenGraphAnalysis(document, url);
+  }
+
+  /**
+   * Internal method to perform Open Graph analysis
+   * @param {Document} document - DOM document
+   * @param {string} url - Page URL
+   * @returns {Promise<Object>} Open Graph analysis results
+   */
+  async _performOpenGraphAnalysis(document, url) {
+    try {
+      this.log('Analyzing Open Graph tags', 'info');
+      
+      const basic = this._analyzeBasicOG(document);
+      const extended = this._analyzeExtendedOG(document);
+      const validation = this._validateOGTags(document);
+      const optimization = this._checkOptimization(document, url);
+
+      const score = this._calculateOGScore(basic, extended, validation);
+
+      return {
+        basic,
+        extended,
+        validation,
+        optimization,
+        score,
+        recommendations: this._generateOGRecommendations(validation, optimization),
+        hasOpenGraph: Object.keys(basic.tags).some(tag => basic.tags[tag] !== null),
+        completeness: basic.completeness
+      };
+    } catch (error) {
+      throw new Error(`Open Graph analysis failed: ${error.message}`);
+    }
   }
 
   _analyzeBasicOG(document) {
@@ -364,5 +520,207 @@ export class OpenGraphAnalyzer {
     } catch {
       return false;
     }
+  }
+
+  // BaseAnalyzer integration helper methods
+
+  /**
+   * Calculate comprehensive Open Graph score for BaseAnalyzer integration
+   */
+  _calculateComprehensiveScore(ogData) {
+    try {
+      if (!ogData || !ogData.hasOpenGraph) {
+        return 0; // No Open Graph tags = 0 score
+      }
+
+      if (ogData.score !== undefined) {
+        return Math.round(ogData.score);
+      }
+
+      // Fallback calculation if score not available
+      let score = ogData.completeness || 0;
+
+      // Bonus for extended features
+      if (ogData.extended && ogData.extended.hasExtended) {
+        score += 10;
+      }
+
+      // Penalty for validation errors
+      if (ogData.validation && ogData.validation.errors) {
+        score -= ogData.validation.errors.length * 10;
+      }
+
+      // Minor penalty for warnings
+      if (ogData.validation && ogData.validation.warnings) {
+        score -= ogData.validation.warnings.length * 5;
+      }
+
+      return Math.max(0, Math.min(100, Math.round(score)));
+    } catch (error) {
+      this.handleError('Error calculating comprehensive Open Graph score', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get grade from score
+   */
+  _getGradeFromScore(score) {
+    try {
+      if (score >= 90) return 'A+';
+      if (score >= 85) return 'A';
+      if (score >= 80) return 'A-';
+      if (score >= 75) return 'B+';
+      if (score >= 70) return 'B';
+      if (score >= 65) return 'B-';
+      if (score >= 60) return 'C+';
+      if (score >= 55) return 'C';
+      if (score >= 50) return 'C-';
+      if (score >= 40) return 'D';
+      return 'F';
+    } catch (error) {
+      this.handleError('Error calculating Open Graph grade', error);
+      return 'F';
+    }
+  }
+
+  /**
+   * Generate Open Graph recommendations
+   */
+  _generateOpenGraphRecommendations(ogData) {
+    try {
+      const recommendations = [];
+
+      if (!ogData.hasOpenGraph) {
+        recommendations.push({
+          type: 'critical',
+          title: 'Add Open Graph Tags',
+          description: 'Implement basic Open Graph meta tags for social media sharing',
+          priority: 'high',
+          impact: 'High - Essential for social media optimization'
+        });
+        return recommendations;
+      }
+
+      // Required tag recommendations
+      const missingRequired = this.requiredTags.filter(tag => 
+        !ogData.basic || !ogData.basic.tags || !ogData.basic.tags[tag]
+      );
+
+      missingRequired.forEach(tag => {
+        recommendations.push({
+          type: 'required',
+          title: `Add Required ${tag} Tag`,
+          description: `Implement ${tag} meta tag for complete Open Graph support`,
+          priority: 'high',
+          impact: 'High - Required for proper social sharing'
+        });
+      });
+
+      // Validation error recommendations
+      if (ogData.validation && ogData.validation.errors && ogData.validation.errors.length > 0) {
+        recommendations.push({
+          type: 'validation',
+          title: 'Fix Open Graph Validation Errors',
+          description: `${ogData.validation.errors.length} validation error(s) detected`,
+          priority: 'high',
+          impact: 'High - Prevents proper social media parsing'
+        });
+      }
+
+      // Optimization recommendations
+      if (ogData.optimization) {
+        Object.values(ogData.optimization).forEach(opt => {
+          if (opt && opt.recommendations && Array.isArray(opt.recommendations)) {
+            opt.recommendations.forEach(rec => {
+              recommendations.push({
+                type: 'optimization',
+                title: 'Optimize Open Graph Content',
+                description: rec,
+                priority: 'medium',
+                impact: 'Medium - Improves social sharing quality'
+              });
+            });
+          }
+        });
+      }
+
+      // Warning recommendations
+      if (ogData.validation && ogData.validation.warnings && ogData.validation.warnings.length > 0) {
+        recommendations.push({
+          type: 'warning',
+          title: 'Address Open Graph Warnings',
+          description: `${ogData.validation.warnings.length} warning(s) detected`,
+          priority: 'low',
+          impact: 'Low - Minor improvements for better compliance'
+        });
+      }
+
+      return recommendations.slice(0, 8); // Limit to top 8 recommendations
+    } catch (error) {
+      this.handleError('Error generating Open Graph recommendations', error);
+      return [];
+    }
+  }
+
+  /**
+   * Generate Open Graph summary
+   */
+  _generateOpenGraphSummary(ogData, score) {
+    try {
+      const grade = this._getGradeFromScore(score);
+      
+      if (!ogData.hasOpenGraph) {
+        return 'No Open Graph meta tags detected. Implementing Open Graph tags is essential for social media optimization.';
+      }
+
+      let summary = `Open Graph analysis completed with ${grade} grade (${score}/100 score). `;
+      
+      // Add completeness information
+      if (ogData.completeness !== undefined) {
+        summary += `Tag completeness: ${ogData.completeness}%. `;
+      }
+
+      // Add required tags status
+      const requiredCount = this.requiredTags.filter(tag => 
+        ogData.basic && ogData.basic.tags && ogData.basic.tags[tag]
+      ).length;
+      summary += `Required tags: ${requiredCount}/${this.requiredTags.length} implemented. `;
+
+      // Add validation status
+      let issueCount = 0;
+      if (ogData.validation) {
+        issueCount = (ogData.validation.errors ? ogData.validation.errors.length : 0) + 
+                    (ogData.validation.warnings ? ogData.validation.warnings.length : 0);
+      }
+
+      if (issueCount === 0) {
+        summary += 'No validation issues detected.';
+      } else {
+        summary += `${issueCount} validation issue${issueCount > 1 ? 's' : ''} requiring attention.`;
+      }
+
+      return summary;
+    } catch (error) {
+      this.handleError('Error generating Open Graph summary', error);
+      return 'Open Graph analysis completed with errors.';
+    }
+  }
+
+  /**
+   * Create error result for consistency
+   */
+  createErrorResult(message) {
+    return {
+      success: false,
+      error: message,
+      data: {
+        hasOpenGraph: false,
+        score: 0,
+        grade: 'F',
+        summary: `Open Graph analysis failed: ${message}`,
+        metadata: this.getMetadata()
+      }
+    };
   }
 }

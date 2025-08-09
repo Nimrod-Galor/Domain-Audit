@@ -15,8 +15,12 @@
  * @version 1.0.0
  */
 
-export class AboutPageAnalyzer {
+import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../../core/AnalyzerCategories.js';
+
+export class AboutPageAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
+    super('AboutPageAnalyzer');
     this.options = {
       enableStoryAnalysis: options.enableStoryAnalysis !== false,
       enableTeamAnalysis: options.enableTeamAnalysis !== false,
@@ -59,41 +63,88 @@ export class AboutPageAnalyzer {
   }
 
   /**
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: this.name,
+      category: AnalyzerCategories.BUSINESS,
+      description: 'Analyzes about page content quality and structure including company story, team information, mission, and credibility indicators',
+      version: '1.0.0',
+      author: 'Nimrod Galor',
+      priority: 'high',
+      type: 'business-intelligence',
+      capabilities: [
+        'about-page-detection',
+        'company-story-analysis',
+        'team-information-analysis',
+        'mission-vision-analysis',
+        'credibility-indicators-analysis',
+        'content-quality-assessment'
+      ],
+      metrics: [
+        'about_page_presence',
+        'story_completeness_score',
+        'team_info_score',
+        'mission_clarity_score',
+        'credibility_score',
+        'content_quality_score',
+        'overall_about_score'
+      ],
+      dependencies: ['cheerio'],
+      performanceImpact: 'medium'
+    };
+  }
+
+  /**
+   * Validate input parameters
+   * @param {Document} document - The DOM document
+   * @param {string} url - The page URL
+   * @returns {boolean} True if inputs are valid
+   */
+  validate(document, url) {
+    if (!document) {
+      this.handleError('Document is required for about page analysis');
+      return false;
+    }
+
+    if (!url || typeof url !== 'string') {
+      this.handleError('Valid URL is required for about page analysis');
+      return false;
+    }
+
+    try {
+      new URL(url);
+    } catch (error) {
+      this.handleError(`Invalid URL format: ${url}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Analyze about page content and quality
    * @param {Document} document - DOM document
    * @param {string} url - Page URL
    * @returns {Object} About page analysis results
    */
-  analyze(document, url) {
-    const aboutPagePresence = this._findAboutPage(document);
-    const aboutContent = this._analyzeAboutContent(document);
-    const teamInformation = this._analyzeTeamInformation(document);
-    const companyStory = this._analyzeCompanyStory(document);
-    const missionVision = this._analyzeMissionVision(document);
-    const credibilityIndicators = this._analyzeCredibilityIndicators(document);
-    const contentQuality = this._analyzeContentQuality(document);
+  async analyze(document, url) {
+    if (!this.validate(document, url)) {
+      return this.createErrorResult('Validation failed for about page analysis');
+    }
 
-    const score = this._calculateAboutScore({
-      aboutPagePresence,
-      aboutContent,
-      teamInformation,
-      companyStory,
-      missionVision,
-      credibilityIndicators,
-      contentQuality,
-    });
+    try {
+      const aboutPagePresence = this._findAboutPage(document);
+      const aboutContent = this._analyzeAboutContent(document);
+      const teamInformation = this._analyzeTeamInformation(document);
+      const companyStory = this._analyzeCompanyStory(document);
+      const missionVision = this._analyzeMissionVision(document);
+      const credibilityIndicators = this._analyzeCredibilityIndicators(document);
+      const contentQuality = this._analyzeContentQuality(document);
 
-    return {
-      aboutPagePresence,
-      aboutContent,
-      teamInformation,
-      companyStory,
-      missionVision,
-      credibilityIndicators,
-      contentQuality,
-      score,
-      grade: this._assignGrade(score),
-      strengths: this._identifyAboutStrengths({
+      const analysis = {
         aboutPagePresence,
         aboutContent,
         teamInformation,
@@ -101,17 +152,32 @@ export class AboutPageAnalyzer {
         missionVision,
         credibilityIndicators,
         contentQuality,
-      }),
-      recommendations: this._generateAboutRecommendations({
-        aboutPagePresence,
-        aboutContent,
-        teamInformation,
-        companyStory,
-        missionVision,
-        credibilityIndicators,
-        contentQuality,
-      }),
-    };
+      };
+
+      const score = this._calculateAboutScore(analysis);
+      const performance = performance.now() - startTime;
+
+      const result = {
+        ...analysis,
+        score,
+        grade: this._assignGrade(score),
+        strengths: this._identifyAboutStrengths(analysis),
+        recommendations: this._generateAboutRecommendations(analysis),
+        summary: this._generateExecutiveSummary(analysis, score),
+        metadata: {
+          ...this.getMetadata(),
+          analysisDate: new Date().toISOString(),
+          performanceMs: Math.round(performance),
+          url: url
+        }
+      };
+
+      return result;
+
+    } catch (error) {
+      this.handleError(`About page analysis failed: ${error.message}`);
+      return this.createErrorResult('About page analysis failed');
+    }
   }
 
   /**
@@ -796,5 +862,88 @@ export class AboutPageAnalyzer {
     }
     
     return recommendations;
+  }
+
+  /**
+   * Generate executive summary
+   * @param {Object} analysis - Analysis results
+   * @param {number} score - Overall score
+   * @returns {string} Executive summary
+   */
+  _generateExecutiveSummary(analysis, score) {
+    const grade = this._assignGrade(score);
+    
+    let summary = `About Page Analysis (Grade: ${grade}, Score: ${score}/100)\n\n`;
+    
+    summary += `Overall Assessment: `;
+    if (score >= 80) {
+      summary += `Excellent about page content with comprehensive company information and strong credibility indicators. `;
+    } else if (score >= 60) {
+      summary += `Good about page foundation with room for improvement in storytelling and team presentation. `;
+    } else if (score >= 40) {
+      summary += `Basic about page present but lacking depth and credibility elements. `;
+    } else {
+      summary += `Limited or missing about page content, requires significant development. `;
+    }
+    
+    // About page presence
+    if (analysis.aboutPagePresence.hasAboutPage) {
+      summary += `Dedicated about page found with ${analysis.aboutPagePresence.sections.length} relevant sections. `;
+    } else {
+      summary += `No dedicated about page detected. `;
+    }
+    
+    // Company story summary
+    if (analysis.companyStory.hasStory) {
+      summary += `Company story present with ${Math.round(analysis.companyStory.storyQuality * 100)}% quality score. `;
+    } else {
+      summary += `Company story not found or underdeveloped. `;
+    }
+    
+    // Team information summary
+    if (analysis.teamInformation.hasTeamSection) {
+      summary += `Team information includes ${analysis.teamInformation.teamMembers.length} member(s) with ${Math.round(analysis.teamInformation.averageCompleteness * 100)}% profile completeness. `;
+    } else {
+      summary += `No team information or member profiles found. `;
+    }
+    
+    // Mission/vision summary
+    if (analysis.missionVision.hasMissionStatement) {
+      summary += `Mission statement present. `;
+      if (analysis.missionVision.hasVisionStatement) {
+        summary += `Vision statement also included. `;
+      }
+    } else {
+      summary += `Mission and vision statements not clearly defined. `;
+    }
+    
+    // Credibility indicators summary
+    if (analysis.credibilityIndicators.indicators.length > 0) {
+      summary += `${analysis.credibilityIndicators.indicators.length} credibility indicator(s) found including ${analysis.credibilityIndicators.indicators.slice(0, 3).map(i => i.type).join(', ')}. `;
+    } else {
+      summary += `No credibility indicators detected. `;
+    }
+    
+    return summary.trim();
+  }
+
+  /**
+   * Assign letter grade based on score
+   * @param {number} score - Numerical score
+   * @returns {string} Letter grade
+   */
+  _assignGrade(score) {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 45) return 'D+';
+    if (score >= 40) return 'D';
+    return 'F';
   }
 }

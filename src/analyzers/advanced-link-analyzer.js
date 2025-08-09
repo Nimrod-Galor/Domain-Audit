@@ -1,13 +1,17 @@
 /**
- * Advanced Link Analysis - Anchor Text and Context Analyzer
- * Analyzes anchor text patterns, distribution, context, and SEO implications
+ * Enhanced Advanced Link Analysis - Anchor Text and Context Analyzer
+ * Comprehensive analysis of anchor text patterns, distribution, context, and SEO implications with BaseAnalyzer integration
  * 
- * @fileoverview Comprehensive link analysis for SEO and content optimization
+ * @fileoverview Advanced link analysis for SEO and content optimization with professional scoring
+ * @extends BaseAnalyzer
  * @version 1.0.0
  * @author Nimrod Galor
  * @AI assistant Claude Sonnet 4
- * @date 2025-08-02
+ * @date 2025-08-09
  */
+
+import { BaseAnalyzer } from './core/BaseAnalyzer.js';
+import { AnalyzerCategories } from './core/AnalyzerInterface.js';
 
 /**
  * Anchor text analysis configuration and patterns
@@ -79,32 +83,173 @@ export const ANCHOR_TEXT_CONFIG = {
 };
 
 /**
- * Advanced Link Analyzer Class
+ * Enhanced Advanced Link Analyzer Class with BaseAnalyzer Integration
  */
-export class AdvancedLinkAnalyzer {
+export class AdvancedLinkAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
-    this.config = {
+    super('AdvancedLinkAnalyzer', {
       enableAnchorTextAnalysis: options.enableAnchorTextAnalysis !== false,
       enableLinkContext: options.enableLinkContext !== false,
       enableDepthAnalysis: options.enableDepthAnalysis !== false,
       enableOrphanDetection: options.enableOrphanDetection !== false,
-      siteUrl: options.siteUrl || '',
-      brandTerms: options.brandTerms || [],
-      targetKeywords: options.targetKeywords || [],
+      enableInternalLinkAnalysis: options.enableInternalLinkAnalysis !== false,
+      enableExternalLinkAnalysis: options.enableExternalLinkAnalysis !== false,
+      strictValidation: options.strictValidation || false,
+      includeRecommendations: options.includeRecommendations !== false,
       ...options
+    });
+
+    this.version = '1.0.0';
+    this.category = AnalyzerCategories.LINKS;
+    
+    this.config = {
+      enableAnchorTextAnalysis: this.options.enableAnchorTextAnalysis,
+      enableLinkContext: this.options.enableLinkContext,
+      enableDepthAnalysis: this.options.enableDepthAnalysis,
+      enableOrphanDetection: this.options.enableOrphanDetection,
+      enableInternalLinkAnalysis: this.options.enableInternalLinkAnalysis,
+      enableExternalLinkAnalysis: this.options.enableExternalLinkAnalysis,
+      siteUrl: this.options.siteUrl || '',
+      brandTerms: this.options.brandTerms || [],
+      targetKeywords: this.options.targetKeywords || []
     };
   }
 
   /**
-   * Comprehensive link analysis including anchor text, context, and distribution
+   * Get analyzer metadata
+   * @returns {Object} Analyzer metadata
+   */
+  getMetadata() {
+    return {
+      name: 'AdvancedLinkAnalyzer',
+      version: '1.0.0',
+      description: 'Comprehensive anchor text analysis, link context evaluation, and SEO optimization',
+      category: AnalyzerCategories.LINKS,
+      priority: 'high',
+      capabilities: [
+        'anchor_text_analysis',
+        'link_context_evaluation',
+        'internal_link_optimization',
+        'external_link_validation',
+        'link_depth_analysis',
+        'orphan_page_detection',
+        'seo_link_quality_assessment',
+        'recommendation_generation'
+      ]
+    };
+  }
+
+  /**
+   * Validate analysis context
+   * @param {Object} context - Analysis context
+   * @returns {boolean} Whether context is valid
+   */
+  validate(context) {
+    try {
+      if (!context || typeof context !== 'object') {
+        return false;
+      }
+
+      const { dom, document } = context;
+      if ((!dom || !dom.window?.document) && (!document || !document.querySelector)) {
+        this.log('Advanced link analysis requires a valid DOM document', 'warn');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.handleError('Error validating advanced link analysis context', error);
+      return false;
+    }
+  }
+
+  /**
+   * Perform comprehensive advanced link analysis with BaseAnalyzer integration
+   * @param {Object} context - Analysis context containing DOM and page data
+   * @returns {Promise<Object>} Advanced link analysis results
+   */
+  async analyze(context) {
+    const startTime = Date.now();
+    
+    try {
+      this.log('Starting advanced link analysis', 'info');
+
+      // Validate context
+      if (!this.validate(context)) {
+        return this.handleError('Invalid context for advanced link analysis', new Error('Context validation failed'), {
+          hasAdvancedLinks: false,
+          score: 0,
+          grade: 'F'
+        });
+      }
+
+      const { dom, document, pageUrl = '', siteData = {} } = context;
+      const analysisDocument = document || dom.window.document;
+
+      // Perform advanced link analysis
+      const linkData = await this._performAdvancedLinkAnalysis(analysisDocument, pageUrl, siteData);
+      
+      // Calculate comprehensive score
+      const score = this._calculateComprehensiveScore(linkData);
+      const grade = this._getGradeFromScore ? this._getGradeFromScore(score) : this._calculateGrade(score);
+      
+      // Generate recommendations
+      const recommendations = this._generateAdvancedLinkRecommendations(linkData);
+      
+      // Generate summary
+      const summary = this._generateAdvancedLinkSummary(linkData, score);
+
+      const result = {
+        success: true,
+        data: {
+          ...linkData,
+          score,
+          grade,
+          recommendations,
+          summary,
+          metadata: this.getMetadata()
+        },
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      };
+
+      this.log(`Advanced link analysis completed in ${result.executionTime}ms with score ${score}`, 'info');
+      return result;
+
+    } catch (error) {
+      return this.handleError('Advanced link analysis failed', error, {
+        hasAdvancedLinks: false,
+        score: 0,
+        grade: 'F',
+        summary: 'Advanced link analysis encountered an error'
+      });
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use analyze() method instead
    * @param {Object} dom - JSDOM document object
    * @param {string} pageUrl - Current page URL
-   * @param {Object} siteData - Site-wide crawl data for depth/orphan analysis
-   * @returns {Object} Complete link analysis
+   * @param {Object} siteData - Site-wide crawl data
+   * @returns {Promise<Object>} Advanced link analysis results
    */
-  analyzeAdvancedLinks(dom, pageUrl = '', siteData = {}) {
+  async analyzeAdvancedLinks(dom, pageUrl = '', siteData = {}) {
+    console.warn('analyzeAdvancedLinks() is deprecated. Use analyze() method instead.');
+    const document = dom.window.document;
+    return this._performAdvancedLinkAnalysis(document, pageUrl, siteData);
+  }
+
+  /**
+   * Internal method to perform advanced link analysis
+   * @param {Document} document - DOM document
+   * @param {string} pageUrl - Current page URL
+   * @param {Object} siteData - Site-wide crawl data
+   * @returns {Promise<Object>} Advanced link analysis results
+   */
+  async _performAdvancedLinkAnalysis(document, pageUrl = '', siteData = {}) {
     try {
-      const document = dom.window.document;
+      this.log('Analyzing advanced link patterns and anchor text', 'info');
       
       const analysis = {
         // Anchor text analysis
@@ -969,5 +1114,283 @@ export class AdvancedLinkAnalyzer {
     }
     
     return recommendations;
+  }
+
+  // ============================================================================
+  // BaseAnalyzer Integration Helper Methods
+  // ============================================================================
+
+  /**
+   * Calculate comprehensive advanced link score
+   * @param {Object} linkData - Complete advanced link analysis data
+   * @returns {number} Score (0-100)
+   */
+  _calculateComprehensiveScore(linkData) {
+    const weights = {
+      anchorText: 0.3,
+      linkContext: 0.25,
+      internalLinks: 0.2,
+      externalLinks: 0.15,
+      siteArchitecture: 0.1
+    };
+    
+    // Anchor text score
+    let anchorScore = 100;
+    if (linkData.anchorTextAnalysis?.issues) {
+      linkData.anchorTextAnalysis.issues.forEach(issue => {
+        if (issue.severity === 'high') anchorScore -= 15;
+        else if (issue.severity === 'medium') anchorScore -= 8;
+        else if (issue.severity === 'low') anchorScore -= 3;
+      });
+    }
+    anchorScore = Math.max(0, anchorScore);
+    
+    // Link context score
+    let contextScore = 100;
+    if (linkData.linkContext?.contextIssues) {
+      contextScore = Math.max(0, 100 - (linkData.linkContext.contextIssues.length * 10));
+    }
+    
+    // Internal links score
+    let internalScore = 100;
+    if (linkData.internalLinks) {
+      const internalIssues = linkData.internalLinks.issues || [];
+      internalScore = Math.max(0, 100 - (internalIssues.length * 12));
+    }
+    
+    // External links score
+    let externalScore = 100;
+    if (linkData.externalLinks) {
+      const externalIssues = linkData.externalLinks.issues || [];
+      externalScore = Math.max(0, 100 - (externalIssues.length * 10));
+    }
+    
+    // Site architecture score
+    let architectureScore = 100;
+    if (linkData.depthAnalysis?.depth > 3) {
+      architectureScore -= (linkData.depthAnalysis.depth - 3) * 15;
+    }
+    architectureScore = Math.max(0, architectureScore);
+    
+    const totalScore = Math.round(
+      (anchorScore * weights.anchorText) +
+      (contextScore * weights.linkContext) +
+      (internalScore * weights.internalLinks) +
+      (externalScore * weights.externalLinks) +
+      (architectureScore * weights.siteArchitecture)
+    );
+    
+    return Math.min(100, Math.max(0, totalScore));
+  }
+
+  /**
+   * Generate comprehensive advanced link recommendations
+   * @param {Object} linkData - Complete advanced link analysis data
+   * @returns {Array} Array of recommendation objects
+   */
+  _generateAdvancedLinkRecommendations(linkData) {
+    const recommendations = [];
+    
+    // Anchor text recommendations
+    if (linkData.anchorTextAnalysis?.issues) {
+      linkData.anchorTextAnalysis.issues.forEach(issue => {
+        let category = 'optimization';
+        let impact = 'medium';
+        
+        if (issue.severity === 'high') {
+          category = 'critical';
+          impact = 'high';
+        } else if (issue.severity === 'low') {
+          impact = 'low';
+        }
+        
+        recommendations.push({
+          category,
+          title: `Fix Anchor Text Issue: ${issue.type}`,
+          description: issue.description || 'Optimize anchor text for better SEO performance',
+          impact,
+          implementation: 'Review and improve anchor text patterns for natural link distribution'
+        });
+      });
+    }
+    
+    // Link context recommendations
+    if (linkData.linkContext?.contextIssues?.length > 0) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Improve Link Context',
+        description: `Found ${linkData.linkContext.contextIssues.length} context issues affecting link quality`,
+        impact: 'medium',
+        implementation: 'Add descriptive context around links to improve user experience and SEO'
+      });
+    }
+    
+    // Internal linking recommendations
+    if (linkData.internalLinks?.issues?.length > 0) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Optimize Internal Linking',
+        description: `Found ${linkData.internalLinks.issues.length} internal linking issues`,
+        impact: 'high',
+        implementation: 'Improve internal link structure and distribution for better site navigation'
+      });
+    }
+    
+    // External link recommendations
+    if (linkData.externalLinks?.issues?.length > 0) {
+      recommendations.push({
+        category: 'optimization',
+        title: 'Review External Links',
+        description: `Found ${linkData.externalLinks.issues.length} external link issues`,
+        impact: 'medium',
+        implementation: 'Review external links for quality, relevance, and proper attributes'
+      });
+    }
+    
+    // Site architecture recommendations
+    if (linkData.depthAnalysis?.depth > 3) {
+      recommendations.push({
+        category: 'enhancement',
+        title: 'Improve Site Architecture',
+        description: `Page is ${linkData.depthAnalysis.depth} levels deep, affecting accessibility`,
+        impact: 'medium',
+        implementation: 'Add internal links from higher-level pages or simplify URL structure'
+      });
+    }
+    
+    // Orphan page recommendations
+    if (linkData.orphanDetection?.isOrphan) {
+      recommendations.push({
+        category: 'critical',
+        title: 'Fix Orphan Page',
+        description: 'Page has no incoming internal links, making it hard to discover',
+        impact: 'high',
+        implementation: 'Add internal links pointing to this page from relevant content'
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Generate advanced link analysis summary
+   * @param {Object} linkData - Complete advanced link analysis data
+   * @param {number} score - Overall score
+   * @returns {string} Analysis summary
+   */
+  _generateAdvancedLinkSummary(linkData, score) {
+    const totalLinks = (linkData.internalLinks?.links?.length || 0) + (linkData.externalLinks?.links?.length || 0);
+    const totalIssues = (linkData.anchorTextAnalysis?.issues?.length || 0) + 
+                       (linkData.linkContext?.contextIssues?.length || 0) +
+                       (linkData.internalLinks?.issues?.length || 0) +
+                       (linkData.externalLinks?.issues?.length || 0);
+    
+    if (totalIssues > 5) {
+      return `Advanced link analysis found ${totalIssues} issues across ${totalLinks} links that need immediate attention.`;
+    }
+    
+    if (linkData.orphanDetection?.isOrphan) {
+      return `Page is an orphan with no incoming internal links, significantly affecting discoverability and SEO.`;
+    }
+    
+    if (score >= 90) {
+      return `Excellent link optimization with ${totalLinks} links and minimal issues. Strong internal linking structure.`;
+    } else if (score >= 70) {
+      return `Good link structure with ${totalLinks} links but ${totalIssues} areas for improvement in anchor text and context.`;
+    } else if (score >= 50) {
+      return `Basic link setup with ${totalLinks} links. Focus on anchor text optimization and internal linking improvements.`;
+    } else {
+      return `Poor link optimization with ${totalIssues} critical issues. Comprehensive link strategy overhaul needed.`;
+    }
+  }
+
+  /**
+   * Calculate advanced link completeness percentage
+   * @param {Object} linkData - Advanced link analysis data
+   * @returns {Object} Completeness analysis
+   */
+  _calculateAdvancedLinkCompleteness(linkData) {
+    const factors = [
+      { name: 'Anchor Text Quality', weight: 25, present: linkData.anchorTextAnalysis?.issues?.length === 0 },
+      { name: 'Link Context', weight: 20, present: linkData.linkContext?.contextIssues?.length === 0 },
+      { name: 'Internal Links', weight: 20, present: (linkData.internalLinks?.links?.length || 0) > 0 },
+      { name: 'External Links', weight: 15, present: (linkData.externalLinks?.links?.length || 0) > 0 },
+      { name: 'Site Architecture', weight: 10, present: (linkData.depthAnalysis?.depth || 4) <= 3 },
+      { name: 'No Orphan Status', weight: 10, present: !linkData.orphanDetection?.isOrphan }
+    ];
+    
+    const totalWeight = factors.reduce((sum, factor) => sum + factor.weight, 0);
+    const achievedWeight = factors.reduce((sum, factor) => sum + (factor.present ? factor.weight : 0), 0);
+    
+    return {
+      percentage: Math.round((achievedWeight / totalWeight) * 100),
+      factors: factors,
+      achieved: achievedWeight,
+      total: totalWeight
+    };
+  }
+
+  /**
+   * Legacy advanced link recommendations method for backward compatibility
+   * @param {Object} analysis - Link analysis data
+   * @returns {Array} Array of recommendation objects
+   */
+  _generateAdvancedLinkRecommendationsLegacy(analysis) {
+    const recommendations = [];
+
+    // Convert new format to legacy format
+    if (analysis.anchorTextAnalysis?.issues) {
+      analysis.anchorTextAnalysis.issues.forEach(issue => {
+        recommendations.push({
+          type: 'anchor-text',
+          priority: issue.severity || 'medium',
+          title: `Anchor Text Issue: ${issue.type}`,
+          description: issue.description,
+          impact: 'seo-performance',
+        });
+      });
+    }
+
+    if (analysis.linkContext?.contextIssues?.length > 0) {
+      recommendations.push({
+        type: 'context',
+        priority: 'medium',
+        title: 'Improve Link Context',
+        description: 'Add descriptive context around links',
+        impact: 'user-experience',
+      });
+    }
+
+    if (analysis.internalLinks?.issues?.length > 0) {
+      recommendations.push({
+        type: 'internal-links',
+        priority: 'high',
+        title: 'Optimize Internal Linking',
+        description: 'Improve internal link structure and distribution',
+        impact: 'site-architecture',
+      });
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Calculate grade from score (fallback method)
+   * @param {number} score - Score (0-100)
+   * @returns {string} Grade letter
+   */
+  _calculateGrade(score) {
+    if (score >= 97) return 'A+';
+    if (score >= 93) return 'A';
+    if (score >= 90) return 'A-';
+    if (score >= 87) return 'B+';
+    if (score >= 83) return 'B';
+    if (score >= 80) return 'B-';
+    if (score >= 77) return 'C+';
+    if (score >= 73) return 'C';
+    if (score >= 70) return 'C-';
+    if (score >= 67) return 'D+';
+    if (score >= 60) return 'D';
+    return 'F';
   }
 }
