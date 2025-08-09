@@ -267,14 +267,38 @@ describe('CheckoutAnalyzer', () => {
   });
 
   describe('Legacy Method Compatibility', () => {
-    test('should support legacy analyzeCheckout method', () => {
-      expect(analyzer.analyzeCheckout).toBeDefined();
-      expect(typeof analyzer.analyzeCheckout).toBe('function');
+    test('should support analyze() method', async () => {
+      const context = {
+        document: mockDOM,
+        url: 'https://store.com/checkout',
+        pageData: {}
+      };
       
-      const result = analyzer.analyzeCheckout(mockDOM);
+      const result = await analyzer.analyze(context);
       expect(result).toBeDefined();
-      expect(result.hasCheckout).toBeDefined();
-      expect(result.score).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.hasCheckout).toBeDefined();
+      expect(result.data.score).toBeDefined();
+    });
+
+    test('should provide consistent results with analyze() method', async () => {
+      const context1 = {
+        document: mockDOM,
+        url: 'https://store.com/checkout',
+        pageData: {}
+      };
+      const context2 = {
+        document: mockDOM,
+        url: 'https://store.com/checkout',
+        pageData: {}
+      };
+      
+      const result1 = await analyzer.analyze(context1);
+      const result2 = await analyzer.analyze(context2);
+      
+      expect(result1.success).toBe(true);
+      expect(result2.success).toBe(true);
+      expect(result1.data.hasCheckout).toBe(result2.data.hasCheckout);
     });
   });
 

@@ -128,18 +128,6 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
   }
 
   /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async analyzeSocialMedia(dom, pageData, url) {
-    console.warn('analyzeSocialMedia() is deprecated. Use analyze() method instead.');
-    
-    // Handle JSDOM object
-    const document = dom.window ? dom.window.document : dom;
-    return this.analyze(document, pageData, url);
-  }
-
-  /**
    * Analyze all platforms
    */
   async _analyzePlatforms(document, url) {

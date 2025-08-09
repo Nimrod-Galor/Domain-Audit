@@ -90,34 +90,45 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
   });
 
   describe('Core Analysis Methods', () => {
-    test('analyzeSocialMedia should return complete analysis structure', async () => {
+    test('analyze should return complete analysis structure', async () => {
       const pageData = { title: 'Test Page', url: 'https://example.com' };
       const url = 'https://example.com';
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const context = {
+        document: mockDOM.window.document,
+        url: url,
+        pageData: pageData
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result).toHaveProperty('platforms');
-      expect(result).toHaveProperty('sharing');
-      expect(result).toHaveProperty('socialProof');
-      expect(result).toHaveProperty('images');
-      expect(result).toHaveProperty('optimizationScore');
-      expect(result).toHaveProperty('recommendations');
-      expect(result).toHaveProperty('analysisTime');
-      expect(result).toHaveProperty('timestamp');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('platforms');
+      expect(result.data).toHaveProperty('sharing');
+      expect(result.data).toHaveProperty('socialProof');
+      expect(result.data).toHaveProperty('images');
+      expect(result.data).toHaveProperty('optimizationScore');
+      expect(result.recommendations).toBeDefined();
+      expect(result.data.metadata).toHaveProperty('analysisTime');
+      expect(result.data.metadata).toHaveProperty('timestamp');
     });
 
-    test('analyzeSocialMedia should handle errors gracefully', async () => {
+    test('analyze should handle errors gracefully', async () => {
       const invalidDOM = null;
       const pageData = { title: 'Test Page', url: 'https://example.com' };
       const url = 'https://example.com';
 
-      const result = await analyzer.analyzeSocialMedia(invalidDOM, pageData, url);
+      const context = {
+        document: invalidDOM,
+        url: url,
+        pageData: pageData
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result).toHaveProperty('error');
-      expect(result.error).toContain('Social media analysis failed');
-      expect(result).toHaveProperty('analysisTime');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('failed');
+      expect(result.duration).toBeDefined();
     });
 
     test('_analyzePlatforms should analyze all platforms', async () => {
@@ -319,12 +330,17 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
       const pageData = { title: 'Empty Page', url: 'https://example.com' };
       const url = 'https://example.com';
 
-      const result = await analyzer.analyzeSocialMedia(emptyDOM, pageData, url);
+      const context = {
+        document: emptyDOM.window.document,
+        url: url,
+        pageData: pageData
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.error).toBeUndefined();
-      expect(result.optimizationScore).toBeDefined();
-      expect(typeof result.optimizationScore).toBe('number');
+      expect(result.success).toBe(true);
+      expect(result.data.optimizationScore).toBeDefined();
+      expect(typeof result.data.optimizationScore).toBe('number');
     });
 
     test('should handle malformed HTML gracefully', async () => {
@@ -333,49 +349,65 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
       const pageData = { title: 'Malformed Page', url: 'https://example.com' };
       const url = 'https://example.com';
 
-      const result = await analyzer.analyzeSocialMedia(malformedDOM, pageData, url);
+      const context = {
+        document: malformedDOM.window.document,
+        url: url,
+        pageData: pageData
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.error).toBeUndefined();
+      expect(result.success).toBe(true);
     });
 
     test('should handle missing platform analyzers gracefully', async () => {
       const brokenAnalyzer = new SocialMediaAnalyzer();
       brokenAnalyzer.platforms.openGraph = null;
 
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await brokenAnalyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await brokenAnalyzer.analyze(context);
 
       expect(result).toBeDefined();
       // Should either handle gracefully or return appropriate error
     });
 
     test('should handle invalid URLs gracefully', async () => {
-      const pageData = { title: 'Test Page', url: 'invalid-url' };
-      const url = 'invalid-url';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'invalid-url',
+        pageData: { title: 'Test Page', url: 'invalid-url' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.error).toBeUndefined(); // Should handle invalid URLs gracefully
+      expect(result.success).toBe(true); // Should handle invalid URLs gracefully
+      expect(result.error).toBeUndefined();
     });
   });
 
   describe('Performance Tests', () => {
     test('should complete analysis within reasonable time', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
       const startTime = Date.now();
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       const analysisTime = endTime - startTime;
+      expect(result.success).toBe(true);
       expect(analysisTime).toBeLessThan(2000); // Should complete within 2 seconds
-      expect(result.analysisTime).toBeDefined();
-      expect(typeof result.analysisTime).toBe('number');
+      expect(result.data.metadata.analysisTime).toBeDefined();
+      expect(typeof result.data.metadata.analysisTime).toBe('number');
     });
 
     test('should handle large documents efficiently', async () => {
@@ -391,16 +423,20 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
       largeContent += '</body></html>';
 
       const largeDOM = new JSDOM(largeContent);
-      const pageData = { title: 'Large Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: largeDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Large Page', url: 'https://example.com' }
+      };
 
       const startTime = Date.now();
-      const result = await analyzer.analyzeSocialMedia(largeDOM, pageData, url);
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       const analysisTime = endTime - startTime;
       expect(analysisTime).toBeLessThan(5000); // Should handle large documents within 5 seconds
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
       expect(result.error).toBeUndefined();
     });
   });
@@ -411,14 +447,18 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
         enableImageAnalysis: false
       });
 
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzerWithoutImages.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzerWithoutImages.analyze(context);
 
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
       // Image analysis should be skipped or minimal
-      expect(result.images).toBeDefined();
+      expect(result.data.images).toBeDefined();
     });
 
     test('should respect checkSocialButtons option', async () => {
@@ -426,13 +466,17 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
         checkSocialButtons: false
       });
 
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzerWithoutButtons.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzerWithoutButtons.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.sharing).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.sharing).toBeDefined();
       // Should have limited sharing analysis
     });
 
@@ -441,10 +485,13 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
         analyzeSocialProof: false
       });
 
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzerWithoutProof.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzerWithoutProof.analyze(context);
 
       expect(result).toBeDefined();
       expect(result.socialProof).toBeDefined();

@@ -169,16 +169,22 @@ async function runTests() {
   });
 
   // Test 2: Main Analysis Function
-  test('analyzeSocialMedia should return complete analysis structure', async () => {
-    const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+  test('analyze should return complete analysis structure', async () => {
+    const context = {
+      document: mockDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const result = await analyzer.analyze(context);
     
     expect(result).toBeDefined();
-    expect(result).toHaveProperty('platforms');
-    expect(result).toHaveProperty('sharing');
-    expect(result).toHaveProperty('socialProof');
-    expect(result).toHaveProperty('images');
-    expect(result).toHaveProperty('optimizationScore');
-    expect(result).toHaveProperty('recommendations');
+    expect(result.success).toBe(true);
+    expect(result.data).toHaveProperty('platforms');
+    expect(result.data).toHaveProperty('sharing');
+    expect(result.data).toHaveProperty('socialProof');
+    expect(result.data).toHaveProperty('images');
+    expect(result.data).toHaveProperty('optimizationScore');
+    expect(result.data).toHaveProperty('recommendations');
   });
 
   // Test 3: Platform Analysis
@@ -310,24 +316,31 @@ async function runTests() {
 
   // Test 11: Real Analysis with Test HTML
   test('Full analysis with test HTML should produce meaningful results', async () => {
-    const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+    const context = {
+      document: mockDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const result = await analyzer.analyze(context);
+    
+    expect(result.success).toBe(true);
     
     // Should detect Open Graph tags
-    expect(result.platforms.openGraph.basic.title).toBe('Amazing Product - Transform Your Business');
-    expect(result.platforms.openGraph.basic.description).toContain('Discover our incredible solution');
+    expect(result.data.platforms.openGraph.basic.title).toBe('Amazing Product - Transform Your Business');
+    expect(result.data.platforms.openGraph.basic.description).toContain('Discover our incredible solution');
     
     // Should detect Twitter Card
-    expect(result.platforms.twitter.cardType).toBe('summary_large_image');
-    expect(result.platforms.twitter.site).toBe('@amazingcompany');
+    expect(result.data.platforms.twitter.cardType).toBe('summary_large_image');
+    expect(result.data.platforms.twitter.site).toBe('@amazingcompany');
     
     // Should detect sharing buttons
-    expect(result.sharing.hasShareButtons).toBe(true);
-    expect(result.sharing.shareButtonPlatforms).toContain('facebook');
-    expect(result.sharing.shareButtonPlatforms).toContain('twitter');
+    expect(result.data.sharing.hasShareButtons).toBe(true);
+    expect(result.data.sharing.shareButtonPlatforms).toContain('facebook');
+    expect(result.data.sharing.shareButtonPlatforms).toContain('twitter');
     
     // Should detect testimonials
-    expect(result.socialProof.testimonials.count).toBeGreaterThan(0);
-    expect(result.socialProof.testimonials.hasTestimonials).toBe(true);
+    expect(result.data.socialProof.testimonials.count).toBeGreaterThan(0);
+    expect(result.data.socialProof.testimonials.hasTestimonials).toBe(true);
     
     // Should detect ratings
     expect(result.socialProof.ratings.count).toBeGreaterThan(0);

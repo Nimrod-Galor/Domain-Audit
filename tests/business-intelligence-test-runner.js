@@ -614,31 +614,37 @@ class BusinessIntelligenceTestRunner {
       const analyzer = new BusinessIntelligenceAnalyzer();
       const startTime = performance.now();
       
-      const result = await analyzer.analyzeBusinessIntelligence(testDocument.window.document, testDocument.window.location.href);
+      const context = {
+        document: testDocument.window.document,
+        url: testDocument.window.location.href,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       const endTime = performance.now();
       this.testResults.performance[testName] = endTime - startTime;
       
       // Validate results
       this.assert(result !== undefined, `${testName}: Result should be defined`);
-      this.assert(result.trustSignals !== undefined, `${testName}: Trust signals should be included`);
-      this.assert(result.contactInformation !== undefined, `${testName}: Contact information should be included`);
-      this.assert(result.aboutPageQuality !== undefined, `${testName}: About page quality should be included`);
-      this.assert(result.customerSupport !== undefined, `${testName}: Customer support should be included`);
-      this.assert(result.businessCredibility !== undefined, `${testName}: Business credibility should be included`);
-      this.assert(result.locationData !== undefined, `${testName}: Location data should be included`);
+      this.assert(result.success === true, `${testName}: Analysis should be successful`);
+      this.assert(result.data.trustSignals !== undefined, `${testName}: Trust signals should be included`);
+      this.assert(result.data.contactInformation !== undefined, `${testName}: Contact information should be included`);
+      this.assert(result.data.aboutPageQuality !== undefined, `${testName}: About page quality should be included`);
+      this.assert(result.data.customerSupport !== undefined, `${testName}: Customer support should be included`);
+      this.assert(result.data.businessCredibility !== undefined, `${testName}: Business credibility should be included`);
+      this.assert(result.data.locationData !== undefined, `${testName}: Location data should be included`);
       this.assert(typeof result.score === 'number', `${testName}: Overall score should be a number`);
       this.assert(result.score >= 0 && result.score <= 100, `${testName}: Score should be between 0-100`);
-      this.assert(result.grade !== undefined, `${testName}: Grade should be assigned`);
-      this.assert(['A', 'B', 'C', 'D', 'F'].includes(result.grade), `${testName}: Grade should be valid`);
+      this.assert(result.data.grade !== undefined, `${testName}: Grade should be assigned`);
+      this.assert(['A', 'B', 'C', 'D', 'F'].includes(result.data.grade), `${testName}: Grade should be valid`);
       this.assert(Array.isArray(result.recommendations), `${testName}: Recommendations should be an array`);
-      this.assert(result.businessType !== undefined, `${testName}: Business type should be classified`);
-      this.assert(Array.isArray(result.strengths), `${testName}: Strengths should be an array`);
+      this.assert(result.data.businessType !== undefined, `${testName}: Business type should be classified`);
+      this.assert(Array.isArray(result.data.strengths), `${testName}: Strengths should be an array`);
       
       console.log(`✅ ${testName} passed (${(endTime - startTime).toFixed(2)}ms)`);
-      console.log(`📊 Score: ${result.score}/100 (Grade: ${result.grade})`);
-      console.log(`🏷️ Business Type: ${result.businessType}`);
-      console.log(`💪 Strengths: ${result.strengths.length} identified`);
+      console.log(`📊 Score: ${result.score}/100 (Grade: ${result.data.grade})`);
+      console.log(`🏷️ Business Type: ${result.data.businessType}`);
+      console.log(`💪 Strengths: ${result.data.strengths.length} identified`);
       console.log(`💡 Recommendations: ${result.recommendations.length} provided`);
       
       this.testResults.passed++;
@@ -664,7 +670,12 @@ class BusinessIntelligenceTestRunner {
     const testName = 'Large Document Performance';
     try {
       const startTime = performance.now();
-      const result = await analyzer.analyzeBusinessIntelligence(testDocuments.large.window.document, testDocuments.large.window.location.href);
+      const context = {
+        document: testDocuments.large.window.document,
+        url: testDocuments.large.window.location.href,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       const endTime = performance.now();
       
       const analysisTime = endTime - startTime;
@@ -672,6 +683,7 @@ class BusinessIntelligenceTestRunner {
       
       this.assert(analysisTime < 10000, `${testName}: Should complete within 10 seconds`);
       this.assert(result !== undefined, `${testName}: Should return valid result`);
+      this.assert(result.success === true, `${testName}: Should be successful`);
       
       console.log(`✅ ${testName} passed (${analysisTime.toFixed(2)}ms)`);
       this.testResults.passed++;
@@ -696,11 +708,17 @@ class BusinessIntelligenceTestRunner {
     // Test with minimal document
     const testName = 'Minimal Document Handling';
     try {
-      const result = await analyzer.analyzeBusinessIntelligence(testDocuments.minimal.window.document, testDocuments.minimal.window.location.href);
+      const context = {
+        document: testDocuments.minimal.window.document,
+        url: testDocuments.minimal.window.location.href,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       this.assert(result !== undefined, `${testName}: Should handle minimal content`);
-      this.assert(typeof result.score === 'number', `${testName}: Should return valid score`);
-      this.assert(result.recommendations.length > 0, `${testName}: Should provide recommendations`);
+      this.assert(result.success === true, `${testName}: Should be successful`);
+      this.assert(typeof result.data.score === 'number', `${testName}: Should return valid score`);
+      this.assert(result.data.recommendations.length > 0, `${testName}: Should provide recommendations`);
       
       console.log(`✅ ${testName} passed`);
       this.testResults.passed++;
@@ -716,9 +734,15 @@ class BusinessIntelligenceTestRunner {
     // Test with null document
     const nullTestName = 'Null Document Handling';
     try {
-      const result = await analyzer.analyzeBusinessIntelligence(null, 'https://example.com');
+      const context = {
+        document: null,
+        url: 'https://example.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       this.assert(result !== undefined, `${nullTestName}: Should handle null document`);
+      this.assert(result.success === false, `${nullTestName}: Should return error for null document`);
       this.assert(result.error !== undefined, `${nullTestName}: Should return error message`);
       
       console.log(`✅ ${nullTestName} passed`);

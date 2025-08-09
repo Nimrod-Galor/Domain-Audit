@@ -47,21 +47,32 @@ async function runTest() {
     const pageData = { title: 'Test Page', url: 'https://example.com' };
     const url = 'https://example.com';
 
-    const analysis = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+    const context = {
+      document: mockDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const analysis = await analyzer.analyze(context);
     
     console.log('✅ Analysis completed successfully');
-    console.log('🔍 Full analysis object:', JSON.stringify(analysis, null, 2));
-    console.log('   - Platform analysis:', analysis.platforms ? 'present' : 'missing');
-    console.log('   - Sharing analysis:', analysis.sharing ? 'present' : 'missing');
-    console.log('   - Social proof analysis:', analysis.socialProof ? 'present' : 'missing');
-    console.log('   - Optimization score:', analysis.optimizationScore || 'not calculated');
-    console.log('   - Recommendations count:', analysis.recommendations?.length || 0);
-    console.log('   - Error in analysis:', analysis.error || 'none');
+    console.log('🔍 Analysis success:', analysis.success);
+    
+    if (!analysis.success) {
+      console.log('❌ Analysis failed:', analysis.error);
+      return;
+    }
+    
+    console.log('🔍 Full analysis object:', JSON.stringify(analysis.data, null, 2));
+    console.log('   - Platform analysis:', analysis.data.platforms ? 'present' : 'missing');
+    console.log('   - Sharing analysis:', analysis.data.sharing ? 'present' : 'missing');
+    console.log('   - Social proof analysis:', analysis.data.socialProof ? 'present' : 'missing');
+    console.log('   - Optimization score:', analysis.data.optimizationScore || 'not calculated');
+    console.log('   - Recommendations count:', analysis.data.recommendations?.length || 0);
     
     // Detailed platform analysis
-    if (analysis.platforms) {
+    if (analysis.data.platforms) {
       console.log('\n📊 Platform Analysis Results:');
-      Object.entries(analysis.platforms).forEach(([platform, data]) => {
+      Object.entries(analysis.data.platforms).forEach(([platform, data]) => {
         console.log(`   - ${platform}:`, data ? 'analyzed' : 'failed');
       });
     }

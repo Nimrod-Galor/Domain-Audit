@@ -251,11 +251,8 @@ async function runEcommerceTests() {
   `;
 
   const shopifyDom = await domProcessor.createDOM(shopifyHTML, 'https://audiotech.myshopify.com/products/premium-headphones');
-  const shopifyResult = await analyzer.analyzeEcommerce(
-    shopifyDom, 
-    { title: 'Premium Headphones | AudioTech Store' }, 
-    'https://audiotech.myshopify.com/products/premium-headphones'
-  );
+  const shopifyResult = await analyzer.analyze({ document: shopifyDom.window.document, url: 'https://audiotech.myshopify.com/products/premium-headphones'
+  , pageData: { title: 'Premium Headphones | AudioTech Store' } });
 
   console.log(`✅ Platform detected: ${shopifyResult.type}`);
   console.log(`📊 Overall Score: ${shopifyResult.optimization?.overall || 0}/100 (${shopifyResult.optimization?.grade || 'N/A'})`);
@@ -399,11 +396,8 @@ async function runEcommerceTests() {
   `;
 
   const woocommerceDom = await domProcessor.createDOM(woocommerceHTML, 'https://techzone.com/product/gaming-laptop');
-  const woocommerceResult = await analyzer.analyzeEcommerce(
-    woocommerceDom, 
-    { title: 'Gaming Laptop | TechZone Store' }, 
-    'https://techzone.com/product/gaming-laptop'
-  );
+  const woocommerceResult = await analyzer.analyze({ document: woocommerceDom.window.document, url: 'https://techzone.com/product/gaming-laptop'
+  , pageData: { title: 'Gaming Laptop | TechZone Store' } });
 
   console.log(`✅ Platform detected: ${woocommerceResult.type}`);
   console.log(`📊 Overall Score: ${woocommerceResult.optimization?.overall || 0}/100 (${woocommerceResult.optimization?.grade || 'N/A'})`);
@@ -458,11 +452,8 @@ async function runEcommerceTests() {
   `;
 
   const blogDom = await domProcessor.createDOM(blogHTML, 'https://techblog.com/ai-future');
-  const blogResult = await analyzer.analyzeEcommerce(
-    blogDom, 
-    { title: 'My Tech Blog | Latest Technology News' }, 
-    'https://techblog.com/ai-future'
-  );
+  const blogResult = await analyzer.analyze({ document: blogDom.window.document, url: 'https://techblog.com/ai-future'
+  , pageData: { title: 'My Tech Blog | Latest Technology News' } });
 
   console.log(`✅ Platform detected: ${blogResult.type}`);
   console.log(`📝 Message: ${blogResult.message}`);
@@ -526,11 +517,8 @@ async function runEcommerceTests() {
 
   const startTime = Date.now();
   const complexDom = await domProcessor.createDOM(complexHTML, 'https://megaelectronics.com');
-  const complexResult = await analyzer.analyzeEcommerce(
-    complexDom, 
-    { title: 'Mega Electronics Store' }, 
-    'https://megaelectronics.com'
-  );
+  const complexResult = await analyzer.analyze({ document: complexDom.window.document, url: 'https://megaelectronics.com'
+  , pageData: { title: 'Mega Electronics Store' } });
   const endTime = Date.now();
 
   console.log(`✅ Platform detected: ${complexResult.type}`);
@@ -578,12 +566,12 @@ function generateTestSummary(results) {
   let totalTests = tests.length;
   
   tests.forEach(test => {
-    const passed = test.result.type === test.expectedType;
-    const score = test.result.optimization?.overall || 0;
-    const analysisTime = test.result.analysisTime || 0;
+    const passed = test.result.data.type === test.expectedType;
+    const score = test.result.data.optimization?.overall || 0;
+    const analysisTime = test.result.data.metadata.analysisTime || 0;
     
     console.log(`${passed ? '✅' : '❌'} ${test.name}:`);
-    console.log(`   Expected: ${test.expectedType}, Got: ${test.result.type}`);
+    console.log(`   Expected: ${test.expectedType}, Got: ${test.result.data.type}`);
     console.log(`   Score: ${score}/100, Time: ${analysisTime}ms`);
     
     if (passed) passedTests++;

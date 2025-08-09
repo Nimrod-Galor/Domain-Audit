@@ -210,17 +210,23 @@ async function runRealImplementationTests() {
   });
 
   // Test 2: Main Analysis Method
-  test('analyzeSocialMedia returns comprehensive analysis', async () => {
-    const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+  test('analyze returns comprehensive analysis', async () => {
+    const context = {
+      document: mockDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const result = await analyzer.analyze(context);
     
     expect(result).toBeDefined();
-    expect(result).toHaveProperty('platforms');
-    expect(result).toHaveProperty('sharing');
-    expect(result).toHaveProperty('socialProof');
-    expect(result).toHaveProperty('images');
-    expect(result).toHaveProperty('recommendations');
-    expect(result).toHaveProperty('analysisTime');
-    expect(result).toHaveProperty('timestamp');
+    expect(result.success).toBe(true);
+    expect(result.data).toHaveProperty('platforms');
+    expect(result.data).toHaveProperty('sharing');
+    expect(result.data).toHaveProperty('socialProof');
+    expect(result.data).toHaveProperty('images');
+    expect(result.recommendations).toBeDefined();
+    expect(result.data.metadata).toHaveProperty('analysisTime');
+    expect(result.data.metadata).toHaveProperty('timestamp');
   });
 
   // Test 3: Platform Analysis
@@ -360,18 +366,24 @@ async function runRealImplementationTests() {
 
   // Test 11: Complete Integration Test
   test('Full integration produces comprehensive social media analysis', async () => {
-    const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+    const context = {
+      document: mockDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const result = await analyzer.analyze(context);
     
     // Verify all major components are present
-    expect(result.platforms).toBeDefined();
-    expect(result.sharing).toBeDefined();
-    expect(result.socialProof).toBeDefined();
-    expect(result.images).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.data.platforms).toBeDefined();
+    expect(result.data.sharing).toBeDefined();
+    expect(result.data.socialProof).toBeDefined();
+    expect(result.data.images).toBeDefined();
     expect(result.recommendations).toBeDefined();
     
     // Verify Open Graph data extraction
-    expect(result.platforms.openGraph.basic.title).toContain('Amazing Product');
-    expect(result.platforms.openGraph.basic.image).toBe('https://example.com/og-image.jpg');
+    expect(result.data.platforms.openGraph.basic.title).toContain('Amazing Product');
+    expect(result.data.platforms.openGraph.basic.image).toBe('https://example.com/og-image.jpg');
     
     // Verify Twitter Card data extraction
     expect(result.platforms.twitter.cardType).toBe('summary_large_image');
@@ -408,12 +420,17 @@ async function runRealImplementationTests() {
     const emptyHTML = '<html><head></head><body></body></html>';
     const emptyDOM = new JSDOM(emptyHTML);
     
-    const result = await analyzer.analyzeSocialMedia(emptyDOM, pageData, url);
+    const context = {
+      document: emptyDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const result = await analyzer.analyze(context);
     
     expect(result).toBeDefined();
-    expect(result.error).toBeUndefined(); // Should not throw errors
-    expect(result.platforms).toBeDefined();
-    expect(result.sharing).toBeDefined();
+    expect(result.success).toBe(true); // Should not throw errors
+    expect(result.data.platforms).toBeDefined();
+    expect(result.data.sharing).toBeDefined();
     expect(result.socialProof).toBeDefined();
   });
 

@@ -17,8 +17,8 @@
  * @extends BaseAnalyzer
  */
 
-import { BaseAnalyzer } from '../core/base-analyzer.js';
-import { AnalyzerCategories } from '../utils/analyzer-categories.js';
+import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../core/AnalyzerInterface.js';
 import { ProductSchemaAnalyzer } from "./product/product-schema-analyzer.js";
 import { CartAnalyzer } from "./checkout/cart-analyzer.js";
 import { CheckoutAnalyzer } from "./checkout/checkout-analyzer.js";
@@ -907,15 +907,4 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
   }
 
   // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeEcommerce(dom, pageData, url) {
-    console.warn('EcommerceAnalyzer.analyzeEcommerce() is deprecated. Use analyze() method instead.');
-    return this.analyze({ dom, pageData, url });
-  }
 }

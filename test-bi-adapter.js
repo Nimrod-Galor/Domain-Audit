@@ -63,14 +63,19 @@ const documentAdapter = {
 const analyzer = new BusinessIntelligenceAnalyzer();
 
 try {
-  const result = await analyzer.analyzeBusinessIntelligence(documentAdapter, 'https://testcompany.com');
+  const context = {
+    document: documentAdapter,
+    url: 'https://testcompany.com',
+    pageData: {}
+  };
+  const result = await analyzer.analyze(context);
   console.log('✅ Business Intelligence analysis completed!');
-  console.log('📊 Result keys:', Object.keys(result));
+  console.log('📊 Result structure:', result.success ? 'Success' : 'Failed');
   if (result.error) {
     console.log('❌ Error found:', result.error);
   } else {
-    console.log('📈 Score:', result.score);
-    console.log('🎯 Grade:', result.grade);
+    console.log('📈 Score:', result.data.score);
+    console.log('🎯 Grade:', result.data.grade);
   }
 } catch (error) {
   console.error('❌ Business Intelligence analysis failed:', error.message);

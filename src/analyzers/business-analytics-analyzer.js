@@ -246,35 +246,7 @@ export class BusinessAnalyticsAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Object} dom - JSDOM document object
-   * @param {Object} pageData - Existing page data
-   * @param {string} url - Page URL
-   * @returns {Object} Business analytics analysis
-   */
-  analyzeBusinessAnalytics(dom, pageData, url) {
-    try {
-      // Convert legacy parameters to new context format
-      const document = dom.window?.document || dom;
-      const context = {
-        document: document,
-        url: url || 'https://example.com',
-        pageData: pageData || {}
-      };
-      
-      // Use the new analyze method
-      return this.analyze(context);
-      
-    } catch (error) {
-      return Promise.resolve({
-        success: false,
-        error: `Business analytics analysis failed: ${error.message}`,
-        data: null
-      });
-    }
-  }
+
 
   /**
    * Analyze user intent based on content and URL

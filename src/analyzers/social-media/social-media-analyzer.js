@@ -17,8 +17,8 @@
  * @extends BaseAnalyzer
  */
 
-import { BaseAnalyzer } from '../core/base-analyzer.js';
-import { AnalyzerCategories } from '../utils/analyzer-categories.js';
+import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../core/AnalyzerInterface.js';
 import { OpenGraphAnalyzer } from "./platforms/open-graph-analyzer.js";
 import { TwitterCardAnalyzer } from "./platforms/twitter-card-analyzer.js";
 import { LinkedInAnalyzer } from "./platforms/linkedin-analyzer.js";
@@ -822,14 +822,4 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
 
   // ============================================================================
   // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeSocialMedia(dom, pageData, url) {
-    console.warn('SocialMediaAnalyzer.analyzeSocialMedia() is deprecated. Use analyze() method instead.');
-    return this.analyze({ dom, pageData, url });
-  }
 }

@@ -106,15 +106,6 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
     });
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async analyzeBusinessIntelligence(document, pageDataOrUrl, url) {
-    console.warn('analyzeBusinessIntelligence() is deprecated. Use analyze() method instead.');
-    return this.analyze(document, pageDataOrUrl, url);
-  }
-
   _analyzeTrustSignals(document, url) {
     try {
       // Look for trust indicators - use direct querySelectorAll to allow errors to propagate in tests

@@ -170,23 +170,35 @@ describe('Business Intelligence Analyzer', () => {
 
   describe('Main Business Intelligence Analyzer', () => {
     test('should perform comprehensive business intelligence analysis', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.trustSignals).toBeDefined();
-      expect(result.contactInformation).toBeDefined();
-      expect(result.aboutPageQuality).toBeDefined();
-      expect(result.customerSupport).toBeDefined();
-      expect(result.businessCredibility).toBeDefined();
-      expect(result.locationData).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+      expect(result.data.trustSignals).toBeDefined();
+      expect(result.data.contactInformation).toBeDefined();
+      expect(result.data.aboutPageQuality).toBeDefined();
+      expect(result.data.customerSupport).toBeDefined();
+      expect(result.data.businessCredibility).toBeDefined();
+      expect(result.data.locationData).toBeDefined();
       expect(result.score).toBeDefined();
-      expect(result.grade).toBeDefined();
+      expect(result.data.grade).toBeDefined();
       expect(result.recommendations).toBeDefined();
-      expect(result.analysisTime).toBeDefined();
+      expect(result.data.metadata.analysisTime).toBeDefined();
     });
 
     test('should calculate accurate business intelligence score', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result.score).toBeGreaterThan(0);
       expect(result.score).toBeLessThanOrEqual(100);
@@ -194,13 +206,23 @@ describe('Business Intelligence Analyzer', () => {
     });
 
     test('should assign appropriate grade based on score', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
-      expect(['A', 'B', 'C', 'D', 'F']).toContain(result.grade);
+      expect(['A', 'B', 'C', 'D', 'F']).toContain(result.data.grade);
     });
 
     test('should generate relevant recommendations', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(Array.isArray(result.recommendations)).toBe(true);
       expect(result.recommendations.length).toBeGreaterThan(0);
@@ -215,19 +237,30 @@ describe('Business Intelligence Analyzer', () => {
     });
 
     test('should handle invalid document gracefully', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(null, testUrl);
+      const context = {
+        document: null,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
+      expect(result).toHaveProperty('success');
+      expect(result.success).toBe(false);
       expect(result).toHaveProperty('error');
-      expect(result.error).toContain('failed');
     });
 
     test('should complete analysis within performance threshold', async () => {
       const startTime = Date.now();
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(5000); // Should complete within 5 seconds
-      expect(result.analysisTime).toBeLessThan(5000);
+      expect(result.data.metadata.analysisTime).toBeLessThan(5000);
     });
   });
 
@@ -485,10 +518,16 @@ describe('Business Intelligence Analyzer', () => {
       `, { url: testUrl });
 
       const startTime = Date.now();
-      const result = await analyzer.analyzeBusinessIntelligence(largeDom.window.document, testUrl);
+      const context = {
+        document: largeDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
       expect(endTime - startTime).toBeLessThan(10000); // Should complete within 10 seconds even for large documents
     });
 
@@ -499,9 +538,15 @@ describe('Business Intelligence Analyzer', () => {
         <body><p>Minimal content</p></body></html>
       `, { url: testUrl });
 
-      const result = await analyzer.analyzeBusinessIntelligence(minimalDom.window.document, testUrl);
+      const context = {
+        document: minimalDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.recommendations.length).toBeGreaterThan(0);
     });
@@ -515,7 +560,12 @@ describe('Business Intelligence Analyzer', () => {
         <section><h2>Missing closing tags
       `, { url: testUrl });
 
-      const result = await analyzer.analyzeBusinessIntelligence(malformedDom.window.document, testUrl);
+      const context = {
+        document: malformedDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
       // Should not throw error, but might have lower scores
@@ -524,7 +574,12 @@ describe('Business Intelligence Analyzer', () => {
     test('should handle empty document', async () => {
       const emptyDom = new JSDOM('', { url: testUrl });
 
-      const result = await analyzer.analyzeBusinessIntelligence(emptyDom.window.document, testUrl);
+      const context = {
+        document: emptyDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
       expect(result.score).toBeGreaterThanOrEqual(0); // Should be >= 0, not necessarily 0
@@ -532,7 +587,12 @@ describe('Business Intelligence Analyzer', () => {
     });
 
     test('should handle missing URL', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, '');
+      const context = {
+        document: mockDocument,
+        url: '',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
       // Should still analyze but might affect URL-dependent features
@@ -545,19 +605,30 @@ describe('Business Intelligence Analyzer', () => {
       const analysisData = {};
       
       // Simulate main analyzer calling business intelligence
-      analysisData.businessIntelligence = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      analysisData.businessIntelligence = await analyzer.analyze(context);
 
       expect(analysisData.businessIntelligence).toBeDefined();
+      expect(analysisData.businessIntelligence.success).toBe(true);
       expect(analysisData.businessIntelligence.score).toBeDefined();
       expect(analysisData.businessIntelligence.recommendations).toBeDefined();
     });
 
     test('should provide data suitable for reporting', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       // Check that result contains all necessary data for reporting
-      expect(result).toHaveProperty('trustSignals');
-      expect(result).toHaveProperty('contactInformation');
+      expect(result.data).toHaveProperty('trustSignals');
+      expect(result.data).toHaveProperty('contactInformation');
       expect(result).toHaveProperty('aboutPageQuality');
       expect(result).toHaveProperty('customerSupport');
       expect(result).toHaveProperty('businessCredibility');

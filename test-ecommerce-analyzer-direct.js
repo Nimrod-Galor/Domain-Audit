@@ -70,24 +70,34 @@ async function testEcommerceAnalyzer() {
         
         // Test the analyzer directly
         const analyzer = new EcommerceAnalyzer();
-        const analysis = await analyzer.analyzeEcommerce(dom, {}, testUrl);
+        const context = {
+          document: dom.window.document,
+          url: testUrl,
+          pageData: {}
+        };
+        const analysis = await analyzer.analyze(context);
         
         console.log('\n📊 E-commerce Analysis Results:');
         console.log('===============================');
-        console.log('Full analysis:', JSON.stringify(analysis, null, 2));
+        console.log('Analysis success:', analysis.success);
+        if (analysis.success) {
+          console.log('Full analysis:', JSON.stringify(analysis.data, null, 2));
+        } else {
+          console.log('Error:', analysis.error);
+        }
         
-        if (analysis && Object.keys(analysis).length > 0) {
+        if (analysis.success && analysis.data && Object.keys(analysis.data).length > 0) {
             console.log('\n✅ E-commerce analyzer is working!');
             
-            if (analysis.type) {
-                console.log(`📦 Platform Type: ${analysis.type}`);
+            if (analysis.data.type) {
+                console.log(`📦 Platform Type: ${analysis.data.type}`);
             }
             
-            if (analysis.confidence) {
-                console.log(`🎯 Confidence: ${analysis.confidence}`);
+            if (analysis.data.confidence) {
+                console.log(`🎯 Confidence: ${analysis.data.confidence}`);
             }
             
-            if (analysis.optimization) {
+            if (analysis.data.optimization) {
                 console.log(`⭐ Overall Score: ${analysis.optimization.overall}/100`);
             }
             

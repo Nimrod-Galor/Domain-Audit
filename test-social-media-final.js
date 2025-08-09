@@ -193,15 +193,26 @@ async function runFinalValidation() {
     // Test 1: Full Analysis
     console.log('🔍 Running complete social media analysis...');
     const startTime = Date.now();
-    const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+    const context = {
+      document: mockDOM.window.document,
+      url: url,
+      pageData: pageData
+    };
+    const result = await analyzer.analyze(context);
     const endTime = Date.now();
     
     console.log(`✅ Analysis completed in ${endTime - startTime}ms\n`);
+    console.log('Analysis success:', result.success);
+
+    if (!result.success) {
+      console.log('❌ Analysis failed:', result.error);
+      return;
+    }
 
     // Test 2: Verify Structure
     console.log('📊 Verifying analysis structure...');
-    const requiredProperties = ['platforms', 'sharing', 'socialProof', 'images', 'recommendations', 'analysisTime', 'timestamp'];
-    const missingProperties = requiredProperties.filter(prop => !(prop in result));
+    const requiredProperties = ['platforms', 'sharing', 'socialProof', 'images', 'recommendations'];
+    const missingProperties = requiredProperties.filter(prop => !(prop in result.data));
     
     if (missingProperties.length === 0) {
       console.log('✅ All required properties present\n');

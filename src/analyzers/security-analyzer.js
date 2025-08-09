@@ -22,7 +22,7 @@
  * @version 2.0.0
  */
 
-import { BaseAnalyzer } from '../core/base-analyzer.js';
+import { BaseAnalyzer } from './core/BaseAnalyzer.js';
 
 /**
  * Security Standards and Configuration

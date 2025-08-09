@@ -152,31 +152,37 @@ describe('E-commerce Integration Tests', () => {
       const pageData = { title: 'Premium T-Shirt | Test Shopify Store' };
       const url = 'https://store.myshopify.com/products/premium-tshirt';
 
-      const result = await analyzer.analyzeEcommerce(dom, pageData, url);
+      const context = {
+        document: dom.window.document,
+        url: url,
+        pageData: pageData
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify platform detection
-      expect(result.type).toBe('shopify');
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('shopify');
 
       // Verify comprehensive analysis structure
-      expect(result.product).toBeDefined();
-      expect(result.checkout).toBeDefined();
-      expect(result.reviews).toBeDefined();
-      expect(result.security).toBeDefined();
-      expect(result.conversion).toBeDefined();
-      expect(result.schema).toBeDefined();
-      expect(result.optimization).toBeDefined();
+      expect(result.data.product).toBeDefined();
+      expect(result.data.checkout).toBeDefined();
+      expect(result.data.reviews).toBeDefined();
+      expect(result.data.security).toBeDefined();
+      expect(result.data.conversion).toBeDefined();
+      expect(result.data.schema).toBeDefined();
+      expect(result.data.optimization).toBeDefined();
       expect(result.recommendations).toBeDefined();
 
       // Verify product analysis
-      expect(result.product.schemas.length).toBeGreaterThan(0);
-      expect(result.product.productPage.hasProductTitle).toBe(true);
-      expect(result.product.productPage.hasProductImages).toBe(true);
-      expect(result.product.productPage.hasPrice).toBe(true);
-      expect(result.product.productPage.hasAddToCart).toBe(true);
+      expect(result.data.product.schemas.length).toBeGreaterThan(0);
+      expect(result.data.product.productPage.hasProductTitle).toBe(true);
+      expect(result.data.product.productPage.hasProductImages).toBe(true);
+      expect(result.data.product.productPage.hasPrice).toBe(true);
+      expect(result.data.product.productPage.hasAddToCart).toBe(true);
 
       // Verify schema validation
-      expect(result.schema.hasReviewSchema).toBe(true);
-      expect(result.schema.schemas.length).toBeGreaterThan(0);
+      expect(result.data.schema.hasReviewSchema).toBe(true);
+      expect(result.data.schema.schemas.length).toBeGreaterThan(0);
 
       // Verify review system
       expect(result.reviews.hasReviews).toBe(true);
@@ -268,24 +274,26 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(woocommerceHTML);
-      const result = await analyzer.analyzeEcommerce(
-        dom, 
-        { title: 'Wireless Bluetooth Speaker | Electronic Gadgets Store' }, 
-        'https://electronicstore.com/product/bluetooth-speaker'
-      );
+      const context = {
+        document: dom.window.document,
+        url: 'https://electronicstore.com/product/bluetooth-speaker',
+        pageData: { title: 'Wireless Bluetooth Speaker | Electronic Gadgets Store' }
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify platform detection
-      expect(result.type).toBe('woocommerce');
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('woocommerce');
 
       // Verify cart functionality detection
-      expect(result.checkout.cart.hasCart).toBe(true);
-      expect(result.checkout.cart.features.addToCart).toBe(true);
-      expect(result.checkout.cart.features.quantityControls).toBe(true);
-      expect(result.checkout.cart.features.subtotal).toBe(true);
+      expect(result.data.checkout.cart.hasCart).toBe(true);
+      expect(result.data.checkout.cart.features.addToCart).toBe(true);
+      expect(result.data.checkout.cart.features.quantityControls).toBe(true);
+      expect(result.data.checkout.cart.features.subtotal).toBe(true);
 
       // Verify payment analysis
-      expect(result.security.paymentMethods.supportedMethods.length).toBeGreaterThan(0);
-      expect(result.security.security.encryptionMentioned).toBe(true);
+      expect(result.data.security.paymentMethods.supportedMethods.length).toBeGreaterThan(0);
+      expect(result.data.security.security.encryptionMentioned).toBe(true);
 
       // Verify checkout process
       expect(result.checkout.checkout.hasCheckout).toBe(true);
@@ -352,22 +360,24 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(customHTML);
-      const result = await analyzer.analyzeEcommerce(
-        dom, 
-        { title: 'Designer Evening Dress | Custom Fashion Store' }, 
-        'https://fashionhouse.com/dresses/evening-dress'
-      );
+      const context = {
+        document: dom.window.document,
+        url: 'https://fashionhouse.com/dresses/evening-dress',
+        pageData: { title: 'Designer Evening Dress | Custom Fashion Store' }
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify platform detection
-      expect(result.type).toBe('custom');
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('custom');
 
       // Verify basic e-commerce features
-      expect(result.product.productPage.hasProductTitle).toBe(true);
-      expect(result.product.productPage.hasPrice).toBe(true);
-      expect(result.product.productPage.hasAddToCart).toBe(true);
+      expect(result.data.product.productPage.hasProductTitle).toBe(true);
+      expect(result.data.product.productPage.hasPrice).toBe(true);
+      expect(result.data.product.productPage.hasAddToCart).toBe(true);
 
       // Verify schema detection
-      expect(result.product.schemas.length).toBeGreaterThan(0);
+      expect(result.data.product.schemas.length).toBeGreaterThan(0);
 
       // Verify trust signals
       expect(result.conversion.trustSignals.count).toBeGreaterThan(0);
@@ -423,14 +433,20 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(integratedHTML);
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://store.com/gaming-laptop');
+      const context = {
+        document: dom.window.document,
+        url: 'https://store.com/gaming-laptop',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify schema and review integration
-      expect(result.product.schemas.length).toBeGreaterThan(0);
-      expect(result.reviews.hasReviews).toBe(true);
-      expect(result.reviews.schema.hasReviewSchema).toBe(true);
-      expect(result.reviews.schema.aggregateRating).toBe(true);
-      expect(result.reviews.schema.individualReviews).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.data.product.schemas.length).toBeGreaterThan(0);
+      expect(result.data.reviews.hasReviews).toBe(true);
+      expect(result.data.reviews.schema.hasReviewSchema).toBe(true);
+      expect(result.data.reviews.schema.aggregateRating).toBe(true);
+      expect(result.data.reviews.schema.individualReviews).toBe(true);
     });
 
     test('should integrate cart analysis with checkout process', async () => {
@@ -468,10 +484,16 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(checkoutHTML);
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://store.com/checkout');
+      const context = {
+        document: dom.window.document,
+        url: 'https://store.com/checkout',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify cart and checkout integration
-      expect(result.checkout.cart.hasCart).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.data.checkout.cart.hasCart).toBe(true);
       expect(result.checkout.cart.features.subtotal).toBe(true);
       expect(result.checkout.cart.features.updateCart).toBe(true);
       
@@ -518,9 +540,15 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(securityHTML);
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://store.com/payment');
+      const context = {
+        document: dom.window.document,
+        url: 'https://store.com/payment',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify payment and security integration
+      expect(result.success).toBe(true);
       expect(result.security.paymentMethods.supportedMethods.length).toBeGreaterThan(2);
       expect(result.security.paymentMethods.digitalWallets.length).toBeGreaterThan(0);
       expect(result.security.paymentMethods.creditCards.length).toBeGreaterThan(0);
@@ -573,8 +601,15 @@ describe('E-commerce Integration Tests', () => {
 
       const startTime = Date.now();
       const dom = new JSDOM(largeHTML);
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://megastore.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://megastore.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
+
+      expect(result.success).toBe(true);
 
       // Verify performance
       expect(endTime - startTime).toBeLessThan(10000); // Should complete within 10 seconds
@@ -613,11 +648,17 @@ describe('E-commerce Integration Tests', () => {
       const dom = new JSDOM(malformedHTML);
       
       // Should not throw errors
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://brokenstore.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://brokenstore.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       expect(result).toBeDefined();
-      expect(result.type).not.toBe('none'); // Should still detect e-commerce elements
-      expect(result.analysisTime).toBeGreaterThan(0);
+      expect(result.success).toBe(true);
+      expect(result.data.type).not.toBe('none'); // Should still detect e-commerce elements
+      expect(result.data.metadata.analysisTime).toBeGreaterThan(0);
     });
 
     test('should provide consistent results across multiple runs', async () => {
@@ -643,7 +684,12 @@ describe('E-commerce Integration Tests', () => {
 
       // Run analysis multiple times
       for (let i = 0; i < 5; i++) {
-        const result = await analyzer.analyzeEcommerce(dom, {}, 'https://teststore.com');
+        const context = {
+          document: dom.window.document,
+          url: 'https://teststore.com',
+          pageData: {}
+        };
+        const result = await analyzer.analyze(context);
         results.push(result);
       }
 
@@ -662,10 +708,16 @@ describe('E-commerce Integration Tests', () => {
       const emptyHTML = '';
       const dom = new JSDOM(emptyHTML);
       
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://empty.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://empty.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
-      expect(result.type).toBe('non-ecommerce');
-      expect(result.message).toBe('No e-commerce indicators detected');
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('non-ecommerce');
+      expect(result.data.message).toBe('No e-commerce indicators detected');
     });
 
     test('should handle missing sub-analyzer dependencies', async () => {
@@ -677,9 +729,15 @@ describe('E-commerce Integration Tests', () => {
       const dom = new JSDOM(simpleHTML);
       
       // Should handle gracefully without throwing
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://store.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://store.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
       
       // Restore the analyzer
       analyzer.analyzers.reviews = originalAnalyzer;
@@ -695,8 +753,14 @@ describe('E-commerce Integration Tests', () => {
       const testHTML = '<div class="add-to-cart">Add to Cart</div>';
       const dom = new JSDOM(testHTML);
       
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://store.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://store.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
+      expect(result.success).toBe(false);
       expect(result.error).toContain('E-commerce analysis failed');
       
       // Restore the original method
@@ -738,11 +802,17 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(mobileHTML);
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://mobilestore.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://mobilestore.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
-      expect(result.type).toBe('custom');
-      expect(result.checkout.checkout.userExperience.mobileOptimized).toBe(true);
-      expect(result.security.paymentMethods.digitalWallets.length).toBeGreaterThan(0);
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('custom');
+      expect(result.data.checkout.checkout.userExperience.mobileOptimized).toBe(true);
+      expect(result.data.security.paymentMethods.digitalWallets.length).toBeGreaterThan(0);
     });
 
     test('should analyze subscription-based e-commerce', async () => {
@@ -775,7 +845,14 @@ describe('E-commerce Integration Tests', () => {
       `;
 
       const dom = new JSDOM(subscriptionHTML);
-      const result = await analyzer.analyzeEcommerce(dom, {}, 'https://coffeesubscription.com');
+      const context = {
+        document: dom.window.document,
+        url: 'https://coffeesubscription.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
+
+      expect(result.success).toBe(true);
 
       expect(result.type).toBe('custom');
       expect(result.conversion.callToAction.count).toBeGreaterThan(0);

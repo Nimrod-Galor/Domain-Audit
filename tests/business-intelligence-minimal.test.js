@@ -149,34 +149,51 @@ describe('Business Intelligence Minimal Analyzer', () => {
 
   describe('Main Analysis Function', () => {
     test('should perform complete business intelligence analysis', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.trustSignals).toBeDefined();
-      expect(result.contactInformation).toBeDefined();
-      expect(result.aboutPageQuality).toBeDefined();
-      expect(result.customerSupport).toBeDefined();
-      expect(result.businessCredibility).toBeDefined();
-      expect(result.locationData).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.trustSignals).toBeDefined();
+      expect(result.data.contactInformation).toBeDefined();
+      expect(result.data.aboutPageQuality).toBeDefined();
+      expect(result.data.customerSupport).toBeDefined();
+      expect(result.data.businessCredibility).toBeDefined();
+      expect(result.data.locationData).toBeDefined();
       expect(result.score).toBeDefined();
-      expect(result.grade).toBeDefined();
+      expect(result.data.grade).toBeDefined();
       expect(result.recommendations).toBeDefined();
-      expect(result.strengths).toBeDefined();
-      expect(result.businessType).toBe('general');
-      expect(result.analysisTime).toBeDefined();
-      expect(result.timestamp).toBeDefined();
+      expect(result.data.strengths).toBeDefined();
+      expect(result.data.businessType).toBe('general');
+      expect(result.data.metadata.analysisTime).toBeDefined();
+      expect(result.data.metadata.timestamp).toBeDefined();
     });
 
     test('should handle different parameter formats', async () => {
       // Test with pageData as object
       const pageData = { title: 'Test Page', meta: {} };
-      const result1 = await analyzer.analyzeBusinessIntelligence(mockDocument, pageData, testUrl);
+      const context1 = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: pageData
+      };
+      const result1 = await analyzer.analyze(context1);
       
       expect(result1).toBeDefined();
+      expect(result1.success).toBe(true);
       expect(result1.score).toBeGreaterThanOrEqual(0);
 
-      // Test with pageData as string (URL)
-      const result2 = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      // Test with minimal pageData
+      const context2 = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result2 = await analyzer.analyze(context2);
       
       expect(result2).toBeDefined();
       expect(result2.score).toBeGreaterThanOrEqual(0);
@@ -184,32 +201,27 @@ describe('Business Intelligence Minimal Analyzer', () => {
 
     test('should handle analysis errors gracefully', async () => {
       // Test with null document
-      const result = await analyzer.analyzeBusinessIntelligence(null, testUrl);
+      const context = {
+        document: null,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.score).toBe(0);
-      expect(result.grade).toBe('F');
-      expect(result.analysisTime).toBeDefined();
-      expect(result.timestamp).toBeDefined();
-      
-      // Should have either error property or valid analysis structure
-      if (result.error) {
-        expect(result.error).toContain('Business intelligence analysis failed');
-        expect(result.recommendations).toEqual(['Fix analysis errors']);
-      } else {
-        // Should have all required properties even with null document
-        expect(result.trustSignals).toBeDefined();
-        expect(result.contactInformation).toBeDefined();
-        expect(result.aboutPageQuality).toBeDefined();
-        expect(result.customerSupport).toBeDefined();
-        expect(result.businessCredibility).toBeDefined();
-        expect(result.locationData).toBeDefined();
-      }
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     test('should calculate overall score correctly', async () => {
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
+      expect(result.success).toBe(true);
       expect(result.score).toBeGreaterThan(0);
       expect(result.score).toBeLessThanOrEqual(100);
       expect(typeof result.score).toBe('number');
@@ -572,12 +584,18 @@ describe('Business Intelligence Minimal Analyzer', () => {
   describe('Integration and Performance', () => {
     test('should complete analysis within reasonable time', async () => {
       const startTime = Date.now();
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+      const context = {
+        document: mockDocument,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
       expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
-      expect(result.analysisTime).toBeLessThan(1000);
+      expect(result.data.metadata.analysisTime).toBeLessThan(1000);
     });
 
     test('should handle large documents efficiently', async () => {
@@ -596,11 +614,17 @@ describe('Business Intelligence Minimal Analyzer', () => {
       `, { url: testUrl });
 
       const startTime = Date.now();
-      const result = await analyzer.analyzeBusinessIntelligence(largeDom.window.document, testUrl);
+      const context = {
+        document: largeDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       expect(result).toBeDefined();
-      expect(result.score).toBeGreaterThan(0);
+      expect(result.success).toBe(true);
+      expect(result.data.score).toBeGreaterThan(0);
       expect(endTime - startTime).toBeLessThan(2000); // Should still be reasonably fast
     });
 
@@ -609,14 +633,20 @@ describe('Business Intelligence Minimal Analyzer', () => {
       const results = [];
       
       for (let i = 0; i < 10; i++) {
-        const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+        const context = {
+          document: mockDocument,
+          url: testUrl,
+          pageData: {}
+        };
+        const result = await analyzer.analyze(context);
         results.push(result);
       }
 
       expect(results.length).toBe(10);
       results.forEach(result => {
         expect(result).toBeDefined();
-        expect(result.score).toBeGreaterThanOrEqual(0);
+        expect(result.success).toBe(true);
+        expect(result.data.score).toBeGreaterThanOrEqual(0);
       });
     });
 
@@ -625,14 +655,20 @@ describe('Business Intelligence Minimal Analyzer', () => {
       const results = [];
       
       for (let i = 0; i < 5; i++) {
-        const result = await analyzer.analyzeBusinessIntelligence(mockDocument, testUrl);
+        const context = {
+          document: mockDocument,
+          url: testUrl,
+          pageData: {}
+        };
+        const result = await analyzer.analyze(context);
         results.push(result);
       }
 
       const firstResult = results[0];
       results.forEach(result => {
-        expect(result.score).toBe(firstResult.score);
-        expect(result.grade).toBe(firstResult.grade);
+        expect(result.success).toBe(true);
+        expect(result.data.score).toBe(firstResult.data.score);
+        expect(result.data.grade).toBe(firstResult.data.grade);
         expect(result.trustSignals.sslPresent).toBe(firstResult.trustSignals.sslPresent);
         expect(result.contactInformation.emailFound).toBe(firstResult.contactInformation.emailFound);
       });
@@ -642,11 +678,17 @@ describe('Business Intelligence Minimal Analyzer', () => {
   describe('Edge Cases', () => {
     test('should handle empty document', async () => {
       const emptyDom = new JSDOM('');
-      const result = await analyzer.analyzeBusinessIntelligence(emptyDom.window.document, testUrl);
+      const context = {
+        document: emptyDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.grade).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.score).toBeGreaterThanOrEqual(0);
+      expect(result.data.grade).toBeDefined();
     });
 
     test('should handle document with no querySelector support', async () => {
@@ -654,17 +696,28 @@ describe('Business Intelligence Minimal Analyzer', () => {
         querySelectorAll: null
       };
 
-      const result = await analyzer.analyzeBusinessIntelligence(mockDocNoQuery, testUrl);
+      const context = {
+        document: mockDocNoQuery,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.score).toBeGreaterThanOrEqual(0);
+      expect(result.success).toBe(true);
+      expect(result.data.score).toBeGreaterThanOrEqual(0);
     });
 
     test('should handle invalid URLs', async () => {
       const invalidUrls = ['', null, undefined, 'not-a-url', 'ftp://example.com'];
 
       for (const url of invalidUrls) {
-        const result = await analyzer.analyzeBusinessIntelligence(mockDocument, url);
+        const context = {
+          document: mockDocument,
+          url: url,
+          pageData: {}
+        };
+        const result = await analyzer.analyze(context);
         expect(result).toBeDefined();
         expect(result.score).toBeGreaterThanOrEqual(0);
       }
@@ -679,12 +732,18 @@ describe('Business Intelligence Minimal Analyzer', () => {
         </body>
       `, { url: testUrl });
 
-      const result = await analyzer.analyzeBusinessIntelligence(malformedDom.window.document, testUrl);
+      const context = {
+        document: malformedDom.window.document,
+        url: testUrl,
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.score).toBeGreaterThanOrEqual(0);
+      expect(result.success).toBe(true);
+      expect(result.data.score).toBeGreaterThanOrEqual(0);
       // Should still find the email despite malformed HTML
-      expect(result.contactInformation.emailFound).toBe(true);
+      expect(result.data.contactInformation.emailFound).toBe(true);
     });
   });
 });

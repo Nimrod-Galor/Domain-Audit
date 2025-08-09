@@ -1177,26 +1177,4 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
   }
 
   // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeBusinessIntelligence(domOrDocument, pageDataOrUrl, url) {
-    console.warn('BusinessIntelligenceAnalyzer.analyzeBusinessIntelligence(domOrDocument, pageDataOrUrl, url) is deprecated. Use analyze(context) method instead.');
-    
-    // Handle legacy call signature
-    let actualPageData, actualUrl;
-    if (typeof pageDataOrUrl === 'string') {
-      actualUrl = pageDataOrUrl;
-      actualPageData = {};
-    } else {
-      actualPageData = pageDataOrUrl;
-      actualUrl = url;
-    }
-    
-    return this.performBusinessIntelligenceAnalysis(domOrDocument, actualPageData, actualUrl);
-  }
 }

@@ -118,10 +118,16 @@ async function testSocialMediaAnalyzer() {
     const validation2 = analyzer.validate(invalidParams);
     console.log('Invalid params validation:', validation2);
     
-    console.log('\n🧪 Testing legacy method compatibility...');
-    const legacyResult = await analyzer.analyzeSocialMedia({ window: { document } }, pageData, url);
-    console.log('Legacy method result available:', !!legacyResult);
-    console.log('Legacy method has platforms:', !!legacyResult?.platforms);
+    console.log('\n🧪 Testing analyze method functionality...');
+    const context2 = { 
+      document: document, 
+      url: url, 
+      pageData: pageData 
+    };
+    const methodResult = await analyzer.analyze(context2);
+    console.log('Analyze method result available:', !!methodResult);
+    console.log('Analyze method success:', methodResult?.success);
+    console.log('Analyze method has platforms:', !!methodResult?.data?.platforms);
     
     console.log('\n🎉 Social Media Analyzer integration test completed successfully!');
     
@@ -132,10 +138,10 @@ async function testSocialMediaAnalyzer() {
     console.log('- Has getMetadata() method:', typeof analyzer.getMetadata === 'function' ? '✅' : '❌');
     console.log('- Has validate() method:', typeof analyzer.validate === 'function' ? '✅' : '❌');
     console.log('- Returns valid result structure:', result && result.success !== undefined ? '✅' : '❌');
-    console.log('- Backward compatible:', typeof analyzer.analyzeSocialMedia === 'function' ? '✅' : '❌');
-    console.log('- Platform analysis working:', result?.platforms ? '✅' : '❌');
-    console.log('- Sharing analysis working:', result?.sharing ? '✅' : '❌');
-    console.log('- Has optimization score:', result?.optimization?.overallScore !== undefined ? '✅' : '❌');
+    console.log('- Analyze method compatible:', typeof analyzer.analyze === 'function' ? '✅' : '❌');
+    console.log('- Platform analysis working:', result?.data?.platforms ? '✅' : '❌');
+    console.log('- Sharing analysis working:', result?.data?.sharing ? '✅' : '❌');
+    console.log('- Has optimization score:', result?.data?.optimization?.overallScore !== undefined ? '✅' : '❌');
     
   } catch (error) {
     console.error('❌ Test failed:', error.message);

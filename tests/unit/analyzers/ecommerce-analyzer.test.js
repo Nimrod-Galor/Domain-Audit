@@ -148,14 +148,20 @@ describe('EcommerceAnalyzer', () => {
     });
   });
 
-  describe('analyzeEcommerce', () => {
+  describe('analyze', () => {
     test('should return non-e-commerce result for non-e-commerce sites', async () => {
-      const result = await analyzer.analyzeEcommerce(mockDom, {}, 'https://myblog.com');
+      const context = {
+        document: mockDom.window.document,
+        url: 'https://myblog.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
-      expect(result.type).toBe('non-ecommerce');
-      expect(result.message).toBe('No e-commerce indicators detected');
-      expect(result.analysisTime).toBeGreaterThan(0);
-      expect(result.timestamp).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('non-ecommerce');
+      expect(result.data.message).toBe('No e-commerce indicators detected');
+      expect(result.data.metadata.analysisTime).toBeGreaterThan(0);
+      expect(result.data.metadata.timestamp).toBeDefined();
     });
 
     test('should perform comprehensive analysis for e-commerce sites', async () => {
@@ -191,18 +197,24 @@ describe('EcommerceAnalyzer', () => {
       `;
       
       const ecommerceDom = new JSDOM(ecommerceHtml);
-      const result = await analyzer.analyzeEcommerce(ecommerceDom, {}, 'https://store.com/product');
+      const context = {
+        document: ecommerceDom.window.document,
+        url: 'https://store.com/product',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
-      expect(result.type).toBe('custom');
-      expect(result.product).toBeDefined();
-      expect(result.checkout).toBeDefined();
-      expect(result.reviews).toBeDefined();
-      expect(result.security).toBeDefined();
-      expect(result.conversion).toBeDefined();
-      expect(result.schema).toBeDefined();
-      expect(result.optimization).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('custom');
+      expect(result.data.product).toBeDefined();
+      expect(result.data.checkout).toBeDefined();
+      expect(result.data.reviews).toBeDefined();
+      expect(result.data.security).toBeDefined();
+      expect(result.data.conversion).toBeDefined();
+      expect(result.data.schema).toBeDefined();
+      expect(result.data.optimization).toBeDefined();
       expect(result.recommendations).toBeDefined();
-      expect(result.analysisTime).toBeGreaterThan(0);
+      expect(result.data.metadata.analysisTime).toBeGreaterThan(0);
     });
 
     test('should handle analysis errors gracefully', async () => {
@@ -216,10 +228,16 @@ describe('EcommerceAnalyzer', () => {
       `;
       const ecommerceDom = new JSDOM(ecommerceHtml);
       
-      const result = await analyzer.analyzeEcommerce(ecommerceDom, {}, 'https://store.com');
+      const context = {
+        document: ecommerceDom.window.document,
+        url: 'https://store.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
+      expect(result.success).toBe(false);
       expect(result.error).toContain('E-commerce analysis failed');
-      expect(result.analysisTime).toBeGreaterThan(0);
+      expect(result.duration).toBeGreaterThan(0);
     });
   });
 
@@ -534,21 +552,23 @@ describe('EcommerceAnalyzer', () => {
       `;
 
       const realWorldDom = new JSDOM(realWorldHtml);
-      const result = await analyzer.analyzeEcommerce(
-        realWorldDom, 
-        { title: 'Premium Headphones - AudioStore' }, 
-        'https://audiostore.com/products/premium-headphones'
-      );
+      const context = {
+        document: realWorldDom.window.document,
+        url: 'https://audiostore.com/products/premium-headphones',
+        pageData: { title: 'Premium Headphones - AudioStore' }
+      };
+      const result = await analyzer.analyze(context);
 
       // Verify comprehensive analysis
-      expect(result.type).toBe('custom');
-      expect(result.product).toBeDefined();
-      expect(result.checkout).toBeDefined();
-      expect(result.reviews).toBeDefined();
-      expect(result.security).toBeDefined();
-      expect(result.conversion).toBeDefined();
-      expect(result.schema).toBeDefined();
-      expect(result.optimization).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.type).toBe('custom');
+      expect(result.data.product).toBeDefined();
+      expect(result.data.checkout).toBeDefined();
+      expect(result.data.reviews).toBeDefined();
+      expect(result.data.security).toBeDefined();
+      expect(result.data.conversion).toBeDefined();
+      expect(result.data.schema).toBeDefined();
+      expect(result.data.optimization).toBeDefined();
       expect(result.recommendations).toBeDefined();
 
       // Verify scoring
@@ -571,7 +591,12 @@ describe('EcommerceAnalyzer', () => {
       
       // Should not throw error
       expect(async () => {
-        await analyzer.analyzeEcommerce(simpleDom, {}, 'https://store.com');
+        const context = {
+          document: simpleDom.window.document,
+          url: 'https://store.com',
+          pageData: {}
+        };
+        await analyzer.analyze(context);
       }).not.toThrow();
     });
   });
@@ -594,13 +619,19 @@ describe('EcommerceAnalyzer', () => {
       `;
       
       const complexDom = new JSDOM(complexHtml);
-      const result = await analyzer.analyzeEcommerce(complexDom, {}, 'https://store.com');
+      const context = {
+        document: complexDom.window.document,
+        url: 'https://store.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       const endTime = Date.now();
       const executionTime = endTime - startTime;
       
       expect(executionTime).toBeLessThan(5000); // Should complete within 5 seconds
       expect(result).toBeDefined();
+      expect(result.success).toBe(true);
     });
   });
 });

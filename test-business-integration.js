@@ -91,9 +91,10 @@ async function testFullAnalyzer() {
     const validation2 = analyzer.validate(invalidParams);
     console.log('Invalid params validation:', validation2);
     
-    console.log('\n🧪 Testing legacy method compatibility...');
-    const legacyResult = analyzer.analyzeBusinessIntelligence(document, url);
-    console.log('Legacy method result available:', !!legacyResult);
+    console.log('\n🧪 Testing analyze method functionality...');
+    const context2 = { document, url, pageData: {} };
+    const methodResult = await analyzer.analyze(context2);
+    console.log('Analyze method result available:', !!methodResult);
     
     console.log('\n🎉 Full Business Intelligence Analyzer integration test completed successfully!');
     
@@ -104,9 +105,9 @@ async function testFullAnalyzer() {
     console.log('- Has getMetadata() method:', typeof analyzer.getMetadata === 'function' ? '✅' : '❌');
     console.log('- Has validate() method:', typeof analyzer.validate === 'function' ? '✅' : '❌');
     console.log('- Returns valid result structure:', result && result.success !== undefined ? '✅' : '❌');
-    console.log('- Backward compatible:', typeof analyzer.analyzeBusinessIntelligence === 'function' ? '✅' : '❌');
-    console.log('- Trust signals working:', result?.trustSignals ? '✅' : '❌');
-    console.log('- Contact info working:', result?.contactInformation ? '✅' : '❌');
+    console.log('- Method compatibility:', typeof analyzer.analyze === 'function' ? '✅' : '❌');
+    console.log('- Trust signals working:', result?.data?.trustSignals ? '✅' : '❌');
+    console.log('- Contact info working:', result?.data?.contactInformation ? '✅' : '❌');
     
   } catch (error) {
     console.error('❌ Test failed:', error.message);

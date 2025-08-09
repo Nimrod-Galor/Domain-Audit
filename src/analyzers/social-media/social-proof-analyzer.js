@@ -5,8 +5,8 @@
  * @extends BaseAnalyzer
  */
 
-import { BaseAnalyzer } from '../core/base-analyzer.js';
-import { AnalyzerCategories } from '../utils/analyzer-categories.js';
+import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
+import { AnalyzerCategories } from '../core/AnalyzerInterface.js';
 
 export class SocialProofAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {

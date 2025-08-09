@@ -387,13 +387,38 @@ describe('BusinessAnalyticsAnalyzer', () => {
     });
   });
 
-  describe('Legacy Method Compatibility', () => {
-    it('should maintain backward compatibility with analyzeBusinessAnalytics', async () => {
-      const result = await analyzer.analyzeBusinessAnalytics(mockDocument, 'https://example.com');
+  describe('Method Compatibility', () => {
+    it('should maintain analyze() method functionality', async () => {
+      const context = {
+        document: mockDocument,
+        url: 'https://example.com',
+        pageData: {}
+      };
+      const result = await analyzer.analyze(context);
       
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data.userIntent).toBeDefined();
+    });
+
+    it('should provide consistent results with analyze() method', async () => {
+      const context1 = {
+        document: mockDocument,
+        url: 'https://example.com',
+        pageData: {}
+      };
+      const context2 = {
+        document: mockDocument,
+        url: 'https://example.com',
+        pageData: {}
+      };
+      
+      const result1 = await analyzer.analyze(context1);
+      const result2 = await analyzer.analyze(context2);
+      
+      expect(result1.success).toBe(true);
+      expect(result2.success).toBe(true);
+      expect(result1.data.userIntent.category).toBe(result2.data.userIntent.category);
     });
   });
 

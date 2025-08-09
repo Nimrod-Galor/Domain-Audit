@@ -236,31 +236,38 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should perform comprehensive social media analysis', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
-      expect(result).toBeDefined();
-      expect(result.platforms).toBeDefined();
-      expect(result.sharing).toBeDefined();
-      expect(result.socialProof).toBeDefined();
-      expect(result.images).toBeDefined();
-      expect(result.optimizationScore).toBeDefined();
-      expect(typeof result.optimizationScore).toBe('number');
-      expect(result.recommendations).toBeDefined();
-      expect(Array.isArray(result.recommendations)).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.data.platforms).toBeDefined();
+      expect(result.data.sharing).toBeDefined();
+      expect(result.data.socialProof).toBeDefined();
+      expect(result.data.images).toBeDefined();
+      expect(result.data.optimizationScore).toBeDefined();
+      expect(typeof result.data.optimizationScore).toBe('number');
+      expect(result.data.recommendations).toBeDefined();
+      expect(Array.isArray(result.data.recommendations)).toBe(true);
     });
   });
 
   describe('Platform-Specific Analysis', () => {
     test('should analyze Open Graph tags correctly', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const ogAnalysis = result.platforms.openGraph;
+      const result = await analyzer.analyze(context);
+      const ogAnalysis = result.data.platforms.openGraph;
 
+      expect(result.success).toBe(true);
       expect(ogAnalysis).toBeDefined();
       expect(ogAnalysis.basic).toBeDefined();
       expect(ogAnalysis.basic.title).toBe('Amazing Product - Transform Your Business');
@@ -271,12 +278,16 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should analyze Twitter Cards correctly', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const twitterAnalysis = result.platforms.twitter;
+      const result = await analyzer.analyze(context);
+      const twitterAnalysis = result.data.platforms.twitter;
 
+      expect(result.success).toBe(true);
       expect(twitterAnalysis).toBeDefined();
       expect(twitterAnalysis.cardType).toBe('summary_large_image');
       expect(twitterAnalysis.title).toBe('Amazing Product - Transform Your Business');
@@ -287,36 +298,48 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should analyze LinkedIn optimization', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const linkedinAnalysis = result.platforms.linkedin;
+      const result = await analyzer.analyze(context);
+      const linkedinAnalysis = result.data.platforms.linkedin;
 
+      expect(result.success).toBe(true);
       expect(linkedinAnalysis).toBeDefined();
       expect(linkedinAnalysis.professionalOptimization).toBeDefined();
       expect(linkedinAnalysis.professionalOptimization.score).toBeGreaterThan(0);
     });
 
     test('should analyze Pinterest Rich Pins', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const pinterestAnalysis = result.platforms.pinterest;
+      const result = await analyzer.analyze(context);
+      const pinterestAnalysis = result.data.platforms.pinterest;
 
+      expect(result.success).toBe(true);
       expect(pinterestAnalysis).toBeDefined();
       expect(pinterestAnalysis.richPins).toBeDefined();
       expect(pinterestAnalysis.richPins.type).toBe('article');
     });
 
     test('should analyze WhatsApp preview optimization', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const whatsappAnalysis = result.platforms.whatsapp;
+      const result = await analyzer.analyze(context);
+      const whatsappAnalysis = result.data.platforms.whatsapp;
 
+      expect(result.success).toBe(true);
       expect(whatsappAnalysis).toBeDefined();
       expect(whatsappAnalysis.preview).toBeDefined();
       expect(whatsappAnalysis.mobileOptimization).toBeDefined();
@@ -325,12 +348,16 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
 
   describe('Social Sharing Analysis', () => {
     test('should detect social sharing buttons', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const sharing = result.sharing;
+      const result = await analyzer.analyze(context);
+      const sharing = result.data.sharing;
 
+      expect(result.success).toBe(true);
       expect(sharing).toBeDefined();
       expect(sharing.hasShareButtons).toBe(true);
       expect(sharing.shareButtons.length).toBeGreaterThan(0);
@@ -340,12 +367,16 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should detect social media links', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const sharing = result.sharing;
+      const result = await analyzer.analyze(context);
+      const sharing = result.data.sharing;
 
+      expect(result.success).toBe(true);
       expect(sharing.socialLinks).toBeDefined();
       expect(sharing.socialLinks.length).toBeGreaterThan(0);
       
@@ -360,12 +391,16 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
 
   describe('Social Proof Analysis', () => {
     test('should detect testimonials with quality analysis', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const socialProof = result.socialProof;
+      const result = await analyzer.analyze(context);
+      const socialProof = result.data.socialProof;
 
+      expect(result.success).toBe(true);
       expect(socialProof).toBeDefined();
       expect(socialProof.testimonials).toBeDefined();
       expect(socialProof.testimonials.count).toBeGreaterThan(0);
@@ -379,12 +414,16 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should detect and analyze ratings', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const socialProof = result.socialProof;
+      const result = await analyzer.analyze(context);
+      const socialProof = result.data.socialProof;
 
+      expect(result.success).toBe(true);
       expect(socialProof.ratings).toBeDefined();
       expect(socialProof.ratings.count).toBeGreaterThan(0);
       expect(socialProof.ratings.hasRatings).toBe(true);
@@ -392,12 +431,16 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should detect social metrics and follower counts', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const socialProof = result.socialProof;
+      const result = await analyzer.analyze(context);
+      const socialProof = result.data.socialProof;
 
+      expect(result.success).toBe(true);
       expect(socialProof.socialMetrics).toBeDefined();
       expect(socialProof.socialMetrics.count).toBeGreaterThan(0);
       expect(socialProof.socialMetrics.totalFollowers).toBeGreaterThan(0);
@@ -405,24 +448,32 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should detect trust signals and certifications', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const socialProof = result.socialProof;
+      const result = await analyzer.analyze(context);
+      const socialProof = result.data.socialProof;
 
+      expect(result.success).toBe(true);
       expect(socialProof.trustSignals).toBeDefined();
       expect(socialProof.trustSignals.count).toBeGreaterThan(0);
       expect(socialProof.trustSignals.hasTrustSignals).toBe(true);
     });
 
     test('should detect customer logos', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
-      const socialProof = result.socialProof;
+      const result = await analyzer.analyze(context);
+      const socialProof = result.data.socialProof;
 
+      expect(result.success).toBe(true);
       expect(socialProof.customerLogos).toBeDefined();
       expect(socialProof.customerLogos.count).toBeGreaterThan(0);
       expect(socialProof.customerLogos.hasCustomerLogos).toBe(true);
@@ -431,13 +482,17 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
 
   describe('Content Quality Analysis', () => {
     test('should analyze content quality with engagement factors', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
+      expect(result.success).toBe(true);
       // Check if content quality analysis is working through platform analyzers
-      const ogAnalysis = result.platforms.openGraph;
+      const ogAnalysis = result.data.platforms.openGraph;
       expect(ogAnalysis.optimization).toBeDefined();
       expect(ogAnalysis.optimization.score).toBeGreaterThan(0);
     });
@@ -480,16 +535,20 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
 
   describe('Recommendations Generation', () => {
     test('should generate actionable optimization recommendations', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
-      expect(result.recommendations).toBeDefined();
-      expect(Array.isArray(result.recommendations)).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.data.recommendations).toBeDefined();
+      expect(Array.isArray(result.data.recommendations)).toBe(true);
       
-      if (result.recommendations.length > 0) {
-        const firstRec = result.recommendations[0];
+      if (result.data.recommendations.length > 0) {
+        const firstRec = result.data.recommendations[0];
         expect(firstRec).toHaveProperty('type');
         expect(firstRec).toHaveProperty('priority');
         expect(firstRec).toHaveProperty('title');
@@ -498,13 +557,17 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
     });
 
     test('should prioritize recommendations by impact', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
-      if (result.recommendations.length > 1) {
-        const priorities = result.recommendations.map(rec => rec.priority);
+      expect(result.success).toBe(true);
+      if (result.data.recommendations.length > 1) {
+        const priorities = result.data.recommendations.map(rec => rec.priority);
         expect(priorities).toContain('high', 'medium');
       }
     });
@@ -512,69 +575,87 @@ describe('Social Media Analyzer - Phase 1 Integration Tests', () => {
 
   describe('Performance and Error Handling', () => {
     test('should complete analysis within reasonable time', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
       const startTime = Date.now();
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
       const endTime = Date.now();
 
       const analysisTime = endTime - startTime;
+      expect(result.success).toBe(true);
       expect(analysisTime).toBeLessThan(5000); // Should complete within 5 seconds
-      expect(result.analysisTime).toBeDefined();
+      expect(result.data.metadata.analysisTime).toBeDefined();
     });
 
     test('should handle missing elements gracefully', async () => {
       const emptyHTML = '<html><head><title>Empty</title></head><body></body></html>';
       const emptyDOM = new JSDOM(emptyHTML);
-      const pageData = { title: 'Empty Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: emptyDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Empty Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(emptyDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.error).toBeUndefined(); // Should not error
-      expect(result.platforms).toBeDefined();
-      expect(result.sharing).toBeDefined();
-      expect(result.socialProof).toBeDefined();
+      expect(result.success).toBe(true); // Should succeed even with empty content
+      expect(result.data.platforms).toBeDefined();
+      expect(result.data.sharing).toBeDefined();
+      expect(result.data.socialProof).toBeDefined();
     });
 
     test('should handle malformed HTML gracefully', async () => {
       const malformedHTML = '<html><head><meta property="og:title" content="Test"><body><div><p>Content</div></body></html>';
       const malformedDOM = new JSDOM(malformedHTML);
-      const pageData = { title: 'Malformed Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: malformedDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Malformed Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(malformedDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
       expect(result).toBeDefined();
-      expect(result.error).toBeUndefined(); // Should not error
+      expect(result.success).toBe(true); // Should succeed even with malformed HTML
     });
   });
 
   describe('Scoring System', () => {
     test('should calculate meaningful optimization scores', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
-      expect(result.optimizationScore).toBeDefined();
-      expect(typeof result.optimizationScore).toBe('number');
-      expect(result.optimizationScore).toBeGreaterThanOrEqual(0);
-      expect(result.optimizationScore).toBeLessThanOrEqual(100);
+      expect(result.success).toBe(true);
+      expect(result.data.optimizationScore).toBeDefined();
+      expect(typeof result.data.optimizationScore).toBe('number');
+      expect(result.data.optimizationScore).toBeGreaterThanOrEqual(0);
+      expect(result.data.optimizationScore).toBeLessThanOrEqual(100);
       
       // With comprehensive test data, score should be reasonably high
-      expect(result.optimizationScore).toBeGreaterThan(50);
+      expect(result.data.optimizationScore).toBeGreaterThan(50);
     });
 
     test('should provide platform-specific scores', async () => {
-      const pageData = { title: 'Test Page', url: 'https://example.com' };
-      const url = 'https://example.com';
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: { title: 'Test Page', url: 'https://example.com' }
+      };
 
-      const result = await analyzer.analyzeSocialMedia(mockDOM, pageData, url);
+      const result = await analyzer.analyze(context);
 
-      Object.values(result.platforms).forEach(platformAnalysis => {
+      expect(result.success).toBe(true);
+      Object.values(result.data.platforms).forEach(platformAnalysis => {
         if (platformAnalysis.score !== undefined) {
           expect(typeof platformAnalysis.score).toBe('number');
           expect(platformAnalysis.score).toBeGreaterThanOrEqual(0);
@@ -614,10 +695,17 @@ describe('Social Media Analyzer - Advanced Integration Scenarios', () => {
     `;
 
     const ecommerceDOM = new JSDOM(ecommerceHTML);
-    const result = await analyzer.analyzeSocialMedia(ecommerceDOM, {}, 'https://shop.example.com/headphones');
+    const context = {
+      document: ecommerceDOM.window.document,
+      url: 'https://shop.example.com/headphones',
+      pageData: {}
+    };
 
-    expect(result.platforms.openGraph.basic.type).toBe('product');
-    expect(result.platforms.openGraph.extended).toBeDefined();
+    const result = await analyzer.analyze(context);
+
+    expect(result.success).toBe(true);
+    expect(result.data.platforms.openGraph.basic.type).toBe('product');
+    expect(result.data.platforms.openGraph.extended).toBeDefined();
   });
 
   test('should handle blog/article pages', async () => {
@@ -640,10 +728,17 @@ describe('Social Media Analyzer - Advanced Integration Scenarios', () => {
     `;
 
     const blogDOM = new JSDOM(blogHTML);
-    const result = await analyzer.analyzeSocialMedia(blogDOM, {}, 'https://blog.example.com/ai-future');
+    const context = {
+      document: blogDOM.window.document,
+      url: 'https://blog.example.com/ai-future',
+      pageData: {}
+    };
 
-    expect(result.platforms.openGraph.basic.type).toBe('article');
-    expect(result.platforms.pinterest.richPins.type).toBe('article');
+    const result = await analyzer.analyze(context);
+
+    expect(result.success).toBe(true);
+    expect(result.data.platforms.openGraph.basic.type).toBe('article');
+    expect(result.data.platforms.pinterest.richPins.type).toBe('article');
   });
 
   test('should handle corporate/business pages', async () => {
@@ -669,11 +764,18 @@ describe('Social Media Analyzer - Advanced Integration Scenarios', () => {
     `;
 
     const corporateDOM = new JSDOM(corporateHTML);
-    const result = await analyzer.analyzeSocialMedia(corporateDOM, {}, 'https://enterprise.example.com');
+    const context = {
+      document: corporateDOM.window.document,
+      url: 'https://enterprise.example.com',
+      pageData: {}
+    };
 
-    expect(result.platforms.linkedin.professionalOptimization.score).toBeGreaterThan(0);
-    expect(result.socialProof.trustSignals.count).toBeGreaterThan(0);
-    expect(result.socialProof.customerLogos.count).toBeGreaterThan(0);
+    const result = await analyzer.analyze(context);
+
+    expect(result.success).toBe(true);
+    expect(result.data.platforms.linkedin.professionalOptimization.score).toBeGreaterThan(0);
+    expect(result.data.socialProof.trustSignals.count).toBeGreaterThan(0);
+    expect(result.data.socialProof.customerLogos.count).toBeGreaterThan(0);
   });
 });
 

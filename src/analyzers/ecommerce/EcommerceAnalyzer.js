@@ -140,18 +140,6 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
   }
 
   /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async analyzeEcommerce(dom, pageData, url) {
-    console.warn('analyzeEcommerce() is deprecated. Use analyze() method instead.');
-    
-    // Handle JSDOM object
-    const document = dom.window ? dom.window.document : dom;
-    return this.analyze(document, pageData, url);
-  }
-
-  /**
    * Detect e-commerce platform and type
    */
   _detectEcommerceType(document, url) {

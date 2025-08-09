@@ -193,7 +193,6 @@ export class WhatsAppAnalyzer extends BaseAnalyzer {
       throw new Error(`WhatsApp analysis failed: ${error.message}`);
     }
   }
-  }
 
   _analyzeWhatsAppPreview(document) {
     // WhatsApp uses Open Graph tags for previews

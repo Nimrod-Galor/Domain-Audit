@@ -716,11 +716,22 @@ export class EnhancedExtractorsIntegration {
    */
   extractBusinessAnalytics(dom, pageData, url = '') {
     try {
-      return this.businessAnalyticsAnalyzer.analyzeBusinessAnalytics(
-        dom, 
-        pageData, 
-        url
-      );
+      // Convert to new context format
+      const document = dom.window?.document || dom;
+      const context = {
+        document: document,
+        url: url || 'https://example.com',
+        pageData: pageData || {}
+      };
+      
+      const result = this.businessAnalyticsAnalyzer.analyze(context);
+      
+      // Return the data part for compatibility with existing code
+      if (result.success) {
+        return result.data;
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       return {
         error: `Business analytics analysis failed: ${error.message}`,
@@ -809,16 +820,24 @@ export class EnhancedExtractorsIntegration {
         documentAdapter = dom.window ? dom.window.document : dom;
       }
       
-      const result = await this.businessIntelligenceAnalyzer.analyzeBusinessIntelligence(
-        documentAdapter, 
-        pageData, 
-        url
-      );
+      // Convert to new context format
+      const context = {
+        document: documentAdapter,
+        url: url || 'https://example.com',
+        pageData: pageData || {}
+      };
+      
+      const result = await this.businessIntelligenceAnalyzer.analyze(context);
       
       console.log('✅ DEBUG: Business Intelligence analysis completed');
-      console.log('📊 DEBUG: Result keys:', Object.keys(result || {}));
+      console.log('📊 DEBUG: Analysis success:', result.success);
       
-      return result;
+      // Return the data part for compatibility with existing code
+      if (result.success) {
+        return result.data;
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.log('❌ DEBUG: Business Intelligence analysis error:', error.message);
       return {
@@ -847,7 +866,22 @@ export class EnhancedExtractorsIntegration {
    */
   extractSocialMediaAnalysis(dom, pageData, url = '') {
     try {
-      return this.socialMediaAnalyzer.analyzeSocialMedia(dom, pageData, url);
+      // Convert to new context format
+      const document = dom.window?.document || dom;
+      const context = {
+        document: document,
+        url: url || 'https://example.com',
+        pageData: pageData || {}
+      };
+      
+      const result = this.socialMediaAnalyzer.analyze(context);
+      
+      // Return the data part for compatibility with existing code
+      if (result.success) {
+        return result.data;
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       return {
         error: `Social media analysis failed: ${error.message}`,
@@ -870,7 +904,22 @@ export class EnhancedExtractorsIntegration {
    */
   extractEcommerceAnalysis(dom, pageData, url = '') {
     try {
-      return this.ecommerceAnalyzer.analyzeEcommerce(dom, pageData, url);
+      // Convert to new context format
+      const document = dom.window?.document || dom;
+      const context = {
+        document: document,
+        url: url || 'https://example.com',
+        pageData: pageData || {}
+      };
+      
+      const result = this.ecommerceAnalyzer.analyze(context);
+      
+      // Return the data part for compatibility with existing code
+      if (result.success) {
+        return result.data;
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       return {
         error: `E-commerce analysis failed: ${error.message}`,

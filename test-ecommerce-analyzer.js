@@ -166,10 +166,16 @@ async function testEcommerceAnalyzer() {
     const validation2 = analyzer.validate(invalidParams);
     console.log('Invalid params validation:', validation2);
     
-    console.log('\n🧪 Testing legacy method compatibility...');
-    const legacyResult = await analyzer.analyzeEcommerce({ window: { document } }, pageData, url);
-    console.log('Legacy method result available:', !!legacyResult);
-    console.log('Legacy method has type:', !!legacyResult?.type);
+    console.log('\n🧪 Testing analyze method functionality...');
+    const context2 = { 
+      document: document, 
+      url: url, 
+      pageData: pageData 
+    };
+    const methodResult = await analyzer.analyze(context2);
+    console.log('Analyze method result available:', !!methodResult);
+    console.log('Analyze method success:', methodResult?.success);
+    console.log('Analyze method has type:', !!methodResult?.data?.type);
     
     console.log('\n🧪 Testing non-ecommerce site detection...');
     const nonEcommerceHtml = `
