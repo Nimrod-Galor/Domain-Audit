@@ -16,7 +16,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../../core/AnalyzerInterface.js';
 
 export class AboutPageAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -99,25 +99,29 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
 
   /**
    * Validate input parameters
-   * @param {Document} document - The DOM document
-   * @param {string} url - The page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - The DOM document
+   * @param {string} context.url - The page URL
    * @returns {boolean} True if inputs are valid
    */
-  validate(document, url) {
+  validate(context) {
+    if (!context || typeof context !== 'object') {
+      return false;
+    }
+
+    const { document, url } = context;
+
     if (!document) {
-      this.handleError('Document is required for about page analysis');
       return false;
     }
 
     if (!url || typeof url !== 'string') {
-      this.handleError('Valid URL is required for about page analysis');
       return false;
     }
 
     try {
       new URL(url);
     } catch (error) {
-      this.handleError(`Invalid URL format: ${url}`);
       return false;
     }
 
@@ -126,58 +130,63 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
 
   /**
    * Analyze about page content and quality
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - DOM document
+   * @param {string} context.url - Page URL
+   * @param {Object} context.pageData - Page metadata
    * @returns {Object} About page analysis results
    */
-  async analyze(document, url) {
-    if (!this.validate(document, url)) {
-      return this.createErrorResult('Validation failed for about page analysis');
+  async analyze({document, url, pageData = {}}) {
+    if (!this.validate({document, url, pageData})) {
+      return this.handleError(new Error('Validation failed for about page analysis'), 'validation');
     }
 
-    try {
-      const aboutPagePresence = this._findAboutPage(document);
-      const aboutContent = this._analyzeAboutContent(document);
-      const teamInformation = this._analyzeTeamInformation(document);
-      const companyStory = this._analyzeCompanyStory(document);
-      const missionVision = this._analyzeMissionVision(document);
-      const credibilityIndicators = this._analyzeCredibilityIndicators(document);
-      const contentQuality = this._analyzeContentQuality(document);
+    const { result, time } = await this.measureTime(async () => {
+      try {
+        const aboutPagePresence = this._findAboutPage(document);
+        const aboutContent = this._analyzeAboutContent(document);
+        const teamInformation = this._analyzeTeamInformation(document);
+        const companyStory = this._analyzeCompanyStory(document);
+        const missionVision = this._analyzeMissionVision(document);
+        const credibilityIndicators = this._analyzeCredibilityIndicators(document);
+        const contentQuality = this._analyzeContentQuality(document);
 
-      const analysis = {
-        aboutPagePresence,
-        aboutContent,
-        teamInformation,
-        companyStory,
-        missionVision,
-        credibilityIndicators,
-        contentQuality,
-      };
+        const analysis = {
+          aboutPagePresence,
+          aboutContent,
+          teamInformation,
+          companyStory,
+          missionVision,
+          credibilityIndicators,
+          contentQuality,
+        };
 
-      const score = this._calculateAboutScore(analysis);
-      const performance = performance.now() - startTime;
+        const score = this._calculateAboutScore(analysis);
 
-      const result = {
-        ...analysis,
-        score,
-        grade: this._assignGrade(score),
-        strengths: this._identifyAboutStrengths(analysis),
-        recommendations: this._generateAboutRecommendations(analysis),
-        summary: this._generateExecutiveSummary(analysis, score),
-        metadata: {
-          ...this.getMetadata(),
-          analysisDate: new Date().toISOString(),
-          performanceMs: Math.round(performance),
-          url: url
-        }
-      };
+        const result = {
+          ...analysis,
+          score,
+          grade: this._assignGrade(score),
+          strengths: this._identifyAboutStrengths(analysis),
+          recommendations: this._generateAboutRecommendations(analysis),
+          summary: this._generateExecutiveSummary(analysis, score),
+          metadata: {
+            ...this.getMetadata(),
+            analysisDate: new Date().toISOString(),
+            url: url
+          }
+        };
 
-      return result;
+        return this.createSuccessResponse({
+          data: result
+        });
 
-    } catch (error) {
-      this.handleError(`About page analysis failed: ${error.message}`);
-      return this.createErrorResult('About page analysis failed');
-    }
+      } catch (error) {
+        return this.handleError(error, 'about page analysis');
+      }
+    });
+
+    return result;
   }
 
   /**
@@ -193,7 +202,7 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
       links.forEach((link) => {
         aboutLinks.push({
           href: link.href,
-          text: link.textContent.trim(),
+          text: (link.textContent || '').trim(),
           location: this._getLinkLocation(link),
         });
       });
@@ -205,9 +214,9 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
       sections.forEach((section) => {
         aboutSections.push({
           selector,
-          wordCount: this._countWords(section.textContent),
+          wordCount: this._countWords(section.textContent || ''),
           hasHeading: this._hasHeading(section),
-          contentLength: section.textContent.trim().length,
+          contentLength: (section.textContent || '').trim().length,
         });
       });
     });
@@ -245,7 +254,7 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
     };
 
     aboutElements.forEach((element) => {
-      const wordCount = this._countWords(element.textContent);
+      const wordCount = this._countWords(element.textContent || '');
       const images = element.querySelectorAll('img');
       const headings = element.querySelectorAll('h1, h2, h3, h4, h5, h6');
       const paragraphs = element.querySelectorAll('p');
@@ -396,9 +405,9 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
     missionSections.forEach((section) => {
       missionContent.push({
         type: this._identifyMissionType(section),
-        wordCount: this._countWords(section.textContent),
+        wordCount: this._countWords(section.textContent || ''),
         hasHeading: this._hasHeading(section),
-        content: section.textContent.trim().substring(0, 200),
+        content: (section.textContent || '').trim().substring(0, 200),
       });
     });
 
@@ -461,9 +470,9 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
     let professionalismScore = 0;
 
     aboutElements.forEach((element) => {
-      readabilityScore += this._assessReadability(element.textContent);
+      readabilityScore += this._assessReadability(element.textContent || '');
       engagementScore += this._assessEngagement(element);
-      professionalismScore += this._assessProfessionalism(element.textContent);
+      professionalismScore += this._assessProfessionalism(element.textContent || '');
     });
 
     const elementCount = aboutElements.length || 1;
@@ -488,6 +497,7 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
   }
 
   _countWords(text) {
+    if (!text || typeof text !== 'string') return 0;
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
 
@@ -525,16 +535,16 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
 
   _hasTeamRoles(section) {
     const roleKeywords = ['ceo', 'cto', 'manager', 'director', 'founder', 'president', 'vice', 'lead'];
-    const text = section.textContent.toLowerCase();
+    const text = (section.textContent || '').toLowerCase();
     return roleKeywords.some(role => text.includes(role));
   }
 
   _analyzeTeamMember(element) {
-    const text = element.textContent.toLowerCase();
+    const text = (element.textContent || '').toLowerCase();
     const hasPhoto = element.querySelector('img') !== null;
     const hasBio = element.querySelector('.bio, .biography, .description, p') !== null;
     const hasRole = /\b(ceo|cto|manager|director|founder|president|vice|lead|senior|junior)\b/.test(text);
-    const bioLength = this._countWords(element.textContent);
+    const bioLength = this._countWords(element.textContent || '');
 
     const isTeamMember = hasRole || hasBio || hasPhoto || bioLength > 20;
 
@@ -569,8 +579,8 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
   }
 
   _identifyMissionType(section) {
-    const text = section.textContent.toLowerCase();
-    const className = section.className.toLowerCase();
+    const text = (section.textContent || '').toLowerCase();
+    const className = (section.className || '').toLowerCase();
     
     if (text.includes('mission') || className.includes('mission')) return 'mission';
     if (text.includes('vision') || className.includes('vision')) return 'vision';
@@ -649,7 +659,7 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
     if (element.querySelector('blockquote')) score += 15;
     
     // Check text engagement
-    const text = element.textContent.toLowerCase();
+    const text = (element.textContent || '').toLowerCase();
     const engagingWords = ['we', 'our', 'you', 'your', 'customer', 'client', 'passion', 'love', 'believe'];
     const engagingCount = engagingWords.filter(word => text.includes(word)).length;
     score += engagingCount * 3;
@@ -888,21 +898,21 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
     
     // About page presence
     if (analysis.aboutPagePresence.hasAboutPage) {
-      summary += `Dedicated about page found with ${analysis.aboutPagePresence.sections.length} relevant sections. `;
+      summary += `Dedicated about page found with ${analysis.aboutPagePresence.aboutSections.length} relevant sections. `;
     } else {
       summary += `No dedicated about page detected. `;
     }
     
     // Company story summary
-    if (analysis.companyStory.hasStory) {
-      summary += `Company story present with ${Math.round(analysis.companyStory.storyQuality * 100)}% quality score. `;
+    if (analysis.companyStory.hasFoundingStory) {
+      summary += `Company story present with ${analysis.companyStory.storyRichness} richness level. `;
     } else {
       summary += `Company story not found or underdeveloped. `;
     }
     
     // Team information summary
     if (analysis.teamInformation.hasTeamSection) {
-      summary += `Team information includes ${analysis.teamInformation.teamMembers.length} member(s) with ${Math.round(analysis.teamInformation.averageCompleteness * 100)}% profile completeness. `;
+      summary += `Team information includes ${analysis.teamInformation.teamMembers.length} member(s) with ${Math.round(analysis.teamInformation.averageBioLength)} average bio length. `;
     } else {
       summary += `No team information or member profiles found. `;
     }
@@ -918,8 +928,8 @@ export class AboutPageAnalyzer extends BaseAnalyzer {
     }
     
     // Credibility indicators summary
-    if (analysis.credibilityIndicators.indicators.length > 0) {
-      summary += `${analysis.credibilityIndicators.indicators.length} credibility indicator(s) found including ${analysis.credibilityIndicators.indicators.slice(0, 3).map(i => i.type).join(', ')}. `;
+    if (analysis.credibilityIndicators.credibilityMentions.length > 0) {
+      summary += `${analysis.credibilityIndicators.credibilityMentions.length} credibility indicator(s) found including ${analysis.credibilityIndicators.credibilityMentions.slice(0, 3).map(i => i.indicator).join(', ')}. `;
     } else {
       summary += `No credibility indicators detected. `;
     }

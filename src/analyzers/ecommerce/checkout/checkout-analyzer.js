@@ -175,45 +175,7 @@ export class CheckoutAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Analyze checkout process (legacy method for backward compatibility)
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @returns {Object} Checkout analysis results
-   */
-  analyzeCheckout(document) {
-    const checkoutElements = this._findCheckoutElements(document);
-    const checkoutButtons = this._findCheckoutButtons(document);
-    const checkoutFlow = this._analyzeCheckoutFlow(document);
-    const formAnalysis = this._analyzeCheckoutForms(document);
-    const userExperience = this._analyzeUserExperience(document);
-    const progressIndicators = this._analyzeProgressIndicators(document);
 
-    return {
-      hasCheckout: checkoutElements.length > 0 || checkoutButtons.length > 0,
-      checkoutElements: {
-        count: checkoutElements.length,
-        elements: checkoutElements.map(el => ({
-          tagName: el.tagName,
-          className: el.className,
-          id: el.id,
-        })),
-      },
-      checkoutButtons: {
-        count: checkoutButtons.length,
-        buttons: checkoutButtons.map(btn => ({
-          text: btn.textContent.trim(),
-          tagName: btn.tagName,
-          href: btn.href || null,
-        })),
-      },
-      flow: checkoutFlow,
-      forms: formAnalysis,
-      userExperience,
-      progressIndicators,
-      score: this._calculateCheckoutScore(checkoutFlow, formAnalysis, userExperience, progressIndicators),
-    };
-  }
 
   /**
    * Find checkout elements

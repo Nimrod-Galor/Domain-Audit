@@ -56,11 +56,26 @@ export class SEOAnalyzer extends BaseAnalyzer {
 
   /**
    * Analyze SEO elements of a web page
-   * @param {Document} document - DOM document to analyze
-   * @param {string} url - Page URL for context
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - DOM document to analyze
+   * @param {string} context.url - Page URL for context
+   * @param {Object} context.pageData - Additional page data
    * @returns {Object} Comprehensive SEO analysis results
    */
-  async analyze(document, url = null) {
+  async analyze(context) {
+    // Handle legacy calling format for backward compatibility
+    if (context && context.nodeType === 9) {
+      const document = context;
+      const url = arguments[1] || null;
+      context = { document, url, pageData: {} };
+    }
+
+    if (!this.validate(context)) {
+      return this.handleError(new Error('Invalid context provided'), 'validation');
+    }
+
+    const { document, url = null, pageData = {} } = context;
+
     try {
       this.log('Starting comprehensive SEO analysis');
       const startTime = this.measureTime();

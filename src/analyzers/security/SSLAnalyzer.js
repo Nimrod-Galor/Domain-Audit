@@ -1195,18 +1195,6 @@ export class SSLCertificateAnalyzer extends BaseAnalyzer {
     }
   }
 
-  // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeCertificate(url, pageData = {}) {
-    console.warn('SSLCertificateAnalyzer.analyzeCertificate(url, pageData) is deprecated. Use analyze(context) method instead.');
-    return this.performSSLCertificateAnalysis(url, pageData);
-  }
 }
 
 export default SSLCertificateAnalyzer;

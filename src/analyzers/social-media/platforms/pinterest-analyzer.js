@@ -141,17 +141,7 @@ export class PinterestAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
-   * @returns {Promise<Object>} Pinterest analysis results
-   */
-  async analyzePinterest(document, url) {
-    console.warn('analyzePinterest() is deprecated. Use analyze() method instead.');
-    return this._performPinterestAnalysis(document, url);
-  }
+
 
   /**
    * Internal method to perform Pinterest analysis

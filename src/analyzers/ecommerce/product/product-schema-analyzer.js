@@ -873,16 +873,4 @@ export class ProductSchemaAnalyzer extends BaseAnalyzer {
     }
   }
 
-  // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeSchema(document) {
-    console.warn('ProductSchemaAnalyzer.analyzeSchema() is deprecated. Use analyze() method instead.');
-    return this.analyze({ document });
-  }
 }

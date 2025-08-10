@@ -29,12 +29,31 @@ export class BaseAnalyzer {
 
   /**
    * Main analysis method - must be implemented by subclasses
-   * @param {Document} document - DOM document
-   * @param {Object} pageData - Page data object
-   * @param {string} url - Page URL
+   * Supports both modern context format and legacy parameter format for backward compatibility
+   * @param {Object|Document} contextOrDocument - Analysis context object or legacy document
+   * @param {Object} [pageData] - Legacy page data parameter
+   * @param {string} [url] - Legacy URL parameter
    * @returns {Promise<Object>} Analysis results
    */
-  async analyze(document, pageData, url) {
+  async analyze(contextOrDocument, pageData, url) {
+    // Handle both modern and legacy calling formats
+    let context;
+    
+    if (contextOrDocument && typeof contextOrDocument === 'object' && contextOrDocument.document) {
+      // Modern format: analyze({document, url, pageData, options})
+      context = contextOrDocument;
+    } else if (contextOrDocument && contextOrDocument.nodeType === 9) {
+      // Legacy format: analyze(document, pageData, url)
+      context = {
+        document: contextOrDocument,
+        url: url || '',
+        pageData: pageData || {},
+        options: {}
+      };
+    } else {
+      throw new Error('Invalid context provided - expected {document, url, pageData} or legacy (document, pageData, url)');
+    }
+
     throw new Error('analyze() method must be implemented by subclass');
   }
 
@@ -52,13 +71,44 @@ export class BaseAnalyzer {
   }
 
   /**
-   * Validate analyzer configuration
+   * Validate analyzer configuration and context
+   * @param {Object} [context] - Analysis context to validate
    * @returns {boolean} True if valid
    */
-  validate() {
+  validate(context = null) {
+    // Validate analyzer configuration
     if (!this.name || typeof this.name !== 'string') {
       throw new Error('Analyzer must have a valid name');
     }
+
+    // Validate context if provided
+    if (context) {
+      if (typeof context !== 'object') {
+        return false;
+      }
+
+      // Check for required document
+      if (!context.document) {
+        return false;
+      }
+
+      // Validate document is a proper DOM document
+      if (typeof context.document !== 'object' || 
+          (context.document.nodeType !== 9 && !context.document.querySelector)) {
+        return false;
+      }
+
+      // Validate URL if provided
+      if (context.url && typeof context.url !== 'string') {
+        return false;
+      }
+
+      // Validate pageData if provided  
+      if (context.pageData && typeof context.pageData !== 'object') {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -82,34 +132,61 @@ export class BaseAnalyzer {
   }
 
   /**
-   * Handle errors gracefully
+   * Handle errors gracefully with modern BaseAnalyzer response format
    * @param {Error} error - Error object
    * @param {string} context - Error context
+   * @param {Object} [defaultData] - Default data to include in error response
    * @returns {Object} Standardized error response
    */
-  handleError(error, context = 'analysis') {
-    const errorMessage = `${this.name} ${context} failed: ${error.message}`;
-    this.log('error', errorMessage, error);
+  handleError(error, context = 'analysis', defaultData = {}) {
+    const errorMessage = error?.message || 'Unknown error occurred';
+    const fullMessage = `${this.name} ${context} failed: ${errorMessage}`;
+    
+    this.log('error', fullMessage, error);
     
     return {
-      error: errorMessage,
       success: false,
+      error: fullMessage,
+      data: defaultData,
       timestamp: new Date().toISOString(),
       analyzer: this.name,
-      context
+      context,
+      analysisTime: 0
     };
   }
 
   /**
-   * Create success response
-   * @param {Object} data - Analysis data
-   * @param {number} analysisTime - Time taken for analysis
+   * Create success response with modern BaseAnalyzer format
+   * @param {Object} responseData - Response data (either data object or full response)
+   * @param {number} [analysisTime] - Time taken for analysis
    * @returns {Object} Standardized success response
    */
-  createSuccessResponse(data, analysisTime = 0) {
+  createSuccessResponse(responseData, analysisTime = 0) {
+    // If responseData already has the full structure, use it
+    if (responseData.success !== undefined) {
+      return {
+        ...responseData,
+        timestamp: responseData.timestamp || new Date().toISOString(),
+        analyzer: responseData.analyzer || this.name,
+        analysisTime: responseData.analysisTime || analysisTime
+      };
+    }
+
+    // If responseData has a 'data' property, use modern nested format
+    if (responseData.data !== undefined) {
+      return {
+        success: true,
+        data: responseData.data,
+        timestamp: new Date().toISOString(),
+        analyzer: this.name,
+        analysisTime
+      };
+    }
+
+    // Otherwise, treat responseData as the data content
     return {
-      ...data,
       success: true,
+      data: responseData,
       timestamp: new Date().toISOString(),
       analyzer: this.name,
       analysisTime
@@ -165,5 +242,125 @@ export class BaseAnalyzer {
       this.log('warn', `Query failed for selector: ${selector}`, error);
       return null;
     }
+  }
+
+  /**
+   * Extract context details from modern or legacy format
+   * @param {Object|Document} contextOrDocument - Context object or legacy document
+   * @param {Object} [pageData] - Legacy page data
+   * @param {string} [url] - Legacy URL
+   * @returns {Object} Normalized context object
+   */
+  extractContext(contextOrDocument, pageData, url) {
+    if (contextOrDocument && typeof contextOrDocument === 'object' && contextOrDocument.document) {
+      // Modern format
+      return {
+        document: contextOrDocument.document,
+        url: contextOrDocument.url || '',
+        pageData: contextOrDocument.pageData || {},
+        options: contextOrDocument.options || {}
+      };
+    } else if (contextOrDocument && contextOrDocument.nodeType === 9) {
+      // Legacy format
+      return {
+        document: contextOrDocument,
+        url: url || '',
+        pageData: pageData || {},
+        options: {}
+      };
+    } else {
+      throw new Error('Invalid context format provided');
+    }
+  }
+
+  /**
+   * Safely get text content from an element
+   * @param {Element} element - DOM element
+   * @returns {string} Text content or empty string
+   */
+  getTextContent(element) {
+    try {
+      return element?.textContent?.trim() || '';
+    } catch (error) {
+      this.log('warn', 'Failed to get text content', error);
+      return '';
+    }
+  }
+
+  /**
+   * Safely get attribute value from an element
+   * @param {Element} element - DOM element
+   * @param {string} attribute - Attribute name
+   * @returns {string} Attribute value or empty string
+   */
+  getAttribute(element, attribute) {
+    try {
+      return element?.getAttribute?.(attribute) || '';
+    } catch (error) {
+      this.log('warn', `Failed to get attribute: ${attribute}`, error);
+      return '';
+    }
+  }
+
+  /**
+   * Calculate a score based on multiple criteria
+   * @param {Array<{weight: number, score: number}>} criteria - Scoring criteria
+   * @returns {number} Weighted score (0-100)
+   */
+  calculateWeightedScore(criteria) {
+    try {
+      if (!Array.isArray(criteria) || criteria.length === 0) {
+        return 0;
+      }
+
+      const totalWeight = criteria.reduce((sum, item) => sum + (item.weight || 0), 0);
+      if (totalWeight === 0) {
+        return 0;
+      }
+
+      const weightedSum = criteria.reduce((sum, item) => {
+        const score = Math.max(0, Math.min(100, item.score || 0));
+        return sum + (score * (item.weight || 0));
+      }, 0);
+
+      return Math.round(weightedSum / totalWeight);
+    } catch (error) {
+      this.log('warn', 'Failed to calculate weighted score', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Convert score to letter grade
+   * @param {number} score - Numeric score (0-100)
+   * @returns {string} Letter grade (A-F)
+   */
+  scoreToGrade(score) {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'F';
+  }
+
+  /**
+   * Generate performance-based recommendations
+   * @param {number} score - Current score
+   * @param {Array<string>} recommendations - Specific recommendations
+   * @returns {Array<string>} Prioritized recommendations
+   */
+  generateRecommendations(score, recommendations = []) {
+    const prioritized = [...recommendations];
+
+    // Add score-based recommendations
+    if (score < 60) {
+      prioritized.unshift('Critical improvements needed - focus on basic optimization');
+    } else if (score < 80) {
+      prioritized.unshift('Good foundation - target specific improvements');
+    } else if (score < 90) {
+      prioritized.unshift('Excellent performance - fine-tune for perfection');
+    }
+
+    return prioritized.slice(0, 10); // Limit to top 10 recommendations
   }
 }

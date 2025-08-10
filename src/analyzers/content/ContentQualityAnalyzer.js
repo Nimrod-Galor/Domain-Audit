@@ -145,18 +145,7 @@ export class ContentQualityAnalyzer extends BaseAnalyzer {
     });
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async analyzeContentQuality(dom, pageData, rawHTML = '') {
-    console.warn('analyzeContentQuality() is deprecated. Use analyze() method instead.');
-    
-    // Handle JSDOM object
-    const document = dom.window ? dom.window.document : dom;
-    const enrichedPageData = { ...pageData, rawHTML };
-    return this.analyze(document, enrichedPageData);
-  }
+
 
   /**
    * Extract clean text content from document

@@ -152,17 +152,7 @@ export class LinkedInAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
-   * @returns {Promise<Object>} LinkedIn analysis results
-   */
-  async analyzeLinkedIn(document, url) {
-    console.warn('analyzeLinkedIn() is deprecated. Use analyze() method instead.');
-    return this._performLinkedInAnalysis(document, url);
-  }
+
 
   /**
    * Internal method to perform LinkedIn analysis

@@ -16,7 +16,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../../core/AnalyzerInterface.js';
 
 export class SupportAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -86,7 +86,7 @@ export class SupportAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: this.name,
-      category: AnalyzerCategories.BUSINESS,
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
       description: 'Analyzes customer support accessibility and quality including live chat, FAQ, documentation, and response times',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -144,59 +144,80 @@ export class SupportAnalyzer extends BaseAnalyzer {
 
   /**
    * Analyze customer support features and accessibility
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - DOM document
+   * @param {string} context.url - Page URL
+   * @param {Object} context.pageData - Additional page data
    * @returns {Object} Support analysis results
    */
-  async analyze(document, url) {
+  async analyze(context) {
+    // Handle legacy calling format for backward compatibility
+    if (context && context.nodeType === 9) {
+      const document = context;
+      const url = arguments[1];
+      context = { document, url, pageData: {} };
+    }
+
+    if (!this.validate(context)) {
+      return this.handleError(new Error('Invalid context provided'), 'validation');
+    }
+
+    const { document, url, pageData = {} } = context;
+
     if (!this.validate(document, url)) {
-      return this.createErrorResult('Validation failed for support analysis');
+      return this.handleError(new Error('Validation failed for support analysis'), 'validation');
     }
 
-    try {
-      const liveChatAnalysis = this._analyzeLiveChat(document);
-      const faqAnalysis = this._analyzeFAQ(document);
-      const documentationAnalysis = this._analyzeDocumentation(document);
-      const supportChannels = this._analyzeSupportChannels(document);
-      const responseTimeInfo = this._analyzeResponseTime(document);
-      const helpAccessibility = this._analyzeHelpAccessibility(document);
-      const supportQuality = this._analyzeSupportQuality(document);
+    return this.measureTime(async () => {
+      try {
+        const liveChatAnalysis = this._analyzeLiveChat(document);
+        const faqAnalysis = this._analyzeFAQ(document);
+        const documentationAnalysis = this._analyzeDocumentation(document);
+        const supportChannels = this._analyzeSupportChannels(document);
+        const responseTimeInfo = this._analyzeResponseTime(document);
+        const helpAccessibility = this._analyzeHelpAccessibility(document);
+        const supportQuality = this._analyzeSupportQuality(document);
 
-      const analysis = {
-        liveChatAnalysis,
-        faqAnalysis,
-        documentationAnalysis,
-        supportChannels,
-        responseTimeInfo,
-        helpAccessibility,
-        supportQuality,
-      };
+        const analysis = {
+          liveChatAnalysis,
+          faqAnalysis,
+          documentationAnalysis,
+          supportChannels,
+          responseTimeInfo,
+          helpAccessibility,
+          supportQuality,
+        };
 
-      const score = this._calculateSupportScore(analysis);
-      const performance = performance.now() - startTime;
+        const score = this._calculateSupportScore(analysis);
 
-      const result = {
-        ...analysis,
-        score,
-        grade: this._assignGrade(score),
-        availableChannels: this._countAvailableChannels(analysis),
-        strengths: this._identifySupportStrengths(analysis),
-        recommendations: this._generateSupportRecommendations(analysis),
-        summary: this._generateExecutiveSummary(analysis, score),
-        metadata: {
-          ...this.getMetadata(),
-          analysisDate: new Date().toISOString(),
-          performanceMs: Math.round(performance),
-          url: url
-        }
-      };
+        const result = {
+          ...analysis,
+          score,
+          grade: this._assignGrade(score),
+          availableChannels: this._countAvailableChannels(analysis),
+          strengths: this._identifySupportStrengths(analysis),
+          recommendations: this._generateSupportRecommendations(analysis),
+          summary: this._generateExecutiveSummary(analysis, score),
+          metadata: {
+            ...this.getMetadata(),
+            analysisDate: new Date().toISOString(),
+            url: url
+          }
+        };
 
+        return this.createSuccessResponse({
+          data: result
+        });
+
+      } catch (error) {
+        return this.handleError(error, 'support analysis');
+      }
+    }).then(({result, time}) => {
+      if (result.success) {
+        result.analysisTime = time;
+      }
       return result;
-
-    } catch (error) {
-      this.handleError(`Support analysis failed: ${error.message}`);
-      return this.createErrorResult('Support analysis failed');
-    }
+    });
   }
 
   /**

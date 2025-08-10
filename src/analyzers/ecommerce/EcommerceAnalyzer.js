@@ -59,50 +59,50 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
    * @param {string} url - Page URL
    * @returns {Promise<Object>} Analysis results
    */
-  async analyze(document, pageDataOrUrl, url) {
-    return this.measureTime(async () => {
+  async analyze(context) {
+    const {result, time} = await this.measureTime(async () => {
       try {
         this.log('info', 'Starting e-commerce analysis...');
         
-        let actualUrl, pageData;
-        if (typeof pageDataOrUrl === 'string') {
-          actualUrl = pageDataOrUrl;
-          pageData = {};
-        } else {
-          pageData = pageDataOrUrl || {};
-          actualUrl = url;
+        // Validate context
+        if (!this.validate(context)) {
+          return this.handleError(new Error('Invalid context provided'), 'validation');
         }
 
+        const { document, url = '', pageData = {} } = context;
+
         // Detect e-commerce type
-        const siteType = this._detectEcommerceType(document, actualUrl);
+        const siteType = this._detectEcommerceType(document, url);
 
         if (siteType === "none") {
           this.log('info', 'No e-commerce indicators detected');
-          return {
-            type: "non-ecommerce",
-            message: "No e-commerce indicators detected",
-            score: 0,
-            platform: null,
-            product: null,
-            checkout: null,
-            reviews: null,
-            security: null,
-            conversion: null,
-            schema: null,
-            optimization: { overallScore: 0, grade: 'N/A' },
-            recommendations: []
-          };
+          return this.createSuccessResponse({
+            data: {
+              type: "non-ecommerce",
+              message: "No e-commerce indicators detected",
+              score: 0,
+              platform: null,
+              product: null,
+              checkout: null,
+              reviews: null,
+              security: null,
+              conversion: null,
+              schema: null,
+              optimization: { overallScore: 0, grade: 'N/A' },
+              recommendations: []
+            }
+          });
         }
 
         // Comprehensive e-commerce analysis
         const analysis = {
           type: siteType,
-          platform: await this._analyzePlatformDetection(document, actualUrl),
-          product: await this._analyzeProductFeatures(document, actualUrl),
-          checkout: await this._analyzeCheckoutProcess(document, actualUrl),
+          platform: await this._analyzePlatformDetection(document, url),
+          product: await this._analyzeProductFeatures(document, url),
+          checkout: await this._analyzeCheckoutProcess(document, url),
           reviews: await this._analyzeReviewSystem(document),
-          security: await this._analyzePaymentSecurity(document, actualUrl),
-          conversion: await this._analyzeConversionOptimization(document, pageData, actualUrl),
+          security: await this._analyzePaymentSecurity(document, url),
+          conversion: await this._analyzeConversionOptimization(document, pageData, url),
           schema: await this._analyzeEcommerceSchema(document),
         };
 
@@ -113,15 +113,25 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
         analysis.recommendations = this._generateEcommerceRecommendations(analysis);
 
         this.log('info', `E-commerce analysis completed for ${siteType} site with score: ${analysis.optimization.overallScore}`);
-        return analysis;
+        
+        return this.createSuccessResponse({
+          data: analysis
+        });
 
       } catch (error) {
         return this.handleError(error, 'e-commerce analysis');
       }
-    }).then(({ result, time }) => {
-      if (result.error) {
-        return {
-          ...result,
+    });
+
+    if (result.success) {
+      result.analysisTime = time;
+      return result;
+    } else {
+      // Return error response with fallback data
+      return {
+        success: false,
+        error: result.error,
+        data: {
           type: "error",
           platform: null,
           product: null,
@@ -132,11 +142,11 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
           schema: null,
           optimization: { overallScore: 0, grade: 'F' },
           recommendations: ['Fix analysis errors to proceed with e-commerce optimization']
-        };
-      }
-      
-      return this.createSuccessResponse(result, time);
-    });
+        },
+        analysisTime: time,
+        timestamp: new Date().toISOString()
+      };
+    }
   }
 
   /**

@@ -208,7 +208,7 @@ export class EnhancedExtractorsIntegration {
     }
 
     try {
-      return this.contentQualityAnalyzer.analyzeContentQuality(dom, pageData, rawHTML);
+      return this.contentQualityAnalyzer.analyze({ dom, pageData, rawHTML });
     } catch (error) {
       return {
         error: `Content quality analysis failed: ${error.message}`
@@ -228,7 +228,12 @@ export class EnhancedExtractorsIntegration {
     }
 
     try {
-      return this.thirdPartyAnalyzer.analyzeThirdPartyServices(dom, url);
+      // Use modern calling format
+      return this.thirdPartyAnalyzer.analyze({
+        document: dom,
+        url: url,
+        pageData: {}
+      });
     } catch (error) {
       return {
         error: `Third-party analysis failed: ${error.message}`
@@ -288,7 +293,12 @@ export class EnhancedExtractorsIntegration {
     }
 
     try {
-      return this.cdnDetector.detectExternalServices(dom, url);
+      // Use modern calling format
+      return this.cdnDetector.analyze({
+        document: dom,
+        url: url,
+        pageData: {}
+      });
     } catch (error) {
       return {
         error: `CDN detection failed: ${error.message}`
@@ -487,11 +497,12 @@ export class EnhancedExtractorsIntegration {
    */
   extractAdvancedLinkAnalysis(dom, url = '') {
     try {
-      return this.advancedLinkAnalyzer.analyzeAdvancedLinks(
-        dom, 
-        url, 
-        this.config.siteData
-      );
+      // Use modern calling format
+      return this.advancedLinkAnalyzer.analyze({
+        document: dom, 
+        url: url, 
+        pageData: this.config.siteData || {}
+      });
     } catch (error) {
       return {
         error: `Advanced link analysis failed: ${error.message}`,
@@ -559,12 +570,12 @@ export class EnhancedExtractorsIntegration {
    */
   extractContentIntelligence(dom, pageData, url = '') {
     try {
-      return this.contentIntelligenceAnalyzer.analyzeContentIntelligence(
+      return this.contentIntelligenceAnalyzer.analyze({
         dom, 
+        url,
         pageData, 
-        url, 
-        this.config.siteData
-      );
+        siteData: this.config.siteData
+      });
     } catch (error) {
       return {
         error: `Content intelligence analysis failed: ${error.message}`,
@@ -948,7 +959,12 @@ export class EnhancedExtractorsIntegration {
     }
 
     try {
-      const analysis = await this.sslCertificateAnalyzer.analyzeCertificate(url, pageData);
+      // Use modern calling format
+      const analysis = await this.sslCertificateAnalyzer.analyze({
+        document: null, // SSL analysis doesn't need DOM
+        url: url,
+        pageData: pageData
+      });
       const report = this.sslCertificateAnalyzer.generateReport(analysis);
       
       return {

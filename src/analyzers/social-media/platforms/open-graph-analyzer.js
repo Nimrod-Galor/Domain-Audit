@@ -159,17 +159,7 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
-   * @returns {Promise<Object>} Open Graph analysis results
-   */
-  async analyzeOpenGraph(document, url) {
-    console.warn('analyzeOpenGraph() is deprecated. Use analyze() method instead.');
-    return this._performOpenGraphAnalysis(document, url);
-  }
+
 
   /**
    * Internal method to perform Open Graph analysis

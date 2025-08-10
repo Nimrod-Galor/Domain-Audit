@@ -173,51 +173,7 @@ export class ReviewAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @returns {Object} Review analysis results
-   */
-  analyzeReviews(document) {
-    try {
-      // Convert legacy parameters to new context format
-      const context = {
-        document: document,
-        url: 'https://example.com',
-        pageData: {}
-      };
-      
-      // Use the new analyze method and extract data
-      return this.analyze(context).then(result => {
-        if (result.success) {
-          return result.data;
-        } else {
-          return {
-            error: result.error,
-            hasReviews: false,
-            reviewCount: 0,
-            score: 0
-          };
-        }
-      }).catch(error => {
-        return {
-          error: `Review analysis failed: ${error.message}`,
-          hasReviews: false,
-          reviewCount: 0,
-          score: 0
-        };
-      });
-      
-    } catch (error) {
-      return {
-        error: `Review analysis failed: ${error.message}`,
-        hasReviews: false,
-        reviewCount: 0,
-        score: 0
-      };
-    }
-  }
+
 
   /**
    * Find review elements in the document

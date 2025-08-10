@@ -17,7 +17,7 @@
  */
 
 import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../core/AnalyzerInterface.js';
 import { TrustSignalAnalyzer } from "./trust/trust-signal-analyzer.js";
 import { ContactAnalyzer } from "./contact/contact-analyzer.js";
 import { AboutPageAnalyzer } from "./about/about-page-analyzer.js";
@@ -61,7 +61,7 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: 'Business Intelligence Analyzer',
-      category: AnalyzerCategories.BUSINESS,
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
       description: 'Comprehensive business intelligence analysis including trust signals, contact information, about page quality, support accessibility, and location data',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -87,8 +87,12 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
       return this.handleError('Invalid context provided');
     }
 
-    if (!context.document && !context.dom && !context.cheerio) {
-      return this.handleError('No document, DOM, or Cheerio function provided for business intelligence analysis');
+    const hasDocument = context.document !== undefined && context.document !== null;
+    const hasDom = context.dom !== undefined && context.dom !== null;
+    const hasCheerio = context.cheerio !== undefined && context.cheerio !== null;
+
+    if (!hasDocument && !hasDom && !hasCheerio) {
+      return this.handleError('No valid document, DOM, or Cheerio function provided for business intelligence analysis');
     }
 
     return true;
@@ -104,8 +108,9 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
     
     try {
       // Validate input
-      if (!this.validate(context)) {
-        return this.createErrorResult('Validation failed');
+      const validationResult = this.validate(context);
+      if (validationResult !== true) {
+        return validationResult; // Return validation error directly
       }
 
       // Extract data from context
@@ -129,7 +134,7 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
       return {
         success: true,
         analyzer: 'BusinessIntelligenceAnalyzer',
-        category: AnalyzerCategories.BUSINESS,
+        category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
         score: score,
         data: {
           ...analysisResult,
@@ -160,10 +165,15 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
    * @param {string} url - Page URL
    * @returns {Object} Business intelligence analysis results
    */
-  async performBusinessIntelligenceAnalysis(domOrDocument, pageData, url) {
+  async performBusinessIntelligenceAnalysis(domOrDocument, pageDataOrUrl, url) {
     const analysisStart = Date.now();
 
     try {
+      // Basic validation
+      if (domOrDocument === null || domOrDocument === undefined) {
+        return this.createErrorResponse('Invalid document: document cannot be null or undefined', 'validation');
+      }
+      
       // Handle different call signatures and DOM types
       let document, actualUrl, pageData, $;
       
@@ -206,11 +216,11 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
       // Comprehensive business analysis
       const analysis = {
         trustSignals: await this._analyzeTrustSignals(document, actualUrl, $),
-        contactInformation: await this._analyzeContactInformation(document, $),
+        contactInformation: await this._analyzeContactInformation(document, actualUrl, $),
         aboutPageQuality: await this._analyzeAboutPage(document, actualUrl, $),
-        customerSupport: await this._analyzeCustomerSupport(document, $),
+        customerSupport: await this._analyzeCustomerSupport(document, actualUrl, $),
         businessCredibility: await this._analyzeBusinessCredibility(document, $),
-        locationData: await this._analyzeLocationData(document, $),
+        locationData: await this._analyzeLocationData(document, actualUrl, $),
         businessHours: await this._analyzeBusinessHours(document, $),
       };
 
@@ -254,17 +264,17 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
     if (!this.options.enableTrustAnalysis) {
       return { enabled: false };
     }
-    return this.analyzers.trustSignals.analyze(document, url, $);
+    return this.analyzers.trustSignals.analyze({ document, url, pageData: {} });
   }
 
   /**
    * Analyze contact information quality
    */
-  async _analyzeContactInformation(document, $) {
+  async _analyzeContactInformation(document, url, $) {
     if (!this.options.enableContactAnalysis) {
       return { enabled: false };
     }
-    return this.analyzers.contact.analyze(document, $);
+    return this.analyzers.contact.analyze({ document, url, pageData: {} });
   }
 
   /**
@@ -274,17 +284,17 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
     if (!this.options.enableContentAnalysis) {
       return { enabled: false };
     }
-    return this.analyzers.aboutPage.analyze(document, url, $);
+    return this.analyzers.aboutPage.analyze({ document, url, pageData: {} });
   }
 
   /**
    * Analyze customer support accessibility
    */
-  async _analyzeCustomerSupport(document, $) {
+  async _analyzeCustomerSupport(document, url, $) {
     if (!this.options.enableSupportAnalysis) {
       return { enabled: false };
     }
-    return this.analyzers.support.analyze(document, $);
+    return this.analyzers.support.analyze({ document, url, pageData: {} });
   }
 
   /**
@@ -317,11 +327,11 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
   /**
    * Analyze location and business presence data
    */
-  async _analyzeLocationData(document) {
+  async _analyzeLocationData(document, url, $) {
     if (!this.options.enableLocationAnalysis) {
       return { enabled: false };
     }
-    return this.analyzers.location.analyze(document);
+    return this.analyzers.location.analyze({ document, url, pageData: {} });
   }
 
   /**

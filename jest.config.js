@@ -5,6 +5,11 @@ export default {
   // ES Modules support
   preset: undefined,
   transform: {},
+  globals: {
+    'ts-jest': {
+      useESM: true
+    }
+  },
   
   // Set environment variables for tests
   setupFiles: ['<rootDir>/tests/jest.env.js'],

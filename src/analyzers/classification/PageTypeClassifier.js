@@ -192,21 +192,40 @@ export class PageTypeClassifier extends BaseAnalyzer {
   /**
    * Perform comprehensive page classification analysis
    * @param {Document} document - DOM document
-   * @param {Object|string} pageDataOrUrl - Page data object or URL string
-   * @param {string} url - Page URL
+   * Main analysis method - supports both modern and legacy calling formats
+   * @param {Object|Document} contextOrDocument - Analysis context object or legacy document
+   * @param {Object|string} [pageDataOrUrl] - Legacy page data object or URL string
+   * @param {string} [url] - Legacy page URL
    * @returns {Promise<Object>} Analysis results
    */
-  async analyze(document, pageDataOrUrl, url) {
-    return this.measureTime(async () => {
+  async analyze(contextOrDocument, pageDataOrUrl, url) {
+    const {result, time} = await this.measureTime(async () => {
       try {
         this.log('info', 'Starting page classification analysis...');
         
-        let actualUrl;
-        if (typeof pageDataOrUrl === 'string') {
-          actualUrl = pageDataOrUrl;
+        // Handle both modern and legacy calling formats
+        let context;
+        if (contextOrDocument && typeof contextOrDocument === 'object' && contextOrDocument.document) {
+          // Modern format: analyze({document, url, pageData})
+          context = contextOrDocument;
+        } else if (contextOrDocument && contextOrDocument.nodeType === 9) {
+          // Legacy format: analyze(document, pageDataOrUrl, url)
+          let actualUrl;
+          if (typeof pageDataOrUrl === 'string') {
+            actualUrl = pageDataOrUrl;
+          } else {
+            actualUrl = url || '';
+          }
+          context = {
+            document: contextOrDocument,
+            url: actualUrl,
+            pageData: (typeof pageDataOrUrl === 'object') ? pageDataOrUrl : {}
+          };
         } else {
-          actualUrl = url || '';
+          throw new Error('Invalid context provided for page classification');
         }
+
+        const { document, url: actualUrl = '', pageData = {} } = context;
 
         const classification = {
           // Primary classification
@@ -255,34 +274,43 @@ export class PageTypeClassifier extends BaseAnalyzer {
         
         return classification;
       } catch (error) {
-        return this.handleError(error, 'page classification');
+        this.log('error', `Page classification error: ${error.message}`);
+        throw error;
       }
-    }).then(({ result, time }) => {
-      if (result.error) {
-        return {
-          ...result,
-          primaryType: null,
-          confidence: 0,
-          detectedTypes: [],
-          recommendations: ['Fix classification errors to improve page analysis']
-        };
-      }
-      
-      return this.createSuccessResponse(result, time);
     });
+
+    // Handle any errors and return standardized format
+    if (result.error) {
+      return {
+        success: false,
+        error: result.error,
+        message: result.message,
+        primaryType: null,
+        confidence: 0,
+        detectedTypes: [],
+        recommendations: ['Fix classification errors to improve page analysis'],
+        timestamp: new Date().toISOString(),
+        executionTime: time
+      };
+    }
+    
+    return {
+      success: true,
+      primaryType: result.primaryType,
+      confidence: result.confidence,
+      detectedTypes: result.detectedTypes,
+      urlAnalysis: result.urlAnalysis,
+      titleAnalysis: result.titleAnalysis,
+      contentAnalysis: result.contentAnalysis,
+      structureAnalysis: result.structureAnalysis,
+      semanticAnalysis: result.semanticAnalysis,
+      recommendations: result.recommendations,
+      timestamp: new Date().toISOString(),
+      executionTime: time
+    };
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async classifyPage(dom, url = '') {
-    console.warn('classifyPage() is deprecated. Use analyze() method instead.');
-    
-    // Handle JSDOM object
-    const document = dom.window ? dom.window.document : dom;
-    return this.analyze(document, url);
-  }
+
 
   /**
    * Analyze URL patterns

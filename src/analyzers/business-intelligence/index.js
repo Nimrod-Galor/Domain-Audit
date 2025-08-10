@@ -15,4 +15,4 @@ export { LocationAnalyzer } from './location/location-analyzer.js';
 export { AboutPageAnalyzer } from './about/about-page-analyzer.js';
 
 // Constants
-export { BUSINESS_CONSTANTS } from './business-constants.js';
+export * from './business-constants.js';

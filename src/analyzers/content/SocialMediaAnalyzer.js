@@ -71,6 +71,10 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
           actualUrl = url;
         }
 
+        // Store for use by other methods
+        this.currentUrl = actualUrl;
+        this.pageData = pageData;
+
         // Platform-specific analysis
         const platformAnalysis = await this._analyzePlatforms(document, actualUrl);
 
@@ -135,17 +139,14 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
     
     for (const [platform, analyzer] of Object.entries(this.platforms)) {
       try {
-        if (platform === 'openGraph') {
-          results[platform] = await analyzer.analyzeOpenGraph(document, url);
-        } else if (platform === 'twitter') {
-          results[platform] = await analyzer.analyzeTwitterCard(document, url);
-        } else if (platform === 'linkedin') {
-          results[platform] = await analyzer.analyzeLinkedIn(document, url);
-        } else if (platform === 'pinterest') {
-          results[platform] = await analyzer.analyzePinterest(document, url);
-        } else if (platform === 'whatsapp') {
-          results[platform] = await analyzer.analyzeWhatsApp(document, url);
-        }
+        // Modern calling format for all analyzers
+        const analysisContext = {
+          document,
+          url,
+          pageData: this.pageData || {}
+        };
+        
+        results[platform] = await analyzer.analyze(analysisContext);
       } catch (error) {
         this.log('warn', `Platform analysis failed for ${platform}: ${error.message}`);
         results[platform] = { error: error.message, score: 0 };
@@ -184,7 +185,14 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
         return { enabled: false };
       }
       
-      return this.socialProofAnalyzer.analyzeSocialProof(document);
+      // Use modern calling format for SocialProofAnalyzer
+      const analysisContext = {
+        document,
+        url: this.currentUrl || '',
+        pageData: this.pageData || {}
+      };
+      
+      return this.socialProofAnalyzer.analyze(analysisContext);
     } catch (error) {
       return { error: error.message, score: 0 };
     }

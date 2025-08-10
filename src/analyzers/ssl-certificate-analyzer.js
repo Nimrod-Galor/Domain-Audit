@@ -161,17 +161,7 @@ export class SSLCertificateAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {string} url - URL to analyze
-   * @param {Object} pageData - Additional page data for mixed content detection
-   * @returns {Promise<Object>} SSL certificate analysis results
-   */
-  async analyzeCertificate(url, pageData = {}) {
-    console.warn('analyzeCertificate() is deprecated. Use analyze() method instead.');
-    return this._performCertificateAnalysis(url, pageData);
-  }
+
 
   /**
    * Internal method to perform SSL certificate analysis

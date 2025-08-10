@@ -1203,19 +1203,6 @@ export class ContentIntelligenceAnalyzer extends BaseAnalyzer {
     }
   }
 
-  // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeContentIntelligence(dom, pageData, url, siteData = {}) {
-    console.warn('ContentIntelligenceAnalyzer.analyzeContentIntelligence(dom, pageData, url, siteData) is deprecated. Use analyze(context) method instead.');
-    const document = dom.window ? dom.window.document : dom;
-    return this.performContentIntelligenceAnalysis(document, pageData, url, siteData);
-  }
 }
 
 export default ContentIntelligenceAnalyzer;

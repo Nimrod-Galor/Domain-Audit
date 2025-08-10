@@ -1094,11 +1094,6 @@ export class ModernAdvancedLinkAnalyzer extends BaseAnalyzer {
     return recommendations;
   }
 
-  // Legacy compatibility method
-  analyzeAdvancedLinks(dom, pageUrl = '', siteData = {}) {
-    console.warn('analyzeAdvancedLinks is deprecated. Use analyze() method instead.');
-    return this.analyze(dom, { url: pageUrl, siteData });
-  }
 }
 
 export default ModernAdvancedLinkAnalyzer;

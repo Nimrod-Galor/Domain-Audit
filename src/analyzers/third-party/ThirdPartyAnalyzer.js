@@ -196,17 +196,7 @@ export class ThirdPartyAnalyzer extends BaseAnalyzer {
     });
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async analyzeThirdPartyServices(dom, pageData = {}) {
-    console.warn('analyzeThirdPartyServices() is deprecated. Use analyze() method instead.');
-    
-    // Handle JSDOM object
-    const document = dom.window ? dom.window.document : dom;
-    return this.analyze(document, pageData);
-  }
+
 
   /**
    * Analyze all script elements on the page

@@ -181,14 +181,7 @@ export class ContentIntelligenceAnalyzer extends BaseAnalyzer {
     });
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  analyzeContentIntelligence(dom, pageData, url, siteData = {}) {
-    this.log('Using deprecated analyzeContentIntelligence method, please migrate to analyze()', 'warn');
-    return this.analyze({ dom, url, pageData, siteData });
-  }
+
 
   /**
    * Get analyzer metadata

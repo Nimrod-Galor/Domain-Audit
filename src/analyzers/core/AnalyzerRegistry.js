@@ -172,7 +172,13 @@ export class AnalyzerRegistry {
         const analyzer = this.getInstance(name, options[name] || {});
         const startTime = Date.now();
         
-        const result = await analyzer.analyze(document, pageData, url);
+        // Use modern context-based calling format
+        const context = {
+          document,
+          url,
+          pageData
+        };
+        const result = await analyzer.analyze(context);
         const endTime = Date.now();
         
         return {

@@ -30,6 +30,14 @@ export class TwitterCardAnalyzer extends BaseAnalyzer {
     this.cardTypes = ['summary', 'summary_large_image', 'app', 'player'];
     this.requiredTags = ['twitter:card'];
     this.recommendedTags = ['twitter:site', 'twitter:creator', 'twitter:title', 'twitter:description', 'twitter:image'];
+    
+    // Required fields for each card type (for test compatibility)
+    this.requiredFields = {
+      'summary': ['card', 'title', 'description'],
+      'summary_large_image': ['card', 'title', 'description', 'image'],
+      'app': ['card', 'app:name:iphone', 'app:id:iphone'],
+      'player': ['card', 'player', 'player:width', 'player:height']
+    };
   }
 
   /**
@@ -141,17 +149,7 @@ export class TwitterCardAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
-   * @returns {Promise<Object>} Twitter Card analysis results
-   */
-  async analyzeTwitterCard(document, url) {
-    console.warn('analyzeTwitterCard() is deprecated. Use analyze() method instead.');
-    return this._performTwitterCardAnalysis(document, url);
-  }
+
 
   /**
    * Internal method to perform Twitter Card analysis

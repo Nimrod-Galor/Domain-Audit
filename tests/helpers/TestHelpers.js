@@ -162,7 +162,7 @@ export class TestHelpers {
       getAttribute: jest.fn().mockReturnValue('en')
     };
 
-    return {
+    const mockDocument = {
       title: config.title || 'Test Page',
       head: config.head || mockHead,
       body: config.body || mockBody,
@@ -171,6 +171,236 @@ export class TestHelpers {
       querySelectorAll,
       getElementsByTagName, // Add this to the main DOM object
       ...config
+    };
+
+    // Return wrapped in window object as expected by TechnicalAnalyzer
+    return {
+      window: {
+        document: mockDocument
+      }
+    };
+  }
+
+  /**
+   * Create mock DOM with CDN resources for CDN analyzer testing
+   */
+  static createMockDOMWithCDN(config = {}) {
+    const scripts = config.scripts || [];
+    const stylesheets = config.stylesheets || [];
+    
+    const querySelector = jest.fn().mockImplementation((selector) => {
+      return null;
+    });
+
+    const querySelectorAll = jest.fn().mockImplementation((selector) => {
+      if (selector.includes('script')) {
+        return scripts.map(src => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'src') return src;
+            return null;
+          }),
+          src
+        }));
+      }
+      if (selector.includes('link')) {
+        return stylesheets.map(href => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'href') return href;
+            if (attr === 'rel') return 'stylesheet';
+            return null;
+          }),
+          href
+        }));
+      }
+      return [];
+    });
+
+    const getElementsByTagName = jest.fn().mockImplementation((tag) => {
+      if (tag === 'script') {
+        return scripts.map(src => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'src') return src;
+            return null;
+          }),
+          src
+        }));
+      }
+      if (tag === 'link') {
+        return stylesheets.map(href => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'href') return href;
+            if (attr === 'rel') return 'stylesheet';
+            return null;
+          }),
+          href
+        }));
+      }
+      return [];
+    });
+
+    const mockHead = {
+      querySelector,
+      querySelectorAll,
+      getElementsByTagName
+    };
+
+    const mockBody = {
+      querySelector,
+      querySelectorAll,
+      getElementsByTagName
+    };
+
+    const mockDocumentElement = {
+      getAttribute: jest.fn().mockReturnValue('en')
+    };
+
+    const mockDocument = {
+      title: config.title || 'Test CDN Page',
+      head: config.head || mockHead,
+      body: config.body || mockBody,
+      documentElement: config.documentElement || mockDocumentElement,
+      querySelector,
+      querySelectorAll,
+      getElementsByTagName,
+      ...config
+    };
+
+    // Return wrapped in window object as expected by CDNAnalyzer
+    return {
+      window: {
+        document: mockDocument
+      }
+    };
+  }
+
+  /**
+   * Create mock DOM with various resources for resource analyzer testing
+   */
+  static createMockDOMWithResources(config = {}) {
+    const scripts = config.scripts || [];
+    const stylesheets = config.stylesheets || [];
+    const images = config.images || [];
+    
+    const querySelector = jest.fn().mockImplementation((selector) => {
+      return null;
+    });
+
+    const querySelectorAll = jest.fn().mockImplementation((selector) => {
+      if (selector.includes('script')) {
+        return scripts.map(src => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'src') return src;
+            if (attr === 'async') return null;
+            if (attr === 'defer') return null;
+            return null;
+          }),
+          src,
+          async: false,
+          defer: false
+        }));
+      }
+      if (selector.includes('link')) {
+        return stylesheets.map(href => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'href') return href;
+            if (attr === 'rel') return 'stylesheet';
+            if (attr === 'media') return 'all';
+            return null;
+          }),
+          href,
+          rel: 'stylesheet'
+        }));
+      }
+      if (selector.includes('img')) {
+        return images.map(src => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'src') return src;
+            if (attr === 'alt') return 'Test image';
+            if (attr === 'loading') return null;
+            return null;
+          }),
+          src,
+          naturalWidth: 400,
+          naturalHeight: 300
+        }));
+      }
+      return [];
+    });
+
+    const getElementsByTagName = jest.fn().mockImplementation((tag) => {
+      if (tag === 'script') {
+        return scripts.map(src => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'src') return src;
+            if (attr === 'async') return null;
+            if (attr === 'defer') return null;
+            return null;
+          }),
+          src,
+          async: false,
+          defer: false
+        }));
+      }
+      if (tag === 'link') {
+        return stylesheets.map(href => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'href') return href;
+            if (attr === 'rel') return 'stylesheet';
+            if (attr === 'media') return 'all';
+            return null;
+          }),
+          href,
+          rel: 'stylesheet'
+        }));
+      }
+      if (tag === 'img') {
+        return images.map(src => ({
+          getAttribute: jest.fn().mockImplementation((attr) => {
+            if (attr === 'src') return src;
+            if (attr === 'alt') return 'Test image';
+            if (attr === 'loading') return null;
+            return null;
+          }),
+          src,
+          naturalWidth: 400,
+          naturalHeight: 300
+        }));
+      }
+      return [];
+    });
+
+    const mockHead = {
+      querySelector,
+      querySelectorAll,
+      getElementsByTagName
+    };
+
+    const mockBody = {
+      querySelector,
+      querySelectorAll,
+      getElementsByTagName
+    };
+
+    const mockDocumentElement = {
+      getAttribute: jest.fn().mockReturnValue('en')
+    };
+
+    const mockDocument = {
+      title: config.title || 'Test Resource Page',
+      head: config.head || mockHead,
+      body: config.body || mockBody,
+      documentElement: config.documentElement || mockDocumentElement,
+      querySelector,
+      querySelectorAll,
+      getElementsByTagName,
+      ...config
+    };
+
+    // Return wrapped in window object as expected by ResourceAnalyzer
+    return {
+      window: {
+        document: mockDocument
+      }
     };
   }
 
@@ -539,6 +769,66 @@ export class TestHelpers {
     return {
       query: jest.fn(),
       transaction: jest.fn()
+    };
+  }
+
+  /**
+   * Create mock DOM with SSL/security elements for testing
+   * @returns {Object} Mock DOM with SSL elements
+   */
+  static createMockDOMWithSSL() {
+    const mockDocument = {
+      title: 'Secure Test Page',
+      head: {
+        querySelector: jest.fn((selector) => {
+          if (selector.includes('meta[http-equiv="Content-Security-Policy"]')) {
+            return { content: "default-src 'self'; script-src 'self' 'unsafe-inline'" };
+          }
+          return null;
+        }),
+        querySelectorAll: jest.fn(() => [])
+      },
+      body: {
+        innerHTML: '<p>Secure content</p>'
+      },
+      documentElement: {
+        innerHTML: '<html><head></head><body><p>Secure content</p></body></html>'
+      },
+      querySelector: jest.fn((selector) => {
+        if (selector.includes('meta[http-equiv="Content-Security-Policy"]')) {
+          return { content: "default-src 'self'; script-src 'self' 'unsafe-inline'" };
+        }
+        return null;
+      }),
+      querySelectorAll: jest.fn((selector) => {
+        if (selector.includes('script[src^="http:"]')) {
+          return []; // No insecure scripts by default
+        }
+        if (selector.includes('img[src^="http:"]')) {
+          return []; // No insecure images by default
+        }
+        if (selector.includes('link[href^="http:"]')) {
+          return []; // No insecure links by default
+        }
+        return [];
+      }),
+      getElementsByTagName: jest.fn(() => []),
+      // SSL/Security specific elements
+      scripts: [],
+      stylesheets: [],
+      images: []
+    };
+
+    return {
+      window: {
+        document: mockDocument,
+        location: {
+          protocol: 'https:',
+          hostname: 'secure.example.com',
+          port: '443',
+          href: 'https://secure.example.com'
+        }
+      }
     };
   }
 }

@@ -449,15 +449,7 @@ export class CDNAnalyzer extends BaseAnalyzer {
     });
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   */
-  async detectExternalServices(dom, url = '') {
-    this.log('detectExternalServices is deprecated, use analyze() instead', 'warn');
-    const result = await this.analyze({ dom, url });
-    return result.success ? result.data : result.data;
-  }
+
 
   /**
    * Detect all external services used on the page

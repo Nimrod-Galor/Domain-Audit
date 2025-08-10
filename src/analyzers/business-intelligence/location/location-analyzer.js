@@ -16,7 +16,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../../core/AnalyzerInterface.js';
 
 export class LocationAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -99,7 +99,7 @@ export class LocationAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: this.name,
-      category: AnalyzerCategories.BUSINESS,
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
       description: 'Analyzes business location and presence data including physical locations, service areas, local business indicators, and geographic targeting',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -157,59 +157,67 @@ export class LocationAnalyzer extends BaseAnalyzer {
 
   /**
    * Analyze location and business presence information
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - DOM document
+   * @param {string} context.url - Page URL
+   * @param {Object} context.pageData - Page metadata
    * @returns {Object} Location analysis results
    */
-  async analyze(document, url) {
+  async analyze({document, url, pageData = {}}) {
     if (!this.validate(document, url)) {
-      return this.createErrorResult('Validation failed for location analysis');
+      return this.handleError(new Error('Validation failed for location analysis'), 'validation');
     }
 
-    try {
-      const physicalLocation = this._analyzePhysicalLocation(document);
-      const serviceAreas = this._analyzeServiceAreas(document);
-      const businessHours = this._analyzeBusinessHours(document);
-      const localPresence = this._analyzeLocalPresence(document);
-      const geographicTargeting = this._analyzeGeographicTargeting(document);
-      const structuredLocationData = this._analyzeStructuredLocationData(document);
-      const multiLocationBusiness = this._analyzeMultiLocationBusiness(document);
+    return this.measureTime(async () => {
+      try {
+        const physicalLocation = this._analyzePhysicalLocation(document);
+        const serviceAreas = this._analyzeServiceAreas(document);
+        const businessHours = this._analyzeBusinessHours(document);
+        const localPresence = this._analyzeLocalPresence(document);
+        const geographicTargeting = this._analyzeGeographicTargeting(document);
+        const structuredLocationData = this._analyzeStructuredLocationData(document);
+        const multiLocationBusiness = this._analyzeMultiLocationBusiness(document);
 
-      const analysis = {
-        physicalLocation,
-        serviceAreas,
-        businessHours,
-        localPresence,
-        geographicTargeting,
-        structuredLocationData,
-        multiLocationBusiness,
-      };
+        const analysis = {
+          physicalLocation,
+          serviceAreas,
+          businessHours,
+          localPresence,
+          geographicTargeting,
+          structuredLocationData,
+          multiLocationBusiness,
+        };
 
-      const score = this._calculateLocationScore(analysis);
-      const performance = performance.now() - startTime;
+        const score = this._calculateLocationScore(analysis);
 
-      const result = {
-        ...analysis,
-        score,
-        grade: this._assignGrade(score),
-        businessType: this._classifyBusinessType(analysis),
-        strengths: this._identifyLocationStrengths(analysis),
-        recommendations: this._generateLocationRecommendations(analysis),
-        summary: this._generateExecutiveSummary(analysis, score),
-        metadata: {
-          ...this.getMetadata(),
-          analysisDate: new Date().toISOString(),
-          performanceMs: Math.round(performance),
-          url: url
-        }
-      };
+        const result = {
+          ...analysis,
+          score,
+          grade: this._assignGrade(score),
+          businessType: this._classifyBusinessType(analysis),
+          strengths: this._identifyLocationStrengths(analysis),
+          recommendations: this._generateLocationRecommendations(analysis),
+          summary: this._generateExecutiveSummary(analysis, score),
+          metadata: {
+            ...this.getMetadata(),
+            analysisDate: new Date().toISOString(),
+            url: url
+          }
+        };
 
+        return this.createSuccessResponse({
+          data: result
+        });
+
+      } catch (error) {
+        return this.handleError(error, 'location analysis');
+      }
+    }).then(({result, time}) => {
+      if (result.success) {
+        result.analysisTime = time;
+      }
       return result;
-
-    } catch (error) {
-      this.handleError(`Location analysis failed: ${error.message}`);
-      return this.createErrorResult('Location analysis failed');
-    }
+    });
   }
 
   /**
@@ -1119,14 +1127,14 @@ export class LocationAnalyzer extends BaseAnalyzer {
     }
     
     // Service areas summary
-    if (analysis.serviceAreas.areas.length > 0) {
-      summary += `Service areas defined for ${analysis.serviceAreas.areas.length} region(s). `;
+    if (analysis.serviceAreas.serviceAreas.length > 0) {
+      summary += `Service areas defined for ${analysis.serviceAreas.serviceAreas.length} region(s). `;
     } else {
       summary += `Service areas not clearly defined. `;
     }
     
     // Business hours summary
-    if (analysis.businessHours.found) {
+    if (analysis.businessHours.hasBusinessHours) {
       summary += `Business hours information available. `;
     } else {
       summary += `Business hours not specified. `;

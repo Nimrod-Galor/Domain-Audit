@@ -350,14 +350,22 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
    * Analyze payment security and trust indicators
    */
   async _analyzePaymentSecurity(document, url) {
-    return this.analyzers.payment.analyze(document, url);
+    return this.analyzers.payment.analyze({
+      document,
+      url,
+      pageData: {}
+    });
   }
 
   /**
    * Analyze e-commerce schema markup
    */
   async _analyzeEcommerceSchema(document) {
-    return this.analyzers.productSchema.analyzeSchema(document);
+    return this.analyzers.productSchema.analyze({
+      document,
+      url: '',
+      pageData: {}
+    });
   }
 
   /**

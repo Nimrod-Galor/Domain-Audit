@@ -38,6 +38,10 @@ export {
 
 // Technical analyzers
 export { CDNAnalyzer } from './technical/index.js';
+export { TechnicalAnalyzer } from './technical-analyzer.js';
+
+// Import classes for legacy compatibility
+import { TechnicalAnalyzer } from './technical-analyzer.js';
 
 // Link analyzers
 export { 
@@ -54,8 +58,7 @@ export {
   ContactAnalyzer,
   SupportAnalyzer,
   LocationAnalyzer,
-  AboutPageAnalyzer,
-  BUSINESS_CONSTANTS
+  AboutPageAnalyzer
 } from './business-intelligence/index.js';
 
 // E-commerce analyzers
@@ -128,9 +131,8 @@ export const legacyAnalyzers = {
     }
   },
 
-  technicalAnalyzer: {
-    analyze: (dom) => extractTechnicalDataOptimized(dom)
-  },
+  // Legacy compatibility - use modern TechnicalAnalyzer
+  technicalAnalyzer: new TechnicalAnalyzer(),
 
   securityAnalyzer: {
     analyze: (dom) => ({

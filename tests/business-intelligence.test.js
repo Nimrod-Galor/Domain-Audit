@@ -271,43 +271,43 @@ describe('Business Intelligence Analyzer', () => {
       trustAnalyzer = new TrustSignalAnalyzer();
     });
 
-    test('should detect SSL certificates and security indicators', () => {
-      const result = trustAnalyzer.analyze(mockDocument, 'https://example.com');
+    test('should detect SSL certificates and security indicators', async () => {
+      const result = await trustAnalyzer.analyze({ document: mockDocument, url: 'https://example.com' });
 
-      expect(result.securityIndicators).toBeDefined();
-      expect(result.securityIndicators.httpsEnabled).toBe(true);
-      expect(result.securityIndicators.securityBadges).toBeDefined();
+      expect(result.data.securityIndicators).toBeDefined();
+      expect(result.data.securityIndicators.httpsEnabled).toBe(true);
+      expect(result.data.securityIndicators.securityBadges).toBeDefined();
     });
 
-    test('should find trust badges and certifications', () => {
-      const result = trustAnalyzer.analyze(mockDocument, testUrl);
+    test('should find trust badges and certifications', async () => {
+      const result = await trustAnalyzer.analyze({ document: mockDocument, url: testUrl });
 
-      expect(result.trustSignals).toBeDefined();
-      expect(result.trustSignals.certifications.length).toBeGreaterThan(0);
-      expect(result.trustSignals.badges.length).toBeGreaterThan(0);
+      expect(result.data.trustSignals).toBeDefined();
+      expect(result.data.trustSignals.certifications.length).toBeGreaterThan(0);
+      expect(result.data.trustSignals.badges.length).toBeGreaterThan(0);
     });
 
-    test('should analyze customer testimonials', () => {
-      const result = trustAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze customer testimonials', async () => {
+      const result = await trustAnalyzer.analyze({ document: mockDocument, url: testUrl });
 
-      expect(result.customerTestimonials).toBeDefined();
-      expect(result.customerTestimonials.testimonials.length).toBeGreaterThan(0);
-      expect(result.customerTestimonials.score).toBeGreaterThan(0);
+      expect(result.data.customerTestimonials).toBeDefined();
+      expect(result.data.customerTestimonials.testimonials.length).toBeGreaterThan(0);
+      expect(result.data.customerTestimonials.score).toBeGreaterThan(0);
     });
 
-    test('should detect professional credentials', () => {
-      const result = trustAnalyzer.analyze(mockDocument, testUrl);
+    test('should detect professional credentials', async () => {
+      const result = await trustAnalyzer.analyze({ document: mockDocument, url: testUrl });
 
-      expect(result.professionalCredentials).toBeDefined();
-      expect(result.professionalCredentials.credentials.length).toBeGreaterThan(0);
+      expect(result.data.professionalCredentials).toBeDefined();
+      expect(result.data.professionalCredentials.credentials.length).toBeGreaterThan(0);
     });
 
-    test('should calculate trust score accurately', () => {
-      const result = trustAnalyzer.analyze(mockDocument, testUrl);
+    test('should calculate trust score accurately', async () => {
+      const result = await trustAnalyzer.analyze({ document: mockDocument, url: testUrl });
 
       expect(result.score).toBeGreaterThan(0);
       expect(result.score).toBeLessThanOrEqual(100);
-      expect(result.grade).toBeDefined();
+      expect(result.data.grade).toBeDefined();
     });
   });
 
@@ -318,45 +318,45 @@ describe('Business Intelligence Analyzer', () => {
       contactAnalyzer = new ContactAnalyzer();
     });
 
-    test('should extract contact forms', () => {
-      const result = contactAnalyzer.analyze(mockDocument, testUrl);
+    test('should extract contact forms', async () => {
+      const result = await contactAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.contactForms).toBeDefined();
-      expect(result.contactForms.count).toBeGreaterThan(0);
-      expect(result.contactForms.hasHighQualityForm).toBe(true);
+      expect(result.data.contactForms).toBeDefined();
+      expect(result.data.contactForms.count).toBeGreaterThan(0);
+      expect(result.data.contactForms.hasHighQualityForm).toBe(true);
     });
 
-    test('should find phone numbers', () => {
-      const result = contactAnalyzer.analyze(mockDocument, testUrl);
+    test('should find phone numbers', async () => {
+      const result = await contactAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.phoneNumbers).toBeDefined();
-      expect(result.phoneNumbers.count).toBeGreaterThan(0);
-      expect(result.phoneNumbers.hasClickablePhone).toBe(true);
+      expect(result.data.phoneNumbers).toBeDefined();
+      expect(result.data.phoneNumbers.count).toBeGreaterThan(0);
+      expect(result.data.phoneNumbers.hasClickablePhone).toBe(true);
     });
 
-    test('should find email addresses', () => {
-      const result = contactAnalyzer.analyze(mockDocument, testUrl);
+    test('should find email addresses', async () => {
+      const result = await contactAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.emailAddresses).toBeDefined();
-      expect(result.emailAddresses.count).toBeGreaterThan(0);
-      expect(result.emailAddresses.hasClickableEmail).toBe(true);
+      expect(result.data.emailAddresses).toBeDefined();
+      expect(result.data.emailAddresses.count).toBeGreaterThan(0);
+      expect(result.data.emailAddresses.hasClickableEmail).toBe(true);
     });
 
-    test('should analyze physical address', () => {
-      const result = contactAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze physical address', async () => {
+      const result = await contactAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.physicalAddress).toBeDefined();
-      expect(result.physicalAddress.count).toBeGreaterThan(0);
+      expect(result.data.physicalAddress).toBeDefined();
+      expect(result.data.physicalAddress.count).toBeGreaterThan(0);
     });
 
-    test('should detect social media presence', () => {
-      const result = contactAnalyzer.analyze(mockDocument, testUrl);
+    test('should detect social media presence', async () => {
+      const result = await contactAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.socialMedia).toBeDefined();
-      expect(result.socialMedia.platformCount).toBeGreaterThan(0);
-      expect(result.socialMedia.hasFacebook).toBe(true);
-      expect(result.socialMedia.hasTwitter).toBe(true);
-      expect(result.socialMedia.hasLinkedIn).toBe(true);
+      expect(result.data.socialMedia).toBeDefined();
+      expect(result.data.socialMedia.platformCount).toBeGreaterThan(0);
+      expect(result.data.socialMedia.hasFacebook).toBe(true);
+      expect(result.data.socialMedia.hasTwitter).toBe(true);
+      expect(result.data.socialMedia.hasLinkedIn).toBe(true);
     });
   });
 
@@ -367,46 +367,46 @@ describe('Business Intelligence Analyzer', () => {
       aboutAnalyzer = new AboutPageAnalyzer();
     });
 
-    test('should find about page presence', () => {
-      const result = aboutAnalyzer.analyze(mockDocument, testUrl);
+    test('should find about page presence', async () => {
+      const result = await aboutAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.aboutPagePresence).toBeDefined();
-      expect(result.aboutPagePresence.hasAboutSection).toBe(true);
-      expect(result.aboutPagePresence.inNavigation).toBe(true);
+      expect(result.data.aboutPagePresence).toBeDefined();
+      expect(result.data.aboutPagePresence.hasAboutSection).toBe(true);
+      expect(result.data.aboutPagePresence.inNavigation).toBe(true);
     });
 
-    test('should analyze about content quality', () => {
-      const result = aboutAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze about content quality', async () => {
+      const result = await aboutAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.aboutContent).toBeDefined();
-      expect(result.aboutContent.totalWordCount).toBeGreaterThan(20); // Reduced expectation for test
-      expect(result.aboutContent.contentDepth).toBeDefined();
+      expect(result.data.aboutContent).toBeDefined();
+      expect(result.data.aboutContent.totalWordCount).toBeGreaterThan(20); // Reduced expectation for test
+      expect(result.data.aboutContent.contentDepth).toBeDefined();
     });
 
-    test('should analyze team information', () => {
-      const result = aboutAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze team information', async () => {
+      const result = await aboutAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.teamInformation).toBeDefined();
-      expect(result.teamInformation.memberCount).toBeGreaterThan(0);
-      expect(result.teamInformation.hasPhotos).toBe(true);
-      expect(result.teamInformation.hasBios).toBe(true);
-      expect(result.teamInformation.hasRoles).toBe(true);
+      expect(result.data.teamInformation).toBeDefined();
+      expect(result.data.teamInformation.memberCount).toBeGreaterThan(0);
+      expect(result.data.teamInformation.hasPhotos).toBe(true);
+      expect(result.data.teamInformation.hasBios).toBe(true);
+      expect(result.data.teamInformation.hasRoles).toBe(true);
     });
 
-    test('should detect company story elements', () => {
-      const result = aboutAnalyzer.analyze(mockDocument, testUrl);
+    test('should detect company story elements', async () => {
+      const result = await aboutAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.companyStory).toBeDefined();
-      expect(result.companyStory.hasFoundingStory).toBe(true);
-      expect(result.companyStory.dateCount).toBeGreaterThan(0);
+      expect(result.data.companyStory).toBeDefined();
+      expect(result.data.companyStory.hasFoundingStory).toBe(true);
+      expect(result.data.companyStory.dateCount).toBeGreaterThan(0);
     });
 
-    test('should find credibility indicators', () => {
-      const result = aboutAnalyzer.analyze(mockDocument, testUrl);
+    test('should find credibility indicators', async () => {
+      const result = await aboutAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.credibilityIndicators).toBeDefined();
-      expect(result.credibilityIndicators.totalIndicators).toBeGreaterThan(0);
-      expect(result.credibilityIndicators.hasCertifications).toBe(true);
+      expect(result.data.credibilityIndicators).toBeDefined();
+      expect(result.data.credibilityIndicators.totalIndicators).toBeGreaterThan(0);
+      expect(result.data.credibilityIndicators.hasCertifications).toBe(true);
     });
   });
 
@@ -417,44 +417,44 @@ describe('Business Intelligence Analyzer', () => {
       supportAnalyzer = new SupportAnalyzer();
     });
 
-    test('should detect live chat functionality', () => {
-      const result = supportAnalyzer.analyze(mockDocument, testUrl);
+    test('should detect live chat functionality', async () => {
+      const result = await supportAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.liveChatAnalysis).toBeDefined();
-      expect(result.liveChatAnalysis.hasChatWidget).toBe(true);
-      expect(result.liveChatAnalysis.isVisible).toBe(true);
+      expect(result.data.liveChatAnalysis).toBeDefined();
+      expect(result.data.liveChatAnalysis.hasChatWidget).toBe(true);
+      expect(result.data.liveChatAnalysis.isVisible).toBe(true);
     });
 
-    test('should analyze support channels', () => {
-      const result = supportAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze support channels', async () => {
+      const result = await supportAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.supportChannels).toBeDefined();
-      expect(result.supportChannels.hasPhone).toBe(true);
-      expect(result.supportChannels.hasEmail).toBe(true);
-      expect(result.supportChannels.isMultiChannel).toBe(true);
+      expect(result.data.supportChannels).toBeDefined();
+      expect(result.data.supportChannels.hasPhone).toBe(true);
+      expect(result.data.supportChannels.hasEmail).toBe(true);
+      expect(result.data.supportChannels.isMultiChannel).toBe(true);
     });
 
-    test('should find FAQ and documentation', () => {
-      const result = supportAnalyzer.analyze(mockDocument, testUrl);
+    test('should find FAQ and documentation', async () => {
+      const result = await supportAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.faqAnalysis).toBeDefined();
-      expect(result.documentationAnalysis).toBeDefined();
+      expect(result.data.faqAnalysis).toBeDefined();
+      expect(result.data.documentationAnalysis).toBeDefined();
     });
 
-    test('should analyze response time information', () => {
-      const result = supportAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze response time information', async () => {
+      const result = await supportAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.responseTimeInfo).toBeDefined();
-      expect(result.responseTimeInfo.mentioned).toBe(true);
-      expect(result.responseTimeInfo.timeframes.length).toBeGreaterThan(0);
+      expect(result.data.responseTimeInfo).toBeDefined();
+      expect(result.data.responseTimeInfo.mentioned).toBe(true);
+      expect(result.data.responseTimeInfo.timeframes.length).toBeGreaterThan(0);
     });
 
-    test('should assess help accessibility', () => {
-      const result = supportAnalyzer.analyze(mockDocument, testUrl);
+    test('should assess help accessibility', async () => {
+      const result = await supportAnalyzer.analyze(mockDocument, testUrl);
 
-      expect(result.helpAccessibility).toBeDefined();
-      expect(result.helpAccessibility.easyToFind).toBe(true);
-      expect(result.helpAccessibility.inHeader).toBe(true);
+      expect(result.data.helpAccessibility).toBeDefined();
+      expect(result.data.helpAccessibility.easyToFind).toBe(true);
+      expect(result.data.helpAccessibility.inHeader).toBe(true);
     });
   });
 
@@ -465,34 +465,34 @@ describe('Business Intelligence Analyzer', () => {
       locationAnalyzer = new LocationAnalyzer();
     });
 
-    test('should analyze physical location', () => {
-      const result = locationAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze physical location', async () => {
+      const result = await locationAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.physicalLocation).toBeDefined();
-      expect(result.physicalLocation.hasPhysicalAddress).toBe(true);
-      expect(result.physicalLocation.addressCount).toBeGreaterThan(0);
+      expect(result.data.physicalLocation).toBeDefined();
+      expect(result.data.physicalLocation.hasPhysicalAddress).toBe(true);
+      expect(result.data.physicalLocation.addressCount).toBeGreaterThan(0);
     });
 
-    test('should analyze business hours', () => {
-      const result = locationAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze business hours', async () => {
+      const result = await locationAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.businessHours).toBeDefined();
-      expect(result.businessHours.hasBusinessHours).toBe(true);
-      expect(result.businessHours.hasStructuredHours).toBe(true);
+      expect(result.data.businessHours).toBeDefined();
+      expect(result.data.businessHours.hasBusinessHours).toBe(true);
+      expect(result.data.businessHours.hasStructuredHours).toBe(true);
     });
 
-    test('should analyze local presence', () => {
-      const result = locationAnalyzer.analyze(mockDocument, testUrl);
+    test('should analyze local presence', async () => {
+      const result = await locationAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.localPresence).toBeDefined();
-      expect(result.localPresence.hasLocalPresence).toBeDefined(); // Just check it's defined, not necessarily true
+      expect(result.data.localPresence).toBeDefined();
+      expect(result.data.localPresence.hasLocalPresence).toBeDefined(); // Just check it's defined, not necessarily true
     });
 
-    test('should classify business type', () => {
-      const result = locationAnalyzer.analyze(mockDocument, testUrl);
+    test('should classify business type', async () => {
+      const result = await locationAnalyzer.analyze({document: mockDocument, url: testUrl});
 
-      expect(result.businessType).toBeDefined();
-      expect(typeof result.businessType).toBe('string');
+      expect(result.data.businessType).toBeDefined();
+      expect(typeof result.data.businessType).toBe('string');
     });
   });
 
@@ -629,15 +629,15 @@ describe('Business Intelligence Analyzer', () => {
       // Check that result contains all necessary data for reporting
       expect(result.data).toHaveProperty('trustSignals');
       expect(result.data).toHaveProperty('contactInformation');
-      expect(result).toHaveProperty('aboutPageQuality');
-      expect(result).toHaveProperty('customerSupport');
-      expect(result).toHaveProperty('businessCredibility');
-      expect(result).toHaveProperty('locationData');
-      expect(result).toHaveProperty('score');
-      expect(result).toHaveProperty('grade');
-      expect(result).toHaveProperty('recommendations');
-      expect(result).toHaveProperty('businessType');
-      expect(result).toHaveProperty('strengths');
+      expect(result.data).toHaveProperty('aboutPageQuality');
+      expect(result.data).toHaveProperty('customerSupport');
+      expect(result.data).toHaveProperty('businessCredibility');
+      expect(result.data).toHaveProperty('locationData');
+      expect(result.data).toHaveProperty('score');
+      expect(result.data).toHaveProperty('grade');
+      expect(result.data).toHaveProperty('recommendations');
+      expect(result.data).toHaveProperty('businessType');
+      expect(result.data).toHaveProperty('strengths');
     });
   });
 });

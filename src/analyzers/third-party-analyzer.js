@@ -953,16 +953,4 @@ export class ThirdPartyAnalyzer extends BaseAnalyzer {
     }
   }
 
-  // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeThirdPartyServices(dom, pageData = {}) {
-    console.warn('ThirdPartyAnalyzer.analyzeThirdPartyServices() is deprecated. Use analyze() method instead.');
-    return this.analyze({ dom, pageData });
-  }
 }

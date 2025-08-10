@@ -1572,12 +1572,4 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
   // LEGACY COMPATIBILITY METHODS
   // ============================================================================
 
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeLegacy(document) {
-    console.warn('SocialProofAnalyzer.analyzeLegacy(document) is deprecated. Use analyze(context) method instead.');
-    return this.analyze({ document });
-  }
 }

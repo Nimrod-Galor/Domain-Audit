@@ -239,52 +239,7 @@ export class AdvancedLinkAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Object|Document} dom - JSDOM document object OR Document directly
-   * @param {string} pageUrl - Current page URL
-   * @param {Object} siteData - Site-wide crawl data
-   * @returns {Promise<Object>} Advanced link analysis results
-   */
-  async analyzeAdvancedLinks(dom, pageUrl = '', siteData = {}) {
-    console.warn('analyzeAdvancedLinks() is deprecated. Use analyze() method instead.');
-    
-    // Handle both cases: full dom object or document directly
-    let document;
-    // Handle different DOM types more gracefully
-    if (dom && dom.window && dom.window.document) {
-      document = dom.window.document;
-    } else if (dom && (dom.nodeType === 9 || dom.querySelector)) {
-      // It's already a document
-      document = dom;
-    } else if (dom && typeof dom === 'function' && dom.html) {
-      // Cheerio object - create a mock document interface
-      document = {
-        querySelectorAll: (selector) => {
-          const elements = dom(selector);
-          return Array.from({ length: elements.length }, (_, i) => elements.eq(i).get(0));
-        },
-        querySelector: (selector) => {
-          const element = dom(selector).first();
-          return element.length > 0 ? element.get(0) : null;
-        }
-      };
-    } else {
-      console.warn('⚠️ Advanced link analysis skipped: unsupported DOM type');
-      return {
-        advancedAnalysis: {
-          linkStructure: { hasNavigation: false, hasFooter: false, hasSidebar: false },
-          linkPatterns: { internalLinkCount: 0, externalLinkCount: 0, linkDensity: 0 },
-          navigationMetrics: { breadcrumbs: false, pagination: false, mainNavigation: false },
-          accessibility: { hasAriaLabels: false, hasAltText: false, keyboardNavigable: false },
-          seoElements: { hasH1: false, hasMetaDescription: false, hasStructuredData: false }
-        }
-      };
-    }
-    
-    return this._performAdvancedLinkAnalysis(document, pageUrl, siteData);
-  }
+
 
   /**
    * Internal method to perform advanced link analysis

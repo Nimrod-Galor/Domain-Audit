@@ -1138,14 +1138,6 @@ export class ContentQualityAnalyzer extends BaseAnalyzer {
   // LEGACY COMPATIBILITY METHODS
   // ============================================================================
 
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeContentQuality(dom, pageData, rawHTML = '') {
-    console.warn('ContentQualityAnalyzer.analyzeContentQuality() is deprecated. Use analyze() method instead.');
-    return this.analyze({ dom, pageData, rawHTML });
-  }
 }
 
 export default ContentQualityAnalyzer;

@@ -205,18 +205,7 @@ export class ResourceAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Object} dom - JSDOM document object
-   * @param {Object} pageData - Page data including response time and size
-   * @returns {Promise<Object>} Resource analysis results
-   */
-  async analyzeResourceLoading(dom, pageData = {}) {
-    console.warn('analyzeResourceLoading() is deprecated. Use analyze() method instead.');
-    const document = dom.window.document;
-    return this._performResourceAnalysis(document, pageData);
-  }
+
 
   /**
    * Internal method to perform resource analysis

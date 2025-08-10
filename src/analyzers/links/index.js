@@ -9,8 +9,8 @@ export { ModernAdvancedLinkAnalyzer } from './ModernAdvancedLinkAnalyzer.js';
 
 // Legacy analyzers
 export { AdvancedLinkAnalyzer } from './AdvancedLinkAnalyzer.js';
-export { LinkDepthAnalyzer } from './LinkDepthAnalyzer.js';
-export { OrphanedPagesAnalyzer } from './OrphanedPagesAnalyzer.js';
+export { LinkDepthCalculator as LinkDepthAnalyzer } from './LinkDepthAnalyzer.js';
+export { OrphanedPagesDetector as OrphanedPagesAnalyzer } from './OrphanedPagesAnalyzer.js';
 
 // Default export for backward compatibility
 export { ModernAdvancedLinkAnalyzer as default } from './ModernAdvancedLinkAnalyzer.js';

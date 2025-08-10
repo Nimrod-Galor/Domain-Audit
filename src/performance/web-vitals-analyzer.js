@@ -74,12 +74,27 @@ export class WebVitalsAnalyzer extends BaseAnalyzer {
 
   /**
    * Analyze Core Web Vitals and performance metrics
-   * @param {Document} document - DOM document
-   * @param {Object} pageData - Existing page data including response time and size
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - DOM document
+   * @param {string} context.url - Page URL
+   * @param {Object} context.pageData - Existing page data including response time and size
    * @returns {Promise<Object>} Core Web Vitals analysis
    */
-  async analyze(document, pageData = {}, url = '') {
+  async analyze(context) {
+    // Handle legacy calling format for backward compatibility
+    if (context && context.nodeType === 9) {
+      const document = context;
+      const pageData = arguments[1] || {};
+      const url = arguments[2] || '';
+      context = { document, pageData, url };
+    }
+
+    if (!this.validate(context)) {
+      return this.handleError(new Error('Invalid context provided'), 'validation');
+    }
+
+    const { document, pageData = {}, url = '' } = context;
+
     return this.measureTime(async () => {
       try {
         this.log('info', 'Starting Core Web Vitals analysis...');

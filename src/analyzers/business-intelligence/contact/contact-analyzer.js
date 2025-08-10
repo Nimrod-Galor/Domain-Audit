@@ -16,7 +16,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../../core/AnalyzerInterface.js';
 
 export class ContactAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -86,7 +86,7 @@ export class ContactAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: this.name,
-      category: AnalyzerCategories.BUSINESS,
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
       description: 'Analyzes contact information quality and accessibility including forms, phone numbers, emails, and social media presence',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -144,60 +144,80 @@ export class ContactAnalyzer extends BaseAnalyzer {
 
   /**
    * Analyzes contact information on a webpage
-   * @param {Document} document - The DOM document
-   * @param {string} url - The page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - The DOM document
+   * @param {string} context.url - The page URL
+   * @param {Object} context.pageData - Additional page data
    * @returns {Object} Analysis results
    */
-  async analyze(document, url) {
+  async analyze(context) {
+    // Handle legacy calling format for backward compatibility
+    if (context && context.nodeType === 9) {
+      const document = context;
+      const url = arguments[1];
+      context = { document, url, pageData: {} };
+    }
+
+    if (!this.validate(context)) {
+      return this.handleError(new Error('Invalid context provided'), 'validation');
+    }
+
+    const { document, url, pageData = {} } = context;
+
     if (!this.validate(document, url)) {
-      return this.createErrorResult('Validation failed for contact analysis');
+      return this.handleError(new Error('Validation failed for contact analysis'), 'validation');
     }
 
-    const startTime = performance.now();
-    try {
-      const contactForms = this._analyzeContactForms(document);
-      const phoneNumbers = this._analyzePhoneNumbers(document);
-      const emailAddresses = this._analyzeEmailAddresses(document);
-      const physicalAddress = this._analyzePhysicalAddress(document);
-      const socialMedia = this._analyzeSocialMedia(document);
-      const supportChannels = this._analyzeSupportChannels(document);
-      const accessibility = this._analyzeAccessibility(document);
+    return this.measureTime(async () => {
+      try {
+        const contactForms = this._analyzeContactForms(document);
+        const phoneNumbers = this._analyzePhoneNumbers(document);
+        const emailAddresses = this._analyzeEmailAddresses(document);
+        const physicalAddress = this._analyzePhysicalAddress(document);
+        const socialMedia = this._analyzeSocialMedia(document);
+        const supportChannels = this._analyzeSupportChannels(document);
+        const accessibility = this._analyzeAccessibility(document);
 
-      const analysis = {
-        contactForms,
-        phoneNumbers,
-        emailAddresses,
-        physicalAddress,
-        socialMedia,
-        supportChannels,
-        accessibility,
-      };
+        const analysis = {
+          contactForms,
+          phoneNumbers,
+          emailAddresses,
+          physicalAddress,
+          socialMedia,
+          supportChannels,
+          accessibility,
+        };
 
-      const score = this._calculateContactScore(analysis);
-      const performance = performance.now() - startTime;
+        const score = this._calculateContactScore(analysis);
 
-      const result = {
-        ...analysis,
-        score,
-        grade: this._assignGrade(score),
-        contactChannels: this._countContactChannels(analysis),
-        strengths: this._identifyContactStrengths(analysis),
-        recommendations: this._generateContactRecommendations(analysis),
-        summary: this._generateExecutiveSummary(analysis, score),
-        metadata: {
-          ...this.getMetadata(),
-          analysisDate: new Date().toISOString(),
-          performanceMs: Math.round(performance),
-          url: url
-        }
-      };
+        const result = {
+          ...analysis,
+          score,
+          grade: this._assignGrade(score),
+          contactChannels: this._countContactChannels(analysis),
+          strengths: this._identifyContactStrengths(analysis),
+          recommendations: this._generateContactRecommendations(analysis),
+          summary: this._generateExecutiveSummary(analysis, score),
+          metadata: {
+            ...this.getMetadata(),
+            analysisDate: new Date().toISOString(),
+            url: url
+          }
+        };
 
+        return this.createSuccessResponse({
+          data: result
+        });
+
+      } catch (error) {
+        return this.handleError(error, 'contact analysis');
+      }
+    }).then(({result, time}) => {
+      if (result.success) {
+        result.analysisTime = time;
+      }
       return result;
-
-    } catch (error) {
-      this.handleError(`Contact analysis failed: ${error.message}`);
-      return this.createErrorResult('Contact analysis failed');
-    }
+    });
   }
 
   /**

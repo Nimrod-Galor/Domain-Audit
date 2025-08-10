@@ -1416,17 +1416,4 @@ export class AdvancedLinkAnalyzer extends BaseAnalyzer {
     }
   }
 
-  // ============================================================================
-  // LEGACY COMPATIBILITY METHODS
-  // ============================================================================
-
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeAdvancedLinks(dom, pageUrl = '', siteData = {}) {
-    console.warn('AdvancedLinkAnalyzer.analyzeAdvancedLinks(dom, pageUrl, siteData) is deprecated. Use analyze(context) method instead.');
-    const document = dom.window ? dom.window.document : dom;
-    return this.performLinkAnalysis(document, pageUrl);
-  }
 }

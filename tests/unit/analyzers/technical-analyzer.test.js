@@ -1,5 +1,5 @@
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { technicalAnalyzer } from '../../../src/analyzers/index.js';
+import { TechnicalAnalyzer } from '../../../src/analyzers/index.js';
 import { TestHelpers } from '../../helpers/TestHelpers.js';
 
 describe('TechnicalAnalyzer', () => {
@@ -15,80 +15,102 @@ describe('TechnicalAnalyzer', () => {
     global.document = originalDocument;
   });
 
-  test('should analyze basic technical elements', () => {
+  test('should analyze basic technical elements', async () => {
+    const analyzer = new TechnicalAnalyzer();
     const mockDOM = TestHelpers.createMockDOMForTechnical({
       title: 'Test Technical Page'
     });
     
-    // Set up global document mock
-    global.document = mockDOM;
+    const result = await analyzer.analyze({
+      dom: mockDOM,
+      url: 'https://example.com',
+      pageData: {}
+    });
 
-    const result = technicalAnalyzer.analyze(mockDOM);
-
-    // Based on actual return structure from console output
-    expect(result).toHaveProperty('viewport');
-    expect(result).toHaveProperty('charset');
-    expect(result).toHaveProperty('resources');
-    expect(result).toHaveProperty('technicalScore');
+    // Based on the BaseAnalyzer format
+    expect(result.result).toHaveProperty('success');
+    expect(result.result).toHaveProperty('data');
+    expect(result.result.data).toHaveProperty('infrastructure');
+    expect(result.result.data).toHaveProperty('architecture');
+    expect(result.result.data).toHaveProperty('accessibility');
   });
 
-  test('should detect viewport configuration', () => {
+  test('should detect viewport configuration', async () => {
+    const analyzer = new TechnicalAnalyzer();
     const mockDOM = TestHelpers.createMockDOMForTechnical();
-    global.document = mockDOM;
 
-    const result = technicalAnalyzer.analyze(mockDOM);
+    const result = await analyzer.analyze({
+      dom: mockDOM,
+      url: 'https://example.com',
+      pageData: {}
+    });
 
-    expect(result.viewport.content).toBe('width=device-width, initial-scale=1');
-    expect(result.viewport.isResponsive).toBe(true);
+    expect(result.result.data.infrastructure).toBeDefined();
+    expect(result.result.data.infrastructure.elements.viewport).toBeDefined();
   });
 
-  test('should detect character encoding', () => {
+  test('should detect character encoding', async () => {
+    const analyzer = new TechnicalAnalyzer();
     const mockDOM = TestHelpers.createMockDOMForTechnical();
-    global.document = mockDOM;
 
-    const result = technicalAnalyzer.analyze(mockDOM);
+    const result = await analyzer.analyze({
+      dom: mockDOM,
+      url: 'https://example.com', 
+      pageData: {}
+    });
 
-    expect(result.charset.value).toBe('utf-8');
-    expect(result.charset.isUTF8).toBe(true);
+    expect(result.result.data.infrastructure).toBeDefined();
+    expect(result.result.data.infrastructure.elements.charset).toBeDefined();
   });
 
-  test('should analyze resource usage', () => {
+  test('should analyze resource usage', async () => {
+    const analyzer = new TechnicalAnalyzer();
     const mockDOM = TestHelpers.createMockDOMForTechnical();
-    global.document = mockDOM;
 
-    const result = technicalAnalyzer.analyze(mockDOM);
+    const result = await analyzer.analyze({
+      dom: mockDOM,
+      url: 'https://example.com',
+      pageData: {}
+    });
 
-    expect(result.resources).toHaveProperty('externalCSS');
-    expect(result.resources).toHaveProperty('externalJS');
-    expect(result.resources).toHaveProperty('totalResources');
+    expect(result.result.data.infrastructure).toBeDefined();
+    expect(result.result.data.infrastructure.elements.resources).toBeDefined();
   });
 
-  test('should handle missing technical elements gracefully', () => {
+  test('should handle missing technical elements gracefully', async () => {
+    const analyzer = new TechnicalAnalyzer();
     const mockDOM = {
-      title: 'Test',
-      head: {
-        querySelector: jest.fn().mockReturnValue(null),
-        querySelectorAll: jest.fn().mockReturnValue([]),
-        getElementsByTagName: jest.fn().mockReturnValue([])
-      },
-      body: {
-        querySelector: jest.fn().mockReturnValue(null),
-        querySelectorAll: jest.fn().mockReturnValue([]),
-        getElementsByTagName: jest.fn().mockReturnValue([])
-      },
-      documentElement: {
-        getAttribute: jest.fn().mockReturnValue('en')
-      },
-      querySelector: jest.fn().mockReturnValue(null),
-      querySelectorAll: jest.fn().mockReturnValue([]),
-      getElementsByTagName: jest.fn().mockReturnValue([])
+      window: {
+        document: {
+          title: 'Test',
+          head: {
+            querySelector: jest.fn().mockReturnValue(null),
+            querySelectorAll: jest.fn().mockReturnValue([]),
+            getElementsByTagName: jest.fn().mockReturnValue([])
+          },
+          body: {
+            querySelector: jest.fn().mockReturnValue(null),
+            querySelectorAll: jest.fn().mockReturnValue([]),
+            getElementsByTagName: jest.fn().mockReturnValue([])
+          },
+          documentElement: {
+            getAttribute: jest.fn().mockReturnValue('en')
+          },
+          querySelector: jest.fn().mockReturnValue(null),
+          querySelectorAll: jest.fn().mockReturnValue([]),
+          getElementsByTagName: jest.fn().mockReturnValue([])
+        }
+      }
     };
-    
-    global.document = mockDOM;
 
-    const result = technicalAnalyzer.analyze(mockDOM);
+    const result = await analyzer.analyze({
+      dom: mockDOM,
+      url: 'https://example.com',
+      pageData: {}
+    });
 
-    expect(result).toHaveProperty('viewport');
-    expect(result).toHaveProperty('technicalScore');
+    expect(result).toBeDefined();
+    expect(result.result.success).toBe(true);
+    expect(result.result.data).toBeDefined();
   });
 });

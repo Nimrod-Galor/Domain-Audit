@@ -18,7 +18,7 @@
  */
 
 import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../core/AnalyzerInterface.js';
 
 /**
  * Business Analytics Configuration
@@ -114,7 +114,7 @@ export class BusinessAnalyticsAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: this.name,
-      category: AnalyzerCategories.BUSINESS,
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
       description: 'Advanced business analytics including user intent analysis, conversion element detection, social proof analysis, and trust signals assessment',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -185,7 +185,7 @@ export class BusinessAnalyticsAnalyzer extends BaseAnalyzer {
    */
   async analyzeBusinessAnalytics(dom, pageData, url) {
     if (!this.validate(dom, pageData, url)) {
-      return this.createErrorResult('Validation failed for business analytics analysis');
+      return this.handleError('Validation failed for business analytics analysis');
     }
 
     try {
@@ -214,7 +214,6 @@ export class BusinessAnalyticsAnalyzer extends BaseAnalyzer {
 
       // Calculate business optimization score
       const score = this._calculateBusinessScore(analysis);
-      const performance = performance.now() - startTime;
       
       const result = {
         ...analysis,
@@ -226,7 +225,6 @@ export class BusinessAnalyticsAnalyzer extends BaseAnalyzer {
         metadata: {
           ...this.getMetadata(),
           analysisDate: new Date().toISOString(),
-          performanceMs: Math.round(performance),
           url: url
         }
       };
@@ -235,7 +233,7 @@ export class BusinessAnalyticsAnalyzer extends BaseAnalyzer {
       
     } catch (error) {
       this.handleError(`Business analytics analysis failed: ${error.message}`);
-      return this.createErrorResult('Business analytics analysis failed');
+      return this.handleError('Business analytics analysis failed');
     }
   }
 

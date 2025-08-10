@@ -148,17 +148,7 @@ export class WhatsAppAnalyzer extends BaseAnalyzer {
     }
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use analyze() method instead
-   * @param {Document} document - DOM document
-   * @param {string} url - Page URL
-   * @returns {Promise<Object>} WhatsApp analysis results
-   */
-  async analyzeWhatsApp(document, url) {
-    console.warn('analyzeWhatsApp() is deprecated. Use analyze() method instead.');
-    return this._performWhatsAppAnalysis(document, url);
-  }
+
 
   /**
    * Internal method to perform WhatsApp analysis

@@ -174,13 +174,42 @@ export class PageCrawler {
         const basePageData = {
             url,
             timestamp: new Date().toISOString(),
-            seo: analyzers.seoAnalyzer.analyze(dom.document),
-            content: analyzers.contentAnalyzer.analyze(dom.document, html),
-            links: analyzers.linkAnalyzer.analyze(dom.document, url),
-            technical: analyzers.technicalAnalyzer.analyze(dom.document),
-            security: analyzers.securityAnalyzer.analyze(dom.document),
-            accessibility: analyzers.accessibilityAnalyzer.analyze(dom.document),
-            mobile: analyzers.mobileAnalyzer.analyze(dom.document)
+            seo: analyzers.seoAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {}
+            }),
+            content: analyzers.contentAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {},
+                html: html
+            }),
+            links: analyzers.linkAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {}
+            }),
+            technical: analyzers.technicalAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {}
+            }),
+            security: analyzers.securityAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {}
+            }),
+            accessibility: analyzers.accessibilityAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {}
+            }),
+            mobile: analyzers.mobileAnalyzer.analyze({
+                document: dom.document,
+                url: url,
+                pageData: {}
+            })
         };
         
         // Enhanced features (medium-priority)

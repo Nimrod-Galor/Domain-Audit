@@ -32,29 +32,31 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
 
   /**
    * Perform business intelligence analysis
-   * @param {Document} document - DOM document
-   * @param {Object|string} pageDataOrUrl - Page data object or URL string
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context
+   * @param {Document} context.document - DOM document
+   * @param {string} context.url - Page URL
+   * @param {Object} context.pageData - Page data object
    * @returns {Promise<Object>} Analysis results
    */
-  async analyze(document, pageDataOrUrl, url) {
-    return this.measureTime(async () => {
+  async analyze(context) {
+    // Validate the context
+    if (!context || !context.document || !context.url) {
+      const errorResult = this.handleError('Invalid context provided - missing document or URL', new Error('Invalid context'), {});
+      // Add score for test compatibility
+      errorResult.score = 0;
+      errorResult.grade = 'F';
+      return errorResult;
+    }
+
+    const { result, time } = await this.measureTime(async () => {
       try {
+        const { document, url, pageData = {} } = context;
         this.log('info', 'Starting Business Intelligence analysis...');
-        
-        let actualUrl, pageData;
-        if (typeof pageDataOrUrl === 'string') {
-          actualUrl = pageDataOrUrl;
-          pageData = {};
-        } else {
-          pageData = pageDataOrUrl || {};
-          actualUrl = url;
-        }
 
         // Perform basic analysis using document adapter
-        const trustSignals = this._analyzeTrustSignals(document, actualUrl);
+        const trustSignals = this._analyzeTrustSignals(document, url);
         const contactInformation = this._analyzeContactInformation(document);
-        const aboutPageQuality = this._analyzeAboutPage(document, actualUrl);
+        const aboutPageQuality = this._analyzeAboutPage(document, url);
         const customerSupport = this._analyzeCustomerSupport(document);
         const businessCredibility = this._analyzeBusinessCredibility(document);
         const locationData = this._analyzeLocationData(document);
@@ -77,33 +79,45 @@ export class BusinessIntelligenceAnalyzer extends BaseAnalyzer {
           grade: this._getGrade(overallScore),
           recommendations: this._generateRecommendations(overallScore),
           strengths: this._identifyStrengths(analysisComponents),
-          businessType: 'general'
+          businessType: 'general',
+          metadata: {
+            componentsAnalyzed: validComponents,
+            totalComponents: analysisComponents.length,
+            analysisTime: 0, // Will be updated after measureTime
+            timestamp: new Date().toISOString()
+          }
         };
 
         this.log('info', `Business Intelligence analysis completed with score: ${overallScore}`);
-        return analysisData;
+        
+        // Return BaseAnalyzer format with data wrapper
+        return {
+          success: true,
+          data: analysisData,
+          score: overallScore,
+          grade: this._getGrade(overallScore),
+          recommendations: this._generateRecommendations(overallScore),
+          timestamp: new Date().toISOString(),
+          // Also add top-level component access for test compatibility
+          trustSignals,
+          contactInformation,
+          aboutPageQuality,
+          customerSupport,
+          businessCredibility,
+          locationData
+        };
 
       } catch (error) {
-        return this.handleError(error, 'business intelligence analysis');
+        return this.handleError('Business Intelligence analysis failed', error, {});
       }
-    }).then(({ result, time }) => {
-      if (result.error) {
-        return {
-          ...result,
-          trustSignals: null,
-          contactInformation: null,
-          aboutPageQuality: null,
-          customerSupport: null,
-          businessCredibility: null,
-          locationData: null,
-          score: 0,
-          grade: 'F',
-          recommendations: ['Fix analysis errors'],
-          analysisTime: time
-        };
-      }
-      return this.createSuccessResponse(result, time);
     });
+
+    // Update the execution time in metadata
+    if (result.success && result.data && result.data.metadata) {
+      result.data.metadata.analysisTime = time;
+    }
+    
+    return result;
   }
 
   _analyzeTrustSignals(document, url) {

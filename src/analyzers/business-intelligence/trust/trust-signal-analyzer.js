@@ -16,7 +16,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
+import { AnalyzerInterface, AnalyzerCategories } from '../../core/AnalyzerInterface.js';
 
 export class TrustSignalAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -71,7 +71,7 @@ export class TrustSignalAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: 'Trust Signal Analyzer',
-      category: AnalyzerCategories.BUSINESS,
+      category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
       description: 'Analyzes trust signals and credibility indicators including security badges, certifications, awards, testimonials, and compliance indicators',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -115,7 +115,7 @@ export class TrustSignalAnalyzer extends BaseAnalyzer {
     try {
       // Validate input
       if (!this.validate(context)) {
-        return this.createErrorResult('Validation failed');
+        return this.handleError('Validation failed');
       }
 
       // Extract document and URL from context
@@ -138,7 +138,7 @@ export class TrustSignalAnalyzer extends BaseAnalyzer {
       return {
         success: true,
         analyzer: 'TrustSignalAnalyzer',
-        category: AnalyzerCategories.BUSINESS,
+        category: AnalyzerCategories.BUSINESS_INTELLIGENCE,
         score: score,
         data: {
           ...analysisResult,
@@ -1227,12 +1227,4 @@ export class TrustSignalAnalyzer extends BaseAnalyzer {
   // LEGACY COMPATIBILITY METHODS
   // ============================================================================
 
-  /**
-   * @deprecated Use analyze() method instead
-   * Legacy method for backward compatibility
-   */
-  analyzeTrustSignals(document, url) {
-    console.warn('TrustSignalAnalyzer.analyzeTrustSignals(document, url) is deprecated. Use analyze(context) method instead.');
-    return this.performTrustSignalAnalysis(document, url);
-  }
 }
