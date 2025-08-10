@@ -127,24 +127,19 @@ export class ThirdPartyAnalyzer extends BaseAnalyzer {
 
   /**
    * Perform comprehensive third-party analysis
-   * @param {Document} document - DOM document
-   * @param {Object|string} pageDataOrUrl - Page data object or URL string
-   * @param {string} url - Page URL
+   * @param {Object} context - Analysis context {document, url, pageData}
    * @returns {Promise<Object>} Analysis results
    */
-  async analyze(document, pageDataOrUrl, url) {
+  async analyze(context) {
+    if (!this.validate(context)) {
+      return this.handleError(new Error('Invalid context provided'), 'validation');
+    }
+
+    const { document, url: actualUrl = '', pageData = {} } = context;
+
     return this.measureTime(async () => {
       try {
         this.log('info', 'Starting third-party analysis...');
-        
-        let actualUrl, pageData;
-        if (typeof pageDataOrUrl === 'string') {
-          actualUrl = pageDataOrUrl;
-          pageData = {};
-        } else {
-          pageData = pageDataOrUrl || {};
-          actualUrl = url;
-        }
 
         const analysis = {
           // Script analysis

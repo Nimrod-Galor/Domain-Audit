@@ -81,19 +81,14 @@ export class WebVitalsAnalyzer extends BaseAnalyzer {
    * @returns {Promise<Object>} Core Web Vitals analysis
    */
   async analyze(context) {
-    // Handle legacy calling format for backward compatibility
-    if (context && context.nodeType === 9) {
-      const document = context;
-      const pageData = arguments[1] || {};
-      const url = arguments[2] || '';
-      context = { document, pageData, url };
-    }
-
     if (!this.validate(context)) {
       return this.handleError(new Error('Invalid context provided'), 'validation');
     }
 
-    const { document, pageData = {}, url = '' } = context;
+    // Optimized property access - avoid destructuring overhead
+    const document = context.document;
+    const pageData = context.pageData || {};
+    const url = context.url || '';
 
     return this.measureTime(async () => {
       try {

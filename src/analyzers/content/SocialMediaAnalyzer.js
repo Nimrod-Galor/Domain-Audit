@@ -52,24 +52,36 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
 
   /**
    * Perform comprehensive social media analysis
-   * @param {Document} document - DOM document
-   * @param {Object|string} pageDataOrUrl - Page data object or URL string
-   * @param {string} url - Page URL
+   * @param {Object|Document} context - Analysis context or legacy document parameter
+   * @param {Object|string} pageDataOrUrl - Page data object or URL string (legacy)
+   * @param {string} url - Page URL (legacy)
    * @returns {Promise<Object>} Analysis results
    */
-  async analyze(document, pageDataOrUrl, url) {
+  async analyze(context, pageDataOrUrl, url) {
+    // Handle both modern context format and legacy parameters
+    let document, actualUrl, pageData;
+    
+    if (context && typeof context === 'object' && (context.document || context.dom)) {
+      // Modern context format: analyze({document, url, pageData})
+      const { dom, pageData: ctxPageData = {}, url: ctxUrl = '' } = context;
+      document = context.document || (dom && dom.window && dom.window.document);
+      actualUrl = ctxUrl;
+      pageData = ctxPageData;
+    } else {
+      // Legacy format: analyze(document, pageDataOrUrl, url)
+      document = context;
+      if (typeof pageDataOrUrl === 'string') {
+        actualUrl = pageDataOrUrl;
+        pageData = {};
+      } else {
+        pageData = pageDataOrUrl || {};
+        actualUrl = url;
+      }
+    }
+
     return this.measureTime(async () => {
       try {
         this.log('info', 'Starting social media analysis...');
-        
-        let actualUrl, pageData;
-        if (typeof pageDataOrUrl === 'string') {
-          actualUrl = pageDataOrUrl;
-          pageData = {};
-        } else {
-          pageData = pageDataOrUrl || {};
-          actualUrl = url;
-        }
 
         // Store for use by other methods
         this.currentUrl = actualUrl;

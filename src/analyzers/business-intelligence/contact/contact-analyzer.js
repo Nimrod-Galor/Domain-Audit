@@ -151,18 +151,14 @@ export class ContactAnalyzer extends BaseAnalyzer {
    * @returns {Object} Analysis results
    */
   async analyze(context) {
-    // Handle legacy calling format for backward compatibility
-    if (context && context.nodeType === 9) {
-      const document = context;
-      const url = arguments[1];
-      context = { document, url, pageData: {} };
-    }
-
     if (!this.validate(context)) {
       return this.handleError(new Error('Invalid context provided'), 'validation');
     }
 
-    const { document, url, pageData = {} } = context;
+    // Optimized property access - avoid destructuring overhead
+    const document = context.document;
+    const url = context.url;
+    const pageData = context.pageData || {};
 
     if (!this.validate(document, url)) {
       return this.handleError(new Error('Validation failed for contact analysis'), 'validation');

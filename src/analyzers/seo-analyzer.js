@@ -63,18 +63,14 @@ export class SEOAnalyzer extends BaseAnalyzer {
    * @returns {Object} Comprehensive SEO analysis results
    */
   async analyze(context) {
-    // Handle legacy calling format for backward compatibility
-    if (context && context.nodeType === 9) {
-      const document = context;
-      const url = arguments[1] || null;
-      context = { document, url, pageData: {} };
-    }
-
     if (!this.validate(context)) {
       return this.handleError(new Error('Invalid context provided'), 'validation');
     }
 
-    const { document, url = null, pageData = {} } = context;
+    // Optimized property access - avoid destructuring overhead
+    const document = context.document;
+    const url = context.url || null;
+    const pageData = context.pageData || {};
 
     try {
       this.log('Starting comprehensive SEO analysis');

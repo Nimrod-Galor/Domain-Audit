@@ -94,35 +94,24 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
     try {
       this.log('Starting Open Graph analysis', 'info');
 
-      // Handle legacy calling format: analyze(document, url)
-      let document, actualUrl, pageData;
-      if (context && context.nodeType === 9) { // Document node
-        document = context;
-        actualUrl = url || '';
-        pageData = {};
-      } else {
-        // Modern calling format: analyze({document, url, pageData})
-        if (!this.validate(context)) {
-          return this.handleError('Invalid context for Open Graph analysis', new Error('Context validation failed'), {
-            hasOpenGraph: false,
-            score: 0,
-            grade: 'F'
-          });
-        }
-        document = context.document;
-        actualUrl = context.url || '';
-        pageData = context.pageData || {};
+      // Modern calling format only: analyze({document, url, pageData})
+      if (!this.validate(context)) {
+        return this.handleError('Invalid context for Open Graph analysis', new Error('Context validation failed'), {
+          hasOpenGraph: false,
+          score: 0,
+          grade: 'F'
+        });
       }
+
+      // Optimized property access - avoid destructuring overhead
+      const document = context.document;
+      const actualUrl = context.url || '';
+      const pageData = context.pageData || {};
 
       // Perform Open Graph analysis
       const ogData = await this._performOpenGraphAnalysis(document, actualUrl);
       
-      // For tests that expect flat structure, return the ogData directly
-      if (context && context.nodeType === 9) {
-        return ogData;
-      }
-
-      // For BaseAnalyzer integration, wrap in standard format
+      // Always return BaseAnalyzer format
       const score = this._calculateComprehensiveScore(ogData);
       const grade = this._getGradeFromScore(score);
       
