@@ -4,4 +4,4 @@
  * Exports all security-related analyzers
  */
 
-export { SSLAnalyzer } from './SSLAnalyzer.js';
+export { default as SSLAnalyzer } from './SSLAnalyzer.js';

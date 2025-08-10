@@ -67,6 +67,18 @@ export function isInternalLink(href, baseDomain) {
       return false;
     }
     
+    // Check for functional protocols before relative URL check
+    const functionalProtocols = ['mailto:', 'tel:'];
+    if (functionalProtocols.some(protocol => href.toLowerCase().startsWith(protocol))) {
+      return false;
+    }
+    
+    // Check for non-fetchable protocols before relative URL check
+    const nonFetchableProtocols = ['javascript:', 'ftp:', 'file:'];
+    if (nonFetchableProtocols.some(protocol => href.toLowerCase().startsWith(protocol))) {
+      return false;
+    }
+    
     // If no protocol, assume it's a relative URL
     if (!href.includes('://')) {
       return true;
@@ -95,9 +107,58 @@ export function isInternalLink(href, baseDomain) {
 }
 
 export function isNonFetchableLink(href) {
+  // Handle null/undefined/empty input
+  if (!href || typeof href !== 'string') {
+    return false;
+  }
+  
   // Filter out links that can't be fetched via HTTP
   const nonFetchableProtocols = ['javascript:', 'ftp:', 'file:'];
-  return nonFetchableProtocols.some(protocol => href.toLowerCase().startsWith(protocol));
+  if (nonFetchableProtocols.some(protocol => href.toLowerCase().startsWith(protocol))) {
+    return true;
+  }
+  
+  // Filter out file URLs based on file extensions
+  const fileExtensions = [
+    // Images
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico',
+    // Videos
+    'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v',
+    // Audio
+    'mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a',
+    // Documents
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf',
+    // Archives
+    'zip', 'rar', '7z', 'tar', 'gz', 'bz2',
+    // Fonts
+    'ttf', 'otf', 'woff', 'woff2', 'eot',
+    // Other files
+    'css', 'js', 'json', 'xml', 'exe', 'dmg', 'pkg', 'deb', 'rpm'
+  ];
+  
+  try {
+    const url = new URL(href);
+    const pathname = url.pathname.toLowerCase();
+    
+    // Check if the URL ends with a file extension
+    const extension = pathname.split('.').pop();
+    if (extension && fileExtensions.includes(extension)) {
+      return true;
+    }
+    
+    // Also check for common file patterns with query parameters
+    // e.g., image.jpg?version=123
+    const pathWithoutQuery = pathname.split('?')[0];
+    const extensionFromPath = pathWithoutQuery.split('.').pop();
+    if (extensionFromPath && fileExtensions.includes(extensionFromPath)) {
+      return true;
+    }
+  } catch (error) {
+    // If URL parsing fails, don't filter it out
+    return false;
+  }
+  
+  return false;
 }
 
 export function isFunctionalLink(href) {

@@ -12,7 +12,7 @@
 
 import { describe, test, expect, beforeEach } from '@jest/globals';
 import { JSDOM } from 'jsdom';
-import { SocialProofAnalyzer } from '../../../../src/analyzers/social-media/social-proof-analyzer.js';
+import { SocialProofAnalyzer } from '../../../src/analyzers/social-media/social-proof-analyzer.js';
 
 describe('SocialProofAnalyzer Unit Tests', () => {
   let analyzer;
@@ -158,9 +158,9 @@ describe('SocialProofAnalyzer Unit Tests', () => {
       mockDOM = new JSDOM(comprehensiveHTML);
     });
 
-    test('analyze should return complete social proof structure', () => {
+    test('analyze should return complete social proof structure', async () => {
       const document = mockDOM.window.document;
-      const result = analyzer.analyze(document);
+      const result = await analyzer.analyze({ document });
 
       expect(result).toBeDefined();
       expect(result).toHaveProperty('testimonials');
@@ -449,11 +449,11 @@ describe('SocialProofAnalyzer Unit Tests', () => {
   });
 
   describe('Error Handling', () => {
-    test('should handle empty document gracefully', () => {
+    test('should handle empty document gracefully', async () => {
       const emptyDOM = new JSDOM('<html><head></head><body></body></html>');
       const document = emptyDOM.window.document;
 
-      const result = analyzer.analyze(document);
+      const result = await analyzer.analyze({ document });
 
       expect(result).toBeDefined();
       expect(result.testimonials.count).toBe(0);
@@ -463,22 +463,22 @@ describe('SocialProofAnalyzer Unit Tests', () => {
       expect(result.customerLogos.count).toBe(0);
     });
 
-    test('should handle malformed HTML gracefully', () => {
+    test('should handle malformed HTML gracefully', async () => {
       const malformedHTML = '<div class="testimonial"><p>Broken HTML<div></div>';
       const malformedDOM = new JSDOM(malformedHTML);
       const document = malformedDOM.window.document;
 
-      expect(() => analyzer.analyze(document)).not.toThrow();
+      await expect(analyzer.analyze({ document })).resolves.not.toThrow();
     });
 
-    test('should handle null/undefined inputs gracefully', () => {
-      expect(() => analyzer.analyze(null)).not.toThrow();
+    test('should handle null/undefined inputs gracefully', async () => {
+      await expect(analyzer.analyze({ document: null })).resolves.not.toThrow();
       expect(() => analyzer.analyze(undefined)).not.toThrow();
     });
   });
 
   describe('Performance Tests', () => {
-    test('should handle large documents efficiently', () => {
+    test('should handle large documents efficiently', async () => {
       let largeHTML = '<html><body>';
       for (let i = 0; i < 1000; i++) {
         largeHTML += `
@@ -494,7 +494,7 @@ describe('SocialProofAnalyzer Unit Tests', () => {
       const document = largeDOM.window.document;
 
       const startTime = Date.now();
-      const result = analyzer.analyze(document);
+      const result = await analyzer.analyze({ document });
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(2000); // Should complete within 2 seconds

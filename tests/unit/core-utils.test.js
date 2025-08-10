@@ -88,8 +88,48 @@ describe('Core Utils', () => {
       expect(isNonFetchableLink('file:///local/file.txt')).toBe(true);
     });
 
-    test('should allow fetchable protocols', () => {
+    test('should filter out image files', () => {
+      expect(isNonFetchableLink('https://example.com/image.jpg')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/image.png')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/image.gif')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/image.webp')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/image.svg')).toBe(true);
+      expect(isNonFetchableLink('https://media.getmood.io/warehouse/dynamic/378729.jpg')).toBe(true);
+    });
+
+    test('should filter out video files', () => {
+      expect(isNonFetchableLink('https://example.com/video.mp4')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/video.avi')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/video.webm')).toBe(true);
+    });
+
+    test('should filter out document files', () => {
+      expect(isNonFetchableLink('https://example.com/document.pdf')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/spreadsheet.xlsx')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/presentation.pptx')).toBe(true);
+    });
+
+    test('should filter out archive files', () => {
+      expect(isNonFetchableLink('https://example.com/archive.zip')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/backup.tar.gz')).toBe(true);
+    });
+
+    test('should handle files with query parameters', () => {
+      expect(isNonFetchableLink('https://example.com/image.jpg?version=123')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/document.pdf?download=true')).toBe(true);
+    });
+
+    test('should handle files with hash fragments', () => {
+      expect(isNonFetchableLink('https://example.com/image.png#section')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/video.mp4#t=30')).toBe(true);
+    });
+
+    test('should allow fetchable web pages', () => {
       expect(isNonFetchableLink('https://example.com')).toBe(false);
+      expect(isNonFetchableLink('https://example.com/')).toBe(false);
+      expect(isNonFetchableLink('https://example.com/page')).toBe(false);
+      expect(isNonFetchableLink('https://example.com/blog/article')).toBe(false);
+      expect(isNonFetchableLink('https://example.com/api/data')).toBe(false);
       expect(isNonFetchableLink('http://example.com')).toBe(false);
       expect(isNonFetchableLink('mailto:test@example.com')).toBe(false);
       expect(isNonFetchableLink('tel:+1234567890')).toBe(false);
@@ -98,6 +138,14 @@ describe('Core Utils', () => {
     test('should handle case variations', () => {
       expect(isNonFetchableLink('JAVASCRIPT:void(0)')).toBe(true);
       expect(isNonFetchableLink('FTP://files.example.com')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/IMAGE.JPG')).toBe(true);
+      expect(isNonFetchableLink('https://example.com/VIDEO.MP4')).toBe(true);
+    });
+
+    test('should handle malformed URLs gracefully', () => {
+      expect(isNonFetchableLink('not-a-url')).toBe(false);
+      expect(isNonFetchableLink('')).toBe(false);
+      expect(isNonFetchableLink(null)).toBe(false);
     });
   });
 

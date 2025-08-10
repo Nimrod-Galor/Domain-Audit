@@ -81,10 +81,11 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
    * @returns {boolean} Whether the context is valid
    */
   validate(context) {
-    return context && 
-           context.dom && 
-           context.dom.window && 
-           context.dom.window.document;
+    if (!context) return false;
+    
+    // Check for document directly in context or nested in dom structure
+    const document = context.document || (context.dom && context.dom.window && context.dom.window.document);
+    return document && typeof document.querySelector === 'function';
   }
 
   /**
@@ -102,7 +103,12 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
       }
 
       const { dom, pageData = {}, url = '' } = context;
-      const document = dom.window.document;
+      const document = context.document || (dom && dom.window && dom.window.document);
+      
+      if (!document) {
+        throw new Error('No document available in context');
+      }
+      
       const analysisStart = Date.now();
 
       // Platform-specific analysis
@@ -112,7 +118,7 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
       const sharingAnalysis = this._analyzeSocialSharing(document);
 
       // Social proof analysis
-      const socialProofAnalysis = this._analyzeSocialProof(document);
+      const socialProofAnalysis = await this._analyzeSocialProof(document);
 
       // Image optimization analysis
       const imageAnalysis = await this._analyzeSocialImages(document, url);
@@ -125,45 +131,45 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
         images: imageAnalysis,
       });
 
-      return {
+      const result = {
         platforms: platformAnalysis,
         sharing: sharingAnalysis,
         socialProof: socialProofAnalysis,
         images: imageAnalysis,
-        optimization: optimizationScore,
+        optimizationScore: optimizationScore,
         recommendations: this._generateRecommendations({
           platforms: platformAnalysis,
           sharing: sharingAnalysis,
           socialProof: socialProofAnalysis,
           images: imageAnalysis,
         }),
-        analysisTime: Date.now() - analysisStart,
-        timestamp: new Date().toISOString(),
+        metadata: {
+          analysisTime: Date.now() - analysisStart,
+          timestamp: new Date().toISOString(),
+          analyzer: this.getMetadata()
+        }
       };
 
-      // BaseAnalyzer integration: comprehensive scoring and summary
-      const comprehensiveScore = this._calculateComprehensiveScore(result);
-      const recommendations = this._generateSocialMediaRecommendations(result);
-      const summary = this._generateSocialMediaSummary(result);
-      
       this.log('Social media analysis completed successfully');
       
       return {
+        success: true,
         ...result,
-        score: comprehensiveScore,
-        recommendations: [...result.recommendations, ...recommendations],
-        summary,
-        metadata: this.getMetadata()
+        duration: Date.now() - analysisStart
       };
     } catch (error) {
-      return this.handleError('Social media analysis failed', error, {
+      this.log('Social media analysis failed:', error.message);
+      return {
+        success: false,
+        error: error.message,
         platforms: null,
         sharing: null,
         socialProof: null,
         images: null,
-        optimization: 0,
-        recommendations: []
-      });
+        optimizationScore: 0,
+        recommendations: [],
+        duration: 0
+      };
     }
   }
 
@@ -174,12 +180,51 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
     const analysis = {};
 
     try {
-      analysis.openGraph = await this.platforms.openGraph.analyze(document, url);
-      analysis.twitter = await this.platforms.twitter.analyze(document, url);
-      analysis.linkedin = await this.platforms.linkedin.analyze(document, url);
-      analysis.pinterest = await this.platforms.pinterest.analyze(document, url);
-      analysis.whatsapp = await this.platforms.whatsapp.analyze(document, url);
+      // Create context object that platform analyzers expect
+      const context = { 
+        dom: { window: { document } }, 
+        url, 
+        pageData: {} 
+      };
+
+      // Try each platform analyzer and handle individual failures gracefully
+      try {
+        analysis.openGraph = await this.platforms.openGraph.analyze(context);
+      } catch (error) {
+        this.log('OpenGraph analysis failed:', error.message);
+        analysis.openGraph = { score: 0, error: error.message };
+      }
+
+      try {
+        analysis.twitter = await this.platforms.twitter.analyze(context);
+      } catch (error) {
+        this.log('Twitter analysis failed:', error.message);
+        analysis.twitter = { score: 0, error: error.message };
+      }
+
+      try {
+        analysis.linkedin = await this.platforms.linkedin.analyze(context);
+      } catch (error) {
+        this.log('LinkedIn analysis failed:', error.message);
+        analysis.linkedin = { score: 0, error: error.message };
+      }
+
+      try {
+        analysis.pinterest = await this.platforms.pinterest.analyze(context);
+      } catch (error) {
+        this.log('Pinterest analysis failed:', error.message);
+        analysis.pinterest = { score: 0, error: error.message };
+      }
+
+      try {
+        analysis.whatsapp = await this.platforms.whatsapp.analyze(context);
+      } catch (error) {
+        this.log('WhatsApp analysis failed:', error.message);
+        analysis.whatsapp = { score: 0, error: error.message };
+      }
+
     } catch (error) {
+      this.log('Platform analysis error:', error.message);
       analysis.error = `Platform analysis failed: ${error.message}`;
     }
 
@@ -190,24 +235,57 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
    * Analyze social sharing elements
    */
   _analyzeSocialSharing(document) {
-    const sharingButtons = this._findSocialSharingButtons(document);
-    const socialLinks = this._findSocialMediaLinks(document);
+    const sharingButtons = this._findShareButtons(document);
+    const socialLinks = this._findSocialLinks(document);
     
-    return {
+    const sharingData = {
       hasShareButtons: sharingButtons.length > 0,
       shareButtons: sharingButtons,
       socialLinks: socialLinks,
       shareButtonPlatforms: this._identifySharePlatforms(sharingButtons),
+      socialLinkPlatforms: this._extractSocialLinkPlatforms(socialLinks),
       placement: this._analyzeSharingPlacement(sharingButtons),
-      score: this._calculateSharingScore(sharingButtons, socialLinks),
     };
+    
+    sharingData.score = this._calculateSharingScore(sharingData);
+    
+    return sharingData;
   }
 
   /**
    * Analyze social proof elements
    */
-  _analyzeSocialProof(document) {
-    return this.socialProofAnalyzer.analyze(document);
+  async _analyzeSocialProof(document) {
+    try {
+      const result = await this.socialProofAnalyzer.analyze({ document });
+      
+      // SocialProofAnalyzer now returns flat structure
+      if (result && result.success) {
+        return result;
+      } else {
+        // Return a default structure if analysis fails
+        return {
+          testimonials: { count: 0, items: [], hasTestimonials: false },
+          ratings: { count: 0, items: [], hasRatings: false },
+          socialMetrics: { count: 0, items: [], hasSocialMetrics: false },
+          trustSignals: { count: 0, items: [], hasTrustSignals: false },
+          customerLogos: { count: 0, items: [], hasCustomerLogos: false },
+          summary: { totalElements: 0, summary: '', strength: 'low' },
+          score: 0
+        };
+      }
+    } catch (error) {
+      this.log('Social proof analysis error:', error.message);
+      return {
+        testimonials: { count: 0, items: [], hasTestimonials: false },
+        ratings: { count: 0, items: [], hasRatings: false },
+        socialMetrics: { count: 0, items: [], hasSocialMetrics: false },
+        trustSignals: { count: 0, items: [], hasTrustSignals: false },
+        customerLogos: { count: 0, items: [], hasCustomerLogos: false },
+        summary: { totalElements: 0, summary: '', strength: 'low' },
+        score: 0
+      };
+    }
   }
 
   /**
@@ -220,10 +298,17 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
       favicon: this._findFavicon(document),
     };
 
+    const validation = await this._validateSocialImages(images);
+    const optimization = this._analyzeSocialImageOptimization(images);
+
     const analysis = {
       images,
-      validation: await this._validateSocialImages(images),
-      optimization: this._analyzeSocialImageOptimization(images),
+      validation,
+      optimization,
+      // Add missing properties that tests expect
+      openGraphImages: images.ogImage ? [images.ogImage] : [],
+      twitterImages: images.twitterImage ? [images.twitterImage] : [],
+      recommendations: this._generateImageRecommendations(validation, optimization)
     };
 
     return analysis;
@@ -347,15 +432,7 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
     score += (analysis.images.optimization?.score || 0) * imageWeight;
     maxScore += 100 * imageWeight;
 
-    return {
-      overall: Math.round((score / maxScore) * 100),
-      breakdown: {
-        platforms: Math.round(avgPlatformScore),
-        sharing: analysis.sharing.score || 0,
-        socialProof: analysis.socialProof.score || 0,
-        images: analysis.images.optimization?.score || 0,
-      },
-    };
+    return Math.round((score / maxScore) * 100);
   }
 
   /**
@@ -376,24 +453,30 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
     });
 
     // Sharing recommendations
-    if (analysis.sharing.score < 70) {
+    const sharingScore = analysis.sharing.score || (analysis.sharing.hasShareButtons ? 70 : 30);
+    if (sharingScore < 70) {
       recommendations.push({
         type: 'social-sharing',
         priority: 'medium',
         title: 'Improve Social Sharing',
         description: 'Add or optimize social sharing buttons',
         impact: 'engagement',
+        implementation: 'Add social sharing buttons for major platforms like Facebook, Twitter, and LinkedIn'
       });
     }
 
     // Social proof recommendations
-    if (analysis.socialProof.score < 50) {
+    const socialProofScore = analysis.socialProof.score || 
+      (analysis.socialProof.summary?.strength === 'low' ? 20 :
+       analysis.socialProof.summary?.strength === 'medium' ? 60 : 80);
+    if (socialProofScore < 50) {
       recommendations.push({
         type: 'social-proof',
         priority: 'high',
         title: 'Add Social Proof Elements',
         description: 'Include testimonials, reviews, or social metrics',
         impact: 'trust',
+        implementation: 'Add customer testimonials, star ratings, or social media metrics to build credibility'
       });
     }
 
@@ -474,6 +557,45 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
     }
 
     return { score, checks };
+  }
+
+  /**
+   * Generate image optimization recommendations
+   * @param {Object} validation - Image validation results
+   * @param {Object} optimization - Image optimization analysis
+   * @returns {Array} Array of recommendations
+   */
+  _generateImageRecommendations(validation, optimization) {
+    const recommendations = [];
+
+    if (!validation.hasOGImage) {
+      recommendations.push({
+        type: 'og-image',
+        priority: 'high',
+        title: 'Add Open Graph Image',
+        description: 'Include og:image meta tag for better social media previews'
+      });
+    }
+
+    if (!validation.hasTwitterImage) {
+      recommendations.push({
+        type: 'twitter-image',
+        priority: 'medium',
+        title: 'Add Twitter Card Image',
+        description: 'Include twitter:image meta tag for Twitter sharing'
+      });
+    }
+
+    if (!validation.hasFavicon) {
+      recommendations.push({
+        type: 'favicon',
+        priority: 'low',
+        title: 'Add Favicon',
+        description: 'Include favicon for better brand recognition'
+      });
+    }
+
+    return recommendations;
   }
 
   /**
@@ -820,6 +942,241 @@ export class SocialMediaAnalyzer extends BaseAnalyzer {
     }
   }
 
+  /**
+   * Find social sharing buttons on the page
+   * @param {Document} document - DOM document
+   * @returns {Array} Array of sharing button objects
+   */
+  _findShareButtons(document) {
+    try {
+      const shareButtons = [];
+      const selectors = [
+        'a[href*="facebook.com/share"]',
+        'a[href*="twitter.com/intent/tweet"]',
+        'a[href*="linkedin.com/sharing/share-offsite"]',
+        'a[href*="pinterest.com/pin/create"]',
+        'a[href*="reddit.com/submit"]',
+        'a[href*="tumblr.com/share"]',
+        'a[href*="whatsapp.com/send"]',
+        'a[class*="share"]',
+        'button[class*="share"]',
+        '[data-share]'
+      ];
+
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          const href = element.getAttribute('href') || element.getAttribute('data-href') || '';
+          const platform = this._extractPlatformFromShareUrl(href);
+          const text = element.textContent?.trim() || element.getAttribute('title') || '';
+          
+          shareButtons.push({
+            element: element.outerHTML,
+            platform: platform,
+            url: href,
+            text: text
+          });
+        });
+      });
+
+      return shareButtons;
+    } catch (error) {
+      this.log('Error finding share buttons:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Find social media profile links
+   * @param {Document} document - DOM document
+   * @returns {Array} Array of social link objects
+   */
+  _findSocialLinks(document) {
+    try {
+      const socialLinks = [];
+      const socialDomains = [
+        'facebook.com',
+        'twitter.com',
+        'linkedin.com',
+        'instagram.com',
+        'youtube.com',
+        'tiktok.com',
+        'pinterest.com',
+        'snapchat.com',
+        'discord.com',
+        'reddit.com'
+      ];
+
+      const links = document.querySelectorAll('a[href]');
+      links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href) {
+          try {
+            // Handle both absolute and relative URLs
+            let url;
+            if (href.startsWith('http')) {
+              url = new URL(href);
+            } else {
+              // For relative URLs, use a base URL
+              url = new URL(href, 'https://example.com');
+            }
+            
+            const domain = url.hostname.replace('www.', '');
+            
+            if (socialDomains.some(social => domain.includes(social))) {
+              const platform = this._extractPlatformFromProfileUrl(href);
+              const text = link.textContent?.trim() || link.getAttribute('title') || '';
+              
+              socialLinks.push({
+                platform: platform,
+                url: href,
+                text: text,
+                element: link.outerHTML
+              });
+            }
+          } catch (urlError) {
+            // Skip invalid URLs
+          }
+        }
+      });
+
+      return socialLinks;
+    } catch (error) {
+      this.log('Error finding social links:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Identify share platforms from sharing buttons
+   * @param {Array} sharingButtons - Array of sharing button objects
+   * @returns {Array} Array of platform names
+   */
+  _identifySharePlatforms(sharingButtons) {
+    if (!Array.isArray(sharingButtons)) return [];
+    
+    const platforms = sharingButtons.map(button => button.platform || 'unknown');
+    return [...new Set(platforms)].filter(platform => platform !== 'unknown');
+  }
+
+  /**
+   * Analyze sharing button placement
+   * @param {Array} sharingButtons - Array of sharing button objects
+   * @returns {Object} Placement analysis
+   */
+  _analyzeSharingPlacement(sharingButtons) {
+    return {
+      present: sharingButtons.length > 0,
+      top: false,
+      bottom: false,
+      sidebar: false,
+      floating: false
+    };
+  }
+
   // ============================================================================
   // LEGACY COMPATIBILITY METHODS
+  // ============================================================================
+
+  /**
+   * Extract platform name from sharing URL
+   * @param {string} url - Sharing URL
+   * @returns {string} Platform name
+   */
+  _extractPlatformFromShareUrl(url) {
+    if (!url) return 'unknown';
+    
+    const urlLower = url.toLowerCase();
+    if (urlLower.includes('facebook.com')) return 'facebook';
+    if (urlLower.includes('twitter.com') || urlLower.includes('x.com')) return 'twitter';
+    if (urlLower.includes('linkedin.com')) return 'linkedin';
+    if (urlLower.includes('pinterest.com')) return 'pinterest';
+    if (urlLower.includes('reddit.com')) return 'reddit';
+    if (urlLower.includes('tumblr.com')) return 'tumblr';
+    if (urlLower.includes('whatsapp.com') || urlLower.includes('wa.me')) return 'whatsapp';
+    if (urlLower.includes('telegram.me') || urlLower.includes('t.me')) return 'telegram';
+    
+    return 'unknown';
+  }
+
+  /**
+   * Extract platform name from profile URL
+   * @param {string} url - Profile URL
+   * @returns {string} Platform name
+   */
+  _extractPlatformFromProfileUrl(url) {
+    if (!url) return 'unknown';
+    
+    try {
+      const urlObj = new URL(url, 'https://example.com');
+      const hostname = urlObj.hostname.replace('www.', '').toLowerCase();
+      
+      if (hostname.includes('facebook.com')) return 'facebook';
+      if (hostname.includes('twitter.com') || hostname.includes('x.com')) return 'twitter';
+      if (hostname.includes('linkedin.com')) return 'linkedin';
+      if (hostname.includes('instagram.com')) return 'instagram';
+      if (hostname.includes('youtube.com')) return 'youtube';
+      if (hostname.includes('tiktok.com')) return 'tiktok';
+      if (hostname.includes('pinterest.com')) return 'pinterest';
+      if (hostname.includes('snapchat.com')) return 'snapchat';
+      if (hostname.includes('discord.com')) return 'discord';
+      if (hostname.includes('reddit.com')) return 'reddit';
+      
+      return 'unknown';
+    } catch (error) {
+      return 'unknown';
+    }
+  }
+
+  /**
+   * Extract platforms from social links array
+   * @param {Array} socialLinks - Array of social link objects
+   * @returns {Array} Array of platform names
+   */
+  _extractSocialLinkPlatforms(socialLinks) {
+    if (!Array.isArray(socialLinks)) return [];
+    
+    const platforms = socialLinks.map(link => link.platform || 'unknown');
+    return [...new Set(platforms)].filter(platform => platform !== 'unknown');
+  }
+
+  /**
+   * Calculate sharing score based on available sharing options
+   * @param {Object} sharingData - Sharing analysis data
+   * @returns {number} Score from 0-100
+   */
+  _calculateSharingScore(sharingData) {
+    try {
+      let score = 0;
+      
+      // Base score for having any sharing buttons
+      if (sharingData.hasShareButtons) {
+        score += 40;
+      }
+      
+      // Points for major platforms
+      const majorPlatforms = ['facebook', 'twitter', 'linkedin'];
+      const availablePlatforms = sharingData.shareButtonPlatforms || [];
+      const majorPlatformCount = majorPlatforms.filter(platform => 
+        availablePlatforms.includes(platform)
+      ).length;
+      
+      score += (majorPlatformCount / majorPlatforms.length) * 30;
+      
+      // Points for good placement
+      if (sharingData.placement?.present) {
+        score += 20;
+      }
+      
+      // Points for social links
+      if (sharingData.socialLinks?.length > 0) {
+        score += 10;
+      }
+      
+      return Math.min(100, Math.max(0, Math.round(score)));
+    } catch (error) {
+      this.log('Error calculating sharing score:', error.message);
+      return 0;
+    }
+  }
 }

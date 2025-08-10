@@ -146,6 +146,16 @@ export class TechnicalExtractor {
    * @returns {Object} Technical infrastructure data
    */
   extractTechnicalInfrastructure(document, headers = {}) {
+    if (!document) {
+      return {
+        viewport: '',
+        charset: '',
+        serverHeaders: headers,
+        performance: {},
+        security: {}
+      };
+    }
+    
     const head = document.head;
     
     // Fast viewport and charset detection

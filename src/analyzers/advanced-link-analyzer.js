@@ -184,7 +184,20 @@ export class AdvancedLinkAnalyzer extends BaseAnalyzer {
       }
 
       const { dom, document, pageUrl = '', siteData = {} } = context;
-      const analysisDocument = document || dom.window.document;
+      
+      // Handle different DOM formats safely
+      let analysisDocument = document;
+      if (!analysisDocument && dom) {
+        if (dom.window && dom.window.document) {
+          analysisDocument = dom.window.document;
+        } else if (dom.nodeType === 9 || dom.querySelector) {
+          analysisDocument = dom;
+        }
+      }
+      
+      if (!analysisDocument) {
+        throw new Error('No valid document found in context');
+      }
 
       // Perform advanced link analysis
       const linkData = await this._performAdvancedLinkAnalysis(analysisDocument, pageUrl, siteData);
@@ -229,14 +242,47 @@ export class AdvancedLinkAnalyzer extends BaseAnalyzer {
   /**
    * Legacy method for backward compatibility
    * @deprecated Use analyze() method instead
-   * @param {Object} dom - JSDOM document object
+   * @param {Object|Document} dom - JSDOM document object OR Document directly
    * @param {string} pageUrl - Current page URL
    * @param {Object} siteData - Site-wide crawl data
    * @returns {Promise<Object>} Advanced link analysis results
    */
   async analyzeAdvancedLinks(dom, pageUrl = '', siteData = {}) {
     console.warn('analyzeAdvancedLinks() is deprecated. Use analyze() method instead.');
-    const document = dom.window.document;
+    
+    // Handle both cases: full dom object or document directly
+    let document;
+    // Handle different DOM types more gracefully
+    if (dom && dom.window && dom.window.document) {
+      document = dom.window.document;
+    } else if (dom && (dom.nodeType === 9 || dom.querySelector)) {
+      // It's already a document
+      document = dom;
+    } else if (dom && typeof dom === 'function' && dom.html) {
+      // Cheerio object - create a mock document interface
+      document = {
+        querySelectorAll: (selector) => {
+          const elements = dom(selector);
+          return Array.from({ length: elements.length }, (_, i) => elements.eq(i).get(0));
+        },
+        querySelector: (selector) => {
+          const element = dom(selector).first();
+          return element.length > 0 ? element.get(0) : null;
+        }
+      };
+    } else {
+      console.warn('⚠️ Advanced link analysis skipped: unsupported DOM type');
+      return {
+        advancedAnalysis: {
+          linkStructure: { hasNavigation: false, hasFooter: false, hasSidebar: false },
+          linkPatterns: { internalLinkCount: 0, externalLinkCount: 0, linkDensity: 0 },
+          navigationMetrics: { breadcrumbs: false, pagination: false, mainNavigation: false },
+          accessibility: { hasAriaLabels: false, hasAltText: false, keyboardNavigable: false },
+          seoElements: { hasH1: false, hasMetaDescription: false, hasStructuredData: false }
+        }
+      };
+    }
+    
     return this._performAdvancedLinkAnalysis(document, pageUrl, siteData);
   }
 

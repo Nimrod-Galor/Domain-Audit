@@ -33,6 +33,9 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config();
 
+// Set environment variable to prevent server termination during audits
+process.env.SKIP_HTML_REPORT = 'true';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -64,28 +67,9 @@ app.use(session({
 // Initialize Passport after session middleware
 initializePassport(app);
 
-// Rate limiting for audit endpoint
-const auditLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Increased limit for development/testing
-  message: 'Too many audit requests, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn('Rate limit exceeded', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      url: req.originalUrl
-    });
-    res.status(429).json({
-      error: 'Too many audit requests, please try again later.'
-    });
-  }
-});
-
 // Routes
 app.use('/', indexRouter);
-app.use('/audit', auditLimiter, rateLimitLogger, auditRouter);
+app.use('/audit', rateLimitLogger, auditRouter);
 app.use('/auth', authRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api', apiRouter);  // API routes

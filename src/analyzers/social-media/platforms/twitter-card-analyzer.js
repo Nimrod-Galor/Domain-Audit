@@ -9,7 +9,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerCategories } from '../../core/AnalyzerInterface.js';
+import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
 
 export class TwitterCardAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -25,7 +25,7 @@ export class TwitterCardAnalyzer extends BaseAnalyzer {
     });
 
     this.version = '1.0.0';
-    this.category = AnalyzerCategories.CONTENT;
+    this.category = 'CONTENT';
     
     this.cardTypes = ['summary', 'summary_large_image', 'app', 'player'];
     this.requiredTags = ['twitter:card'];
@@ -41,7 +41,7 @@ export class TwitterCardAnalyzer extends BaseAnalyzer {
       name: 'TwitterCardAnalyzer',
       version: '1.0.0',
       description: 'Comprehensive Twitter Card meta tag analysis for social media optimization',
-      category: AnalyzerCategories.CONTENT,
+      category: 'CONTENT',
       priority: 'high',
       capabilities: [
         'twitter_card_validation',
@@ -1038,3 +1038,5 @@ export class TwitterCardAnalyzer extends BaseAnalyzer {
     return 'F';
   }
 }
+
+export default TwitterCardAnalyzer;

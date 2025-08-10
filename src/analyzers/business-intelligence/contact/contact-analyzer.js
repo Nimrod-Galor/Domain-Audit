@@ -16,7 +16,7 @@
  */
 
 import { BaseAnalyzer } from '../../core/BaseAnalyzer.js';
-import { AnalyzerCategories } from '../../core/AnalyzerCategories.js';
+import { AnalyzerInterface } from '../../core/AnalyzerInterface.js';
 
 export class ContactAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {

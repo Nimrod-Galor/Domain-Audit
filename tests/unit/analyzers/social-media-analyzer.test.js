@@ -103,14 +103,14 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('platforms');
-      expect(result.data).toHaveProperty('sharing');
-      expect(result.data).toHaveProperty('socialProof');
-      expect(result.data).toHaveProperty('images');
-      expect(result.data).toHaveProperty('optimizationScore');
+      expect(result).toHaveProperty('platforms');
+      expect(result).toHaveProperty('sharing');
+      expect(result).toHaveProperty('socialProof');
+      expect(result).toHaveProperty('images');
+      expect(result).toHaveProperty('optimizationScore');
       expect(result.recommendations).toBeDefined();
-      expect(result.data.metadata).toHaveProperty('analysisTime');
-      expect(result.data.metadata).toHaveProperty('timestamp');
+      expect(result.metadata).toHaveProperty('analysisTime');
+      expect(result.metadata).toHaveProperty('timestamp');
     });
 
     test('analyze should handle errors gracefully', async () => {
@@ -127,7 +127,7 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
 
       expect(result).toBeDefined();
       expect(result.success).toBe(false);
-      expect(result.error).toContain('failed');
+      expect(result.error).toContain('Invalid context');
       expect(result.duration).toBeDefined();
     });
 
@@ -158,10 +158,10 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
       expect(result).toHaveProperty('socialLinkPlatforms');
     });
 
-    test('_analyzeSocialProof should detect social proof elements', () => {
+    test('_analyzeSocialProof should detect social proof elements', async () => {
       const document = mockDOM.window.document;
 
-      const result = analyzer._analyzeSocialProof(document);
+      const result = await analyzer._analyzeSocialProof(document);
 
       expect(result).toBeDefined();
       expect(result).toHaveProperty('testimonials');
@@ -339,8 +339,8 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.data.optimizationScore).toBeDefined();
-      expect(typeof result.data.optimizationScore).toBe('number');
+      expect(result.optimizationScore).toBeDefined();
+      expect(typeof result.optimizationScore).toBe('number');
     });
 
     test('should handle malformed HTML gracefully', async () => {
@@ -406,8 +406,8 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
       const analysisTime = endTime - startTime;
       expect(result.success).toBe(true);
       expect(analysisTime).toBeLessThan(2000); // Should complete within 2 seconds
-      expect(result.data.metadata.analysisTime).toBeDefined();
-      expect(typeof result.data.metadata.analysisTime).toBe('number');
+      expect(result.metadata.analysisTime).toBeDefined();
+      expect(typeof result.metadata.analysisTime).toBe('number');
     });
 
     test('should handle large documents efficiently', async () => {
@@ -458,7 +458,7 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
       // Image analysis should be skipped or minimal
-      expect(result.data.images).toBeDefined();
+      expect(result.images).toBeDefined();
     });
 
     test('should respect checkSocialButtons option', async () => {
@@ -476,7 +476,7 @@ describe('SocialMediaAnalyzer Unit Tests', () => {
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.data.sharing).toBeDefined();
+      expect(result.sharing).toBeDefined();
       // Should have limited sharing analysis
     });
 

@@ -20,9 +20,26 @@ import { requireEmailVerification } from '../controllers/authController.js';
 
 const router = express.Router();
 
+// Import rate limiter from app.js context (we'll get it from a shared module)
+// For now, we'll create a simple rate limiter specifically for audit creation
+import rateLimit from 'express-rate-limit';
+
+const auditCreationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit audit creation requests
+  message: 'Too many audit requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Too many audit requests, please try again later.'
+    });
+  }
+});
+
 // Main audit routes
 router.get('/', getAuditForm);
-router.post('/analyze', validateAuditRequest, processAudit);
+router.post('/analyze', auditCreationLimiter, validateAuditRequest, processAudit); // Rate limit only audit creation
 router.get('/progress/:sessionId', getAuditProgress);
 router.get('/status/:sessionId', getAuditStatus);
 router.get('/results/:sessionId', getAuditResults);

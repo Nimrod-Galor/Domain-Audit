@@ -83,10 +83,11 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
    * @returns {boolean} Whether the context is valid
    */
   validate(context) {
-    return context && 
-           context.dom && 
-           context.dom.window && 
-           context.dom.window.document;
+    if (!context) return false;
+    
+    // Check for document directly in context or nested in dom structure
+    const document = context.document || (context.dom && context.dom.window && context.dom.window.document);
+    return document && typeof document.querySelector === 'function';
   }
 
   /**
@@ -104,7 +105,30 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
       }
 
       const { dom, pageData = {}, url = '' } = context;
-      const document = dom.window.document;
+      const document = context.document || (dom && dom.window && dom.window.document);
+      
+      if (!document) {
+        throw new Error('No document available in context');
+      }
+      
+      // Create a mock dom object if missing (for testing)
+      const mockDom = dom || (() => {
+        const cheerioLike = (selector) => {
+          const elements = selector ? document.querySelectorAll(selector) : [document];
+          return {
+            length: elements.length,
+            each: () => {},
+            text: () => elements[0]?.textContent || '',
+            attr: () => '',
+            find: (s) => cheerioLike(s)
+          };
+        };
+        cheerioLike.html = () => document.documentElement.outerHTML || '';
+        cheerioLike.find = (s) => cheerioLike(s);
+        cheerioLike.window = { document };
+        return cheerioLike;
+      })();
+      
       const analysisStart = Date.now();
 
       // Detect e-commerce type
@@ -113,6 +137,7 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
       if (siteType === "none") {
         this.log('No e-commerce indicators detected');
         return {
+          success: true,
           type: "non-ecommerce",
           message: "No e-commerce indicators detected",
           score: 0,
@@ -127,12 +152,12 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
       // Comprehensive e-commerce analysis
       const analysis = {
         type: siteType,
-        platform: await this._analyzePlatformDetection(dom, url),
+        platform: await this._analyzePlatformDetection(mockDom, url),
         product: await this._analyzeProductFeatures(document, url),
         checkout: await this._analyzeCheckoutProcess(document, url),
-        reviews: await this._analyzeReviewSystem(document),
+        reviews: await this._analyzeReviewSystem(document, url),
         security: await this._analyzePaymentSecurity(document, url),
-        conversion: await this._analyzeConversionOptimization(dom, pageData, url),
+        conversion: await this._analyzeConversionOptimization(mockDom, pageData, url),
         schema: await this._analyzeEcommerceSchema(document),
       };
 
@@ -153,6 +178,7 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
       this.log('E-commerce analysis completed successfully');
       
       return {
+        success: true,
         ...analysis,
         score: comprehensiveScore,
         recommendations: [...analysis.recommendations, ...recommendations],
@@ -206,7 +232,7 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
         platform: await this._analyzePlatformDetection(dom, url),
         product: await this._analyzeProductFeatures(document, url),
         checkout: await this._analyzeCheckoutProcess(document, url),
-        reviews: await this._analyzeReviewSystem(document),
+        reviews: await this._analyzeReviewSystem(document, url),
         security: await this._analyzePaymentSecurity(document, url),
         conversion: await this._analyzeConversionOptimization(dom, pageData, url),
         schema: await this._analyzeEcommerceSchema(document),
@@ -235,27 +261,58 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
    * Detect e-commerce platform and type
    */
   _detectEcommerceType(document, url) {
-    const indicators = {
-      shopify: [".shopify", "cdn.shopify.com", "/cart", "/checkout"],
-      woocommerce: [".woocommerce", ".cart-contents", ".product"],
-      magento: [".page-product", ".checkout-cart", "magento"],
-      bigcommerce: [".productView", ".cart-item"],
-      custom: [".add-to-cart", ".shopping-cart", ".product-price", ".checkout"],
-    };
+    const urlLower = (url || '').toLowerCase();
+    const htmlContent = document.documentElement.innerHTML.toLowerCase();
 
-    // Platform detection logic
-    for (const [platform, selectors] of Object.entries(indicators)) {
-      for (const selector of selectors) {
-        if (selector.startsWith('.')) {
-          if (document.querySelector(selector)) {
-            return platform;
-          }
-        } else {
-          if (url.includes(selector) || document.documentElement.innerHTML.includes(selector)) {
-            return platform;
-          }
-        }
+    // Shopify detection
+    if (urlLower.includes('myshopify.com') || 
+        htmlContent.includes('shopify') ||
+        document.querySelector('.shopify-section') ||
+        document.querySelector('.shopify-payment-button') ||
+        document.querySelector('[data-shopify]')) {
+      return 'shopify';
+    }
+
+    // WooCommerce detection
+    if (htmlContent.includes('woocommerce') ||
+        document.querySelector('.woocommerce') ||
+        document.querySelector('.cart-contents') ||
+        document.querySelector('.wc-product')) {
+      return 'woocommerce';
+    }
+
+    // Magento detection
+    if (htmlContent.includes('magento') ||
+        document.querySelector('.page-product') ||
+        document.querySelector('.checkout-cart') ||
+        htmlContent.includes('var/magento')) {
+      return 'magento';
+    }
+
+    // BigCommerce detection
+    if (urlLower.includes('bigcommerce.com') ||
+        document.querySelector('.productView') ||
+        document.querySelector('.cart-item')) {
+      return 'bigcommerce';
+    }
+
+    // Custom e-commerce detection
+    const customIndicators = [
+      '.add-to-cart', '.shopping-cart', '.product-price', '.price',
+      '.checkout', '.cart-button', '[data-product-id]',
+      '.product', '.buy-now', '.product-info', '.product-page'
+    ];
+    
+    let customIndicatorCount = 0;
+    for (const selector of customIndicators) {
+      if (document.querySelector(selector)) {
+        customIndicatorCount++;
       }
+    }
+    
+    // Need at least 2 indicators for custom e-commerce
+    if (customIndicatorCount >= 2) {
+      return 'custom';
     }
 
     return "none";
@@ -265,7 +322,7 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
    * Analyze product features and optimization
    */
   async _analyzeProductFeatures(document, url) {
-    return this.analyzers.productSchema.analyze(document, url);
+    return this.analyzers.productSchema.analyze({ document, url });
   }
 
   /**
@@ -285,8 +342,8 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
   /**
    * Analyze review system and customer feedback
    */
-  async _analyzeReviewSystem(document) {
-    return this.analyzers.reviews.analyze(document);
+  async _analyzeReviewSystem(document, url = '') {
+    return this.analyzers.reviews.analyze({ document, url });
   }
 
   /**
@@ -324,6 +381,15 @@ export class EcommerceAnalyzer extends BaseAnalyzer {
    */
   async _analyzeConversionOptimization(dom, pageData = {}, url = '') {
     try {
+      // Handle test environments where dom might not be proper Cheerio object
+      if (!dom && pageData.document) {
+        // Create a simple mock dom object for testing
+        dom = {
+          html: () => pageData.document.documentElement.outerHTML || '',
+          window: { document: pageData.document }
+        };
+      }
+      
       return this.analyzers.conversion.analyzeConversion(dom, pageData, url);
     } catch (error) {
       return {

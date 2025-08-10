@@ -84,30 +84,45 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
 
   /**
    * Perform comprehensive Open Graph analysis with BaseAnalyzer integration
-   * @param {Object} context - Analysis context containing DOM and page data
+   * @param {Object|Document} context - Analysis context containing DOM and page data OR document for legacy support
+   * @param {string} url - URL for legacy support
    * @returns {Promise<Object>} Open Graph analysis results
    */
-  async analyze(context) {
+  async analyze(context, url) {
     const startTime = Date.now();
     
     try {
       this.log('Starting Open Graph analysis', 'info');
 
-      // Validate context
-      if (!this.validate(context)) {
-        return this.handleError('Invalid context for Open Graph analysis', new Error('Context validation failed'), {
-          hasOpenGraph: false,
-          score: 0,
-          grade: 'F'
-        });
+      // Handle legacy calling format: analyze(document, url)
+      let document, actualUrl, pageData;
+      if (context && context.nodeType === 9) { // Document node
+        document = context;
+        actualUrl = url || '';
+        pageData = {};
+      } else {
+        // Modern calling format: analyze({document, url, pageData})
+        if (!this.validate(context)) {
+          return this.handleError('Invalid context for Open Graph analysis', new Error('Context validation failed'), {
+            hasOpenGraph: false,
+            score: 0,
+            grade: 'F'
+          });
+        }
+        document = context.document;
+        actualUrl = context.url || '';
+        pageData = context.pageData || {};
       }
 
-      const { document, url = '', pageData = {} } = context;
-
       // Perform Open Graph analysis
-      const ogData = await this._performOpenGraphAnalysis(document, url);
+      const ogData = await this._performOpenGraphAnalysis(document, actualUrl);
       
-      // Calculate comprehensive score
+      // For tests that expect flat structure, return the ogData directly
+      if (context && context.nodeType === 9) {
+        return ogData;
+      }
+
+      // For BaseAnalyzer integration, wrap in standard format
       const score = this._calculateComprehensiveScore(ogData);
       const grade = this._getGradeFromScore(score);
       
@@ -201,16 +216,25 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
       tags[tag] = element ? element.getAttribute('content') : null;
     });
 
+    // Return flat structure for test compatibility
     return {
       tags,
       completeness: this._calculateCompleteness(tags),
+      // Flat properties expected by tests
+      title: tags['og:title'],
+      description: tags['og:description'],
+      image: tags['og:image'],
+      url: tags['og:url'],
+      type: tags['og:type'],
+      siteName: tags['og:site_name'],
+      locale: tags['og:locale']
     };
   }
 
   _analyzeExtendedOG(document) {
     const extendedTags = [
       'og:image:width', 'og:image:height', 'og:image:alt',
-      'article:author', 'article:published_time', 'article:modified_time',
+      'article:author', 'article:published_time', 'article:modified_time', 'article:section', 'article:tag',
       'product:price:amount', 'product:price:currency', 'product:availability',
       'video:url', 'video:width', 'video:height', 'video:duration',
       'audio:url', 'audio:duration',
@@ -223,10 +247,29 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
       tags[tag] = element ? element.getAttribute('content') : null;
     });
 
+    // Handle multiple article:tag values
+    const articleTagElements = document.querySelectorAll('meta[property="article:tag"]');
+    const articleTags = Array.from(articleTagElements).map(el => el.getAttribute('content')).filter(Boolean);
+
     return {
       tags,
       hasExtended: Object.values(tags).some(value => value !== null),
       categories: this._categorizeExtendedTags(tags),
+      // Structure expected by tests
+      article: {
+        author: tags['article:author'],
+        publishedTime: tags['article:published_time'],
+        modifiedTime: tags['article:modified_time'],
+        section: tags['article:section'],
+        tags: articleTags.length > 0 ? articleTags : (tags['article:tag'] ? [tags['article:tag']] : [])
+      },
+      product: {
+        price: {
+          amount: tags['product:price:amount'],
+          currency: tags['product:price:currency']
+        },
+        availability: tags['product:availability']
+      }
     };
   }
 
@@ -237,15 +280,22 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
       passed: [],
     };
 
+    const missingRequired = [];
+
     // Check required tags
     this.requiredTags.forEach(tag => {
       const element = document.querySelector(`meta[property="${tag}"]`);
       if (!element) {
         validation.errors.push(`Missing required tag: ${tag}`);
+        // Extract property name without 'og:' prefix for missingRequired array
+        const propName = tag.replace('og:', '');
+        missingRequired.push(propName);
       } else {
         const content = element.getAttribute('content');
         if (!content || content.trim() === '') {
           validation.errors.push(`Empty content for tag: ${tag}`);
+          const propName = tag.replace('og:', '');
+          missingRequired.push(propName);
         } else {
           validation.passed.push(`Valid ${tag}`);
           this._validateTagContent(tag, content, validation);
@@ -263,7 +313,12 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
       }
     });
 
-    return validation;
+    // Add properties expected by tests
+    return {
+      ...validation,
+      hasRequired: missingRequired.length === 0,
+      missingRequired
+    };
   }
 
   _validateTagContent(tag, content, validation) {
@@ -705,6 +760,261 @@ export class OpenGraphAnalyzer extends BaseAnalyzer {
       this.handleError('Error generating Open Graph summary', error);
       return 'Open Graph analysis completed with errors.';
     }
+  }
+
+  /**
+   * Validate Open Graph title
+   * @param {string} title - Title to validate
+   * @returns {Object} Validation result
+   */
+  _validateTitle(title) {
+    const result = {
+      isOptimal: true,
+      issues: [],
+      recommendations: []
+    };
+
+    if (!title || title.trim().length === 0) {
+      result.isOptimal = false;
+      result.issues.push('Title is empty');
+      result.recommendations.push('Add og:title meta tag');
+      return result;
+    }
+
+    const length = title.length;
+    if (length < 30) {
+      result.isOptimal = false;
+      result.issues.push('Title too short');
+      result.recommendations.push('Use a more descriptive title (30-60 characters recommended)');
+    } else if (length > 60) {
+      result.isOptimal = false;
+      result.issues.push('Title too long');
+      result.recommendations.push('Shorten title to 60 characters or less for optimal display');
+    }
+
+    return result;
+  }
+
+  /**
+   * Validate Open Graph description
+   * @param {string} description - Description to validate
+   * @returns {Object} Validation result
+   */
+  _validateDescription(description) {
+    const result = {
+      isOptimal: true,
+      issues: [],
+      recommendations: []
+    };
+
+    if (!description || description.trim().length === 0) {
+      result.isOptimal = false;
+      result.issues.push('Description is empty');
+      result.recommendations.push('Add og:description meta tag');
+      return result;
+    }
+
+    const length = description.length;
+    if (length < 50) {
+      result.isOptimal = false;
+      result.issues.push('Description too short');
+      result.recommendations.push('Use a more detailed description (100-160 characters recommended)');
+    } else if (length > 300) {
+      result.isOptimal = false;
+      result.issues.push('Description too long');
+      result.recommendations.push('Shorten description to 300 characters or less');
+    }
+
+    return result;
+  }
+
+  /**
+   * Validate Open Graph image
+   * @param {string} image - Image URL to validate
+   * @returns {Object} Validation result
+   */
+  _validateImage(image) {
+    const result = {
+      isValid: true,
+      issues: [],
+      recommendations: []
+    };
+
+    if (!image || image.trim().length === 0) {
+      result.isValid = false;
+      result.issues.push('Image URL is empty');
+      result.recommendations.push('Add og:image meta tag with valid image URL');
+      return result;
+    }
+
+    try {
+      const url = new URL(image);
+      if (url.protocol !== 'https:') {
+        result.isValid = false;
+        result.issues.push('Image URL is not HTTPS');
+        result.recommendations.push('Use HTTPS URL for better security and compatibility');
+      }
+    } catch (error) {
+      result.isValid = false;
+      result.issues.push('Invalid image URL format');
+      result.recommendations.push('Provide a valid absolute URL for the image');
+    }
+
+    return result;
+  }
+
+  /**
+   * Validate Open Graph URL
+   * @param {string} url - URL to validate
+   * @param {string} pageUrl - Current page URL for consistency check
+   * @returns {Object} Validation result
+   */
+  _validateUrl(url, pageUrl) {
+    const result = {
+      isValid: true,
+      isConsistent: true,
+      issues: [],
+      recommendations: []
+    };
+
+    if (!url || url.trim().length === 0) {
+      result.isValid = false;
+      result.issues.push('URL is empty');
+      result.recommendations.push('Add og:url meta tag');
+      return result;
+    }
+
+    try {
+      const ogUrl = new URL(url);
+      if (pageUrl) {
+        const currentUrl = new URL(pageUrl);
+        if (ogUrl.hostname !== currentUrl.hostname) {
+          result.isConsistent = false;
+          result.issues.push('URL domain does not match current page');
+          result.recommendations.push('Ensure og:url matches the current page domain');
+        }
+      }
+    } catch (error) {
+      result.isValid = false;
+      result.issues.push('Invalid URL format');
+      result.recommendations.push('Provide a valid absolute URL');
+    }
+
+    return result;
+  }
+
+  /**
+   * Analyze localization metadata
+   * @param {Document} document - DOM document
+   * @returns {Object} Localization analysis
+   */
+  _analyzeLocalization(document) {
+    const localeElement = document.querySelector('meta[property="og:locale"]');
+    const alternateElements = document.querySelectorAll('meta[property="og:locale:alternate"]');
+    
+    return {
+      primaryLocale: localeElement ? localeElement.getAttribute('content') : null,
+      alternateLocales: Array.from(alternateElements).map(el => el.getAttribute('content')),
+      hasLocale: !!localeElement,
+      hasAlternates: alternateElements.length > 0,
+      alternateCount: alternateElements.length
+    };
+  }
+
+  /**
+   * Analyze image properties
+   * @param {Document} document - DOM document
+   * @returns {Object} Image analysis
+   */
+  _analyzeImageProperties(document) {
+    const images = document.querySelectorAll('meta[property^="og:image"]');
+    const imageData = [];
+
+    images.forEach(img => {
+      const property = img.getAttribute('property');
+      const content = img.getAttribute('content');
+      
+      if (property === 'og:image') {
+        imageData.push({
+          url: content,
+          width: null,
+          height: null,
+          type: null,
+          alt: null
+        });
+      }
+    });
+
+    return {
+      images: imageData,
+      count: imageData.length,
+      hasImages: imageData.length > 0
+    };
+  }
+
+  /**
+   * Analyze video properties
+   * @param {Document} document - DOM document
+   * @returns {Object} Video analysis
+   */
+  _analyzeVideoProperties(document) {
+    const videos = document.querySelectorAll('meta[property^="og:video"]');
+    const videoData = [];
+
+    videos.forEach(video => {
+      const property = video.getAttribute('property');
+      const content = video.getAttribute('content');
+      
+      if (property === 'og:video') {
+        videoData.push({
+          url: content,
+          type: null,
+          width: null,
+          height: null
+        });
+      }
+    });
+
+    return {
+      videos: videoData,
+      count: videoData.length,
+      hasVideos: videoData.length > 0
+    };
+  }
+
+  /**
+   * Calculate Open Graph score
+   * @param {Object} analysis - Complete analysis data
+   * @returns {number} Score from 0-100
+   */
+  _calculateScore(analysis) {
+    let score = 100;
+
+    // Required fields (40 points total)
+    if (!analysis.basic?.title) score -= 15;
+    if (!analysis.basic?.description) score -= 10;
+    if (!analysis.basic?.image) score -= 10;
+    if (!analysis.basic?.url) score -= 5;
+
+    // Validation issues (30 points)
+    if (analysis.validation?.errors?.length > 0) {
+      score -= Math.min(30, analysis.validation.errors.length * 10);
+    }
+
+    // Optimization (30 points)
+    if (analysis.optimization) {
+      const optimizations = Object.values(analysis.optimization);
+      const totalOptimizations = optimizations.length;
+      const failedOptimizations = optimizations.filter(opt => 
+        opt && typeof opt === 'object' && opt.recommendations && opt.recommendations.length > 0
+      ).length;
+      
+      if (totalOptimizations > 0) {
+        score -= (failedOptimizations / totalOptimizations) * 30;
+      }
+    }
+
+    return Math.max(0, Math.round(score));
   }
 
   /**

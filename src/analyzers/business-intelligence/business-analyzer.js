@@ -17,7 +17,7 @@
  */
 
 import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
-import { AnalyzerCategories } from '../core/AnalyzerCategories.js';
+import { AnalyzerInterface } from '../core/AnalyzerInterface.js';
 import { TrustSignalAnalyzer } from "./trust/trust-signal-analyzer.js";
 import { ContactAnalyzer } from "./contact/contact-analyzer.js";
 import { AboutPageAnalyzer } from "./about/about-page-analyzer.js";

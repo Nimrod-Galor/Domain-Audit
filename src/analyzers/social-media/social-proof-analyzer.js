@@ -15,11 +15,11 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     this.category = AnalyzerCategories.CONTENT;
     this.options = options;
     this.selectors = {
-      testimonials: [".testimonial", ".review", ".feedback", ".quote", ".recommendation"],
-      ratings: [".rating", ".stars", ".score", ".rating-stars", "[data-rating]"],
-      socialCounts: [".social-count", ".followers", ".likes", ".shares", ".subscriber-count"],
-      customerLogos: [".customer-logo", ".client-logo", ".partner-logo", ".brand-logo"],
-      trustBadges: [".trust-badge", ".security-badge", ".certification", ".award"],
+      testimonials: [".testimonial", ".review", ".feedback", ".quote", ".recommendation", ".client-testimonial", ".customer-review"],
+      ratings: [".rating", ".stars", ".score", ".rating-stars", "[data-rating]", ".star-rating", ".review-rating"],
+      socialCounts: [".social-count", ".followers", ".likes", ".shares", ".subscriber-count", ".follower-count", ".like-count", ".share-count"],
+      customerLogos: [".customer-logo", ".client-logo", ".partner-logo", ".brand-logo", ".customer-logos", ".client-logos"],
+      trustSignals: [".trust-badge", ".security-badge", ".certification", ".award", ".guarantee", ".ssl-badge", ".verified", ".secure", ".badge"],
       socialMedia: [".social-links", ".social-icons", ".social-media", "[href*='facebook']", "[href*='twitter']"],
     };
   }
@@ -186,7 +186,8 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     const hasRating = this._hasTestimonialRating(element);
 
     return {
-      text: text.substring(0, 200), // Truncate for analysis
+      text: text.substring(0, 200), // Truncated for analysis
+      content: text, // Full content for tests
       fullLength: text.length,
       hasAuthor,
       hasPhoto,
@@ -243,6 +244,8 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
       items: ratings,
       hasRatings: ratings.length > 0,
       averageRating: this._calculateAverageRating(ratings),
+      totalReviews: ratings.reduce((sum, rating) => sum + (rating.reviewCount || 0), 0),
+      hasBreakdown: ratings.some(rating => rating.reviewCount > 0),
       distribution: this._calculateRatingDistribution(ratings),
     };
   }
@@ -251,7 +254,26 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     const text = element.textContent.trim();
     const ratingValue = this._extractRatingValue(text, element);
     const maxRating = this._extractMaxRating(text, element);
-    const reviewCount = this._extractReviewCount(element);
+    
+    // Look for review count in the element and nearby elements
+    let reviewCount = this._extractReviewCount(element);
+    
+    // If no review count found in the element, look in parent or nearby elements
+    if (reviewCount === 0) {
+      const parent = element.parentElement;
+      if (parent) {
+        reviewCount = this._extractReviewCount(parent);
+        
+        // Also check siblings
+        if (reviewCount === 0) {
+          const siblings = parent.children;
+          for (let sibling of siblings) {
+            reviewCount = this._extractReviewCount(sibling);
+            if (reviewCount > 0) break;
+          }
+        }
+      }
+    }
 
     return {
       value: ratingValue,
@@ -290,7 +312,7 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     const trustSignals = [];
     
     // Look for trust badges and certifications
-    this.selectors.trustBadges.forEach(selector => {
+    this.selectors.trustSignals.forEach(selector => {
       const elements = document.querySelectorAll(selector);
       elements.forEach(element => {
         const signal = this._analyzeTrustSignal(element);
@@ -309,6 +331,7 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
       items: trustSignals,
       hasTrustSignals: trustSignals.length > 0,
       categories: this._categorizeTrustSignals(trustSignals),
+      types: this._categorizeTrustSignalTypes(trustSignals),
     };
   }
 
@@ -403,10 +426,12 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
   _extractRatingValue(text, element) {
     // Try to extract rating from various formats
     const patterns = [
-      /(\d+(?:\.\d+)?)\s*(?:\/|\sout\sof|\sof)\s*(\d+)/,
-      /(\d+(?:\.\d+)?)\s*stars?/,
-      /(\d+(?:\.\d+)?)\s*★/,
-      /★{1,5}/,
+      /(\d+(?:\.\d+)?)\s*(?:\/|\sout\sof|\sof)\s*(\d+)/, // "4.5 out of 5" or "4/5"
+      /(\d+(?:\.\d+)?)\s*stars?/, // "4.5 stars"
+      /(\d+(?:\.\d+)?)\s*★/, // "4.5★"
+      /★{1,5}/, // "★★★★★"
+      /(\d+(?:\.\d+)?)%/, // "85%"
+      /^(\d+(?:\.\d+)?)$/, // Simple decimal like "4.9"
     ];
 
     for (let i = 0; i < patterns.length; i++) {
@@ -415,16 +440,22 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
       if (match) {
         if (i === 3) { // Star pattern index
           return match[0].length; // Count stars
+        } else if (i === 4) { // Percentage
+          const percentage = parseFloat(match[1]);
+          return (percentage / 100) * 5; // Convert percentage to 5-star scale
+        } else {
+          return parseFloat(match[1]);
         }
-        return parseFloat(match[1]);
       }
     }
 
     // Try data attributes
-    const dataRating = element.getAttribute('data-rating') || 
-                      element.getAttribute('data-score');
-    if (dataRating) {
-      return parseFloat(dataRating);
+    if (element) {
+      const dataRating = element.getAttribute('data-rating') || 
+                        element.getAttribute('data-score');
+      if (dataRating) {
+        return parseFloat(dataRating);
+      }
     }
 
     return null;
@@ -459,7 +490,7 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
       }
     }
 
-    return null;
+    return 0;
   }
 
   _analyzeSocialMetric(element) {
@@ -503,10 +534,14 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     };
   }
 
-  _identifySocialPlatform(url) {
-    const platforms = {
+  _identifySocialPlatform(input) {
+    const text = (input || '').toLowerCase();
+    
+    // Check for URLs first
+    const urlPlatforms = {
       'facebook.com': 'facebook',
-      'twitter.com': 'twitter',
+      'twitter.com': 'twitter', 
+      'x.com': 'twitter',
       'instagram.com': 'instagram',
       'linkedin.com': 'linkedin',
       'youtube.com': 'youtube',
@@ -515,13 +550,36 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
       'snapchat.com': 'snapchat',
     };
 
-    for (let [domain, platform] of Object.entries(platforms)) {
-      if (url.includes(domain)) {
+    for (let [domain, platform] of Object.entries(urlPlatforms)) {
+      if (text.includes(domain)) {
         return platform;
       }
     }
 
-    return null;
+    // Check for text mentions
+    if (text.includes('facebook') || text.includes('fb')) {
+      return 'facebook';
+    }
+    if (text.includes('twitter')) {
+      return 'twitter';
+    }
+    if (text.includes('instagram') || text.includes('ig')) {
+      return 'instagram';
+    }
+    if (text.includes('linkedin')) {
+      return 'linkedin';
+    }
+    if (text.includes('youtube') || text.includes('yt')) {
+      return 'youtube';
+    }
+    if (text.includes('tiktok')) {
+      return 'tiktok';
+    }
+    if (text.includes('pinterest')) {
+      return 'pinterest';
+    }
+    
+    return 'unknown';
   }
 
   _extractNumber(text) {
@@ -736,6 +794,54 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     return {};
   }
 
+  _categorizeTrustSignalTypes(trustSignals) {
+    const types = {};
+    
+    trustSignals.forEach(signal => {
+      const type = this._getTrustSignalType(signal);
+      types[type] = (types[type] || 0) + 1;
+    });
+    
+    return types;
+  }
+
+  _getTrustSignalType(signal) {
+    const text = signal.text.toLowerCase();
+    
+    if (text.includes('secure') || text.includes('ssl') || text.includes('encrypted') || 
+        text.includes('protected') || text.includes('safe') || text.includes('verified') ||
+        text.includes('security') || text.includes('privacy') || text.includes('shield')) {
+      return 'security';
+    }
+    
+    if (text.includes('iso') || text.includes('certified') || text.includes('accredited') || 
+        text.includes('compliant') || text.includes('certification')) {
+      return 'certifications';
+    }
+    
+    if (text.includes('award') || text.includes('winner') || text.includes('best') || 
+        text.includes('top') || text.includes('#1') || text.includes('leader')) {
+      return 'awards';
+    }
+    
+    if (text.includes('money back') || text.includes('guarantee') || text.includes('warranty') || 
+        text.includes('return') || text.includes('refund')) {
+      return 'guarantee';
+    }
+    
+    if (text.includes('shipping') || text.includes('delivery') || text.includes('fast') || 
+        text.includes('free') || text.includes('express')) {
+      return 'shipping';
+    }
+    
+    if (text.includes('support') || text.includes('service') || text.includes('help') || 
+        text.includes('customer') || text.includes('24/7')) {
+      return 'support';
+    }
+    
+    return 'other';
+  }
+
   _assessTestimonialQuality(testimonials) {
     if (testimonials.length === 0) return 0;
     const avgQuality = testimonials.reduce((sum, t) => sum + t.quality, 0) / testimonials.length;
@@ -755,6 +861,264 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
   _identifyTrustSignalType(element, text) {
     // Implementation for identifying trust signal type
     return 'generic';
+  }
+
+  /**
+   * Analyze testimonial quality based on multiple factors
+   * @param {Object} testimonial - Testimonial data
+   * @returns {Object} Quality analysis with score and factors
+   */
+  _analyzeTestimonialQuality(testimonial) {
+    let score = 0;
+    const credibilityFactors = [];
+
+    // Check for author name
+    if (testimonial.authorName && testimonial.authorName.trim().length > 0) {
+      score += 25;
+      credibilityFactors.push('hasAuthorName');
+    }
+
+    // Check for company information
+    if (testimonial.company && testimonial.company.trim().length > 0) {
+      score += 20;
+      credibilityFactors.push('hasCompany');
+    }
+
+    // Check for photo
+    if (testimonial.hasPhoto) {
+      score += 15;
+      credibilityFactors.push('hasPhoto');
+    }
+
+    // Check for specific details/measurable results
+    if (testimonial.content && testimonial.content.length > 50) {
+      score += 15;
+      credibilityFactors.push('hasSpecificDetails');
+    }
+
+    // Check for verification
+    if (testimonial.isVerified) {
+      score += 25;
+      credibilityFactors.push('isVerified');
+    }
+
+    return {
+      score,
+      credibilityFactors,
+      quality: score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low'
+    };
+  }
+
+  /**
+   * Extract complete testimonial data from DOM element
+   * @param {HTMLElement} element - Testimonial element
+   * @returns {Object} Extracted testimonial data
+   */
+  _extractTestimonialData(element) {
+    const content = element.querySelector('.testimonial-content')?.textContent?.trim() || 
+                    element.textContent.trim();
+    
+    const authorElement = element.querySelector('.testimonial-author, .reviewer-info');
+    const authorName = authorElement?.querySelector('h4, .reviewer-name, .author-name')?.textContent?.trim() || '';
+    
+    const company = authorElement?.querySelector('.author-company, .company-name')?.textContent?.trim() || '';
+    
+    const hasPhoto = element.querySelector('.author-photo, img[alt*="photo" i], img[alt*="avatar" i]') !== null;
+    
+    const hasRating = element.querySelector('.testimonial-rating, .review-rating, .rating, .stars') !== null;
+    
+    const isVerified = element.querySelector('.verified-badge, .verified, [class*="verified"]') !== null;
+
+    return {
+      content,
+      authorName,
+      company,
+      hasPhoto,
+      hasRating,
+      isVerified,
+      quality: this._calculateTestimonialQuality({
+        text: content,
+        hasAuthor: !!authorName,
+        hasPhoto,
+        hasCompany: !!company,
+        hasRating
+      })
+    };
+  }
+
+  /**
+   * Parse review count from text
+   * @param {string} text - Text containing review count
+   * @returns {number} Number of reviews
+   */
+  _parseReviewCount(text) {
+    const patterns = [
+      /(\d+(?:,\d{3})*)\s*\+?\s*reviews?/i,
+      /based\s+on\s+(\d+(?:,\d{3})*)/i,
+      /\((\d+(?:,\d{3})*)\s*reviews?\)/i,
+      /(\d+(?:,\d{3})*)\s*customer/i,
+      /(\d+(?:\.\d+)?)[kK]\s*reviews?/i,
+    ];
+
+    for (let pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        let number = match[1].replace(/,/g, '');
+        if (text.toLowerCase().includes('k')) {
+          return parseInt(number) * 1000;
+        }
+        return parseInt(number) || 0;
+      }
+    }
+
+    return 0;
+  }
+
+  /**
+   * Parse social media follower count from text
+   * @param {string} text - Text containing follower count
+   * @returns {number} Number of followers
+   */
+  _parseSocialCount(text) {
+    const patterns = [
+      /(\d+(?:,\d{3})*)\s*\+?\s*(?:followers?|subscribers?|fans?|likes?)/i,
+      /(\d+(?:\.\d+)?)[kK]\s*(?:followers?|subscribers?|fans?)/i,
+      /(\d+(?:\.\d+)?)[mM]\s*(?:followers?|subscribers?|fans?)/i,
+      /(\d+(?:,\d{3})*)/
+    ];
+
+    for (let pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        let number = parseFloat(match[1].replace(/,/g, ''));
+        
+        if (text.toLowerCase().includes('k')) {
+          return Math.round(number * 1000);
+        } else if (text.toLowerCase().includes('m')) {
+          return Math.round(number * 1000000);
+        }
+        
+        return Math.round(number);
+      }
+    }
+
+    return 0;
+  }
+
+  /**
+   * Categorize trust signal by type
+   * @param {string} text - Trust signal text
+   * @returns {string} Trust signal category
+   */
+  _categorizeTrustSignal(text) {
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('ssl') || lowerText.includes('secure') || lowerText.includes('encrypted')) {
+      return 'security';
+    }
+    
+    if (lowerText.includes('certified') || lowerText.includes('iso') || lowerText.includes('certificate')) {
+      return 'certification';
+    }
+    
+    if (lowerText.includes('award') || lowerText.includes('winner') || lowerText.includes('best')) {
+      return 'award';
+    }
+    
+    if (lowerText.includes('guarantee') || lowerText.includes('money back') || lowerText.includes('refund')) {
+      return 'guarantee';
+    }
+    
+    if (lowerText.includes('verified') || lowerText.includes('approved') || lowerText.includes('authorized')) {
+      return 'verification';
+    }
+    
+    return 'other';
+  }
+
+  /**
+   * Assess trust signal credibility
+   * @param {Object} signal - Trust signal data
+   * @returns {Object} Credibility assessment
+   */
+  _assessTrustSignalCredibility(signal) {
+    let score = 0;
+    const credibilityFactors = [];
+
+    // Check for recognized certifications
+    const recognizedCertifications = ['iso', 'ssl', 'bbb', 'pci', 'hipaa', 'soc'];
+    if (recognizedCertifications.some(cert => signal.text.toLowerCase().includes(cert))) {
+      score += 30;
+      credibilityFactors.push('recognizedCertification');
+    }
+
+    // Check for visual proof (image)
+    if (signal.hasImage) {
+      score += 20;
+      credibilityFactors.push('hasVisualProof');
+    }
+
+    // Check for verification link
+    if (signal.hasVerificationLink) {
+      score += 25;
+      credibilityFactors.push('hasVerificationLink');
+    }
+
+    // Check category
+    if (['security', 'certification'].includes(signal.category)) {
+      score += 15;
+      credibilityFactors.push('highValueCategory');
+    }
+
+    // Check text length (more detailed is better)
+    if (signal.text.length > 20) {
+      score += 10;
+      credibilityFactors.push('detailedDescription');
+    }
+
+    return {
+      score,
+      credibilityFactors,
+      credibility: score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low'
+    };
+  }
+
+  /**
+   * Analyze logo quality and presentation
+   * @param {Object} logoElement - Logo element data
+   * @returns {Object} Logo quality analysis
+   */
+  _analyzeLogoQuality(logoElement) {
+    let score = 0;
+    
+    // Check for alt text
+    const hasAltText = logoElement.alt && logoElement.alt.trim().length > 0;
+    if (hasAltText) {
+      score += 30;
+    }
+
+    // Check for context (description, company info)
+    if (logoElement.hasContext) {
+      score += 25;
+    }
+
+    // Check for high resolution indicator
+    if (logoElement.isHighRes) {
+      score += 20;
+    }
+
+    // Check for valid source
+    if (logoElement.src && logoElement.src.length > 0) {
+      score += 25;
+    }
+
+    return {
+      score,
+      hasAltText,
+      hasContext: logoElement.hasContext || false,
+      isHighRes: logoElement.isHighRes || false,
+      quality: score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low'
+    };
   }
 
   /**
@@ -1070,6 +1434,140 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
     }
   }
 
+  _categorizeTrustSignal(text) {
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('verified') || lowerText.includes('verification') || 
+        lowerText.includes('authenticate') || lowerText.includes('validated')) {
+      return 'verification';
+    }
+    if (lowerText.includes('iso') || lowerText.includes('certified') || 
+        lowerText.includes('accredited') || lowerText.includes('compliant')) {
+      return 'certification';
+    }
+    if (lowerText.includes('secure') || lowerText.includes('ssl') || 
+        lowerText.includes('encrypted') || lowerText.includes('privacy')) {
+      return 'security';
+    }
+    if (lowerText.includes('award') || lowerText.includes('winner') || 
+        lowerText.includes('best') || lowerText.includes('top')) {
+      return 'award';
+    }
+    if (lowerText.includes('guarantee') || lowerText.includes('warranty') || 
+        lowerText.includes('money back')) {
+      return 'guarantee';
+    }
+    if (lowerText.includes('shipping') || lowerText.includes('delivery') || 
+        lowerText.includes('free shipping')) {
+      return 'shipping';
+    }
+    
+    return 'other';
+  }
+
+  _calculateSocialProofSummary(data) {
+    const totalElements = 
+      (data.testimonials?.count || 0) +
+      (data.ratings?.count || 0) +
+      (data.socialMetrics?.count || 0) +
+      (data.trustSignals?.count || 0) +
+      (data.customerLogos?.count || 0);
+
+    const qualityScores = [];
+    
+    // Get quality scores, handling both object and number formats
+    if (data.testimonials?.quality) {
+      const tQuality = typeof data.testimonials.quality === 'object' 
+        ? data.testimonials.quality.averageScore 
+        : data.testimonials.quality;
+      qualityScores.push(tQuality || 0);
+    }
+    
+    if (data.ratings?.averageRating) {
+      qualityScores.push((data.ratings.averageRating / 5) * 100);
+    }
+    
+    if (data.socialMetrics?.totalFollowers) {
+      // Convert follower count to quality score (simplified)
+      const followersScore = Math.min((data.socialMetrics.totalFollowers / 1000), 100);
+      qualityScores.push(followersScore);
+    }
+    
+    if (data.trustSignals?.count) {
+      qualityScores.push(Math.min(data.trustSignals.count * 10, 100));
+    }
+    
+    if (data.customerLogos?.quality) {
+      const cQuality = typeof data.customerLogos.quality === 'object'
+        ? data.customerLogos.quality.averageScore
+        : data.customerLogos.quality;
+      qualityScores.push(cQuality || 0);
+    }
+
+    const averageQuality = qualityScores.length > 0 
+      ? qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length
+      : 0;
+
+    const strength = this._assessSocialProofStrength(data);
+    
+    return {
+      totalElements,
+      strength,
+      score: Math.round(averageQuality),
+      hasStrongProof: strength === 'high' || strength === 'excellent',
+      recommendations: this._generateRecommendations(data)
+    };
+  }
+
+  _assessSocialProofStrength(input) {
+    let score;
+    
+    // Handle both score numbers and data objects
+    if (typeof input === 'number') {
+      score = input;
+    } else {
+      const totalElements = 
+        (input.testimonials?.count || 0) +
+        (input.ratings?.count || 0) +
+        (input.socialMetrics?.count || 0) +
+        (input.trustSignals?.count || 0) +
+        (input.customerLogos?.count || 0);
+
+      // Convert element count to score
+      if (totalElements >= 10) score = 90;
+      else if (totalElements >= 6) score = 75;
+      else if (totalElements >= 3) score = 50;
+      else score = 25;
+    }
+
+    if (score >= 80) return 'excellent';
+    if (score >= 60) return 'high';
+    if (score >= 40) return 'medium';
+    return 'low';
+  }
+
+  _generateRecommendations(data) {
+    const recommendations = [];
+    
+    if ((data.testimonials?.count || 0) < 3) {
+      recommendations.push('Add more customer testimonials to increase trust');
+    }
+    
+    if ((data.ratings?.count || 0) < 2) {
+      recommendations.push('Implement a rating system to showcase customer satisfaction');
+    }
+    
+    if ((data.trustSignals?.count || 0) < 2) {
+      recommendations.push('Add security badges or certifications to build trust');
+    }
+    
+    if ((data.customerLogos?.count || 0) < 3) {
+      recommendations.push('Display client or customer logos to show credibility');
+    }
+    
+    return recommendations;
+  }
+
   // ============================================================================
   // LEGACY COMPATIBILITY METHODS
   // ============================================================================
@@ -1078,8 +1576,8 @@ export class SocialProofAnalyzer extends BaseAnalyzer {
    * @deprecated Use analyze() method instead
    * Legacy method for backward compatibility
    */
-  analyze(document) {
-    console.warn('SocialProofAnalyzer.analyze(document) is deprecated. Use analyze(context) method instead.');
+  analyzeLegacy(document) {
+    console.warn('SocialProofAnalyzer.analyzeLegacy(document) is deprecated. Use analyze(context) method instead.');
     return this.analyze({ document });
   }
 }

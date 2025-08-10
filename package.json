@@ -47,7 +47,16 @@
     "test:ci:no-e2e": "npm run test:coverage && npm run test:integration",
     "test:db:setup": "node scripts/setup-test-db.js setup",
     "test:db:teardown": "node scripts/setup-test-db.js teardown",
-    "test:db:reset": "node scripts/setup-test-db.js reset"
+    "test:db:reset": "node scripts/setup-test-db.js reset",
+    "db:dev:setup": "cross-env NODE_ENV=development node scripts/setup-databases.js development",
+    "db:test:setup": "cross-env NODE_ENV=test node scripts/setup-databases.js test",
+    "db:prod:setup": "cross-env NODE_ENV=production node scripts/setup-databases.js production",
+    "db:dev:setup:win": "powershell -Command \"$env:NODE_ENV='development'; node scripts/setup-databases.js development\"",
+    "db:test:setup:win": "powershell -Command \"$env:NODE_ENV='test'; node scripts/setup-databases.js test\"",
+    "db:prod:setup:win": "powershell -Command \"$env:NODE_ENV='production'; node scripts/setup-databases.js production\"",
+    "db:check:dev": "cross-env NODE_ENV=development node scripts/check-db-status.js",
+    "db:check:test": "cross-env NODE_ENV=test node scripts/check-db-status.js",
+    "db:check:prod": "cross-env NODE_ENV=production node scripts/check-db-status.js"
   },
   "keywords": [
     "seo",
@@ -94,6 +103,7 @@
     "@jest/globals": "^30.0.5",
     "@playwright/test": "^1.54.2",
     "@vitest/coverage-v8": "^1.6.1",
+    "cross-env": "^10.0.0",
     "jest": "^30.0.5",
     "nodemon": "^3.0.1",
     "playwright": "^1.54.2",

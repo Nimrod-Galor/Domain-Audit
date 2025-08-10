@@ -129,7 +129,8 @@ export const getAuditForm = (req, res) => {
     title: 'Website Audit',
     user: req.session.user || null,
     error: null,
-    url: ''
+    url: '',
+    showSignUpPrompt: false
   });
 };
 
@@ -162,6 +163,7 @@ export const processAudit = async (req, res) => {
         user: req.session.user || null,
         error: canPerformAudit.reason || upgradeMessage,
         url,
+        showSignUpPrompt: !userId,
         userLimits: {
           current: canPerformAudit.currentUsage,
           max: canPerformAudit.limit,
@@ -335,7 +337,8 @@ jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit, tierService 
         title: 'Website Audit',
         user: req.session.user || null,
         error: firstError.message,
-        url: req.body.url || ''
+        url: req.body.url || '',
+        showSignUpPrompt: !req.session.user
       });
     }
     
@@ -350,7 +353,8 @@ jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit, tierService 
       title: 'Website Audit',
       user: req.session.user || null,
       error: 'Invalid form data',
-      url: req.body.url || ''
+      url: req.body.url || '',
+      showSignUpPrompt: !req.session.user
     });
   }
 };
@@ -1153,7 +1157,8 @@ export const validateAuditRequest = (req, res, next) => {
         title: 'Website Audit',
         user: req.session.user || null,
         error: firstError.message,
-        url: req.body.url || ''
+        url: req.body.url || '',
+        showSignUpPrompt: !req.session.user
       });
     }
     
@@ -1168,7 +1173,8 @@ export const validateAuditRequest = (req, res, next) => {
       title: 'Website Audit',
       user: req.session.user || null,
       error: 'Invalid form data',
-      url: req.body.url || ''
+      url: req.body.url || '',
+      showSignUpPrompt: !req.session.user
     });
   }
 };

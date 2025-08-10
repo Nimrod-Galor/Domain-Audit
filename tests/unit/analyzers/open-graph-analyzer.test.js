@@ -12,7 +12,7 @@
 
 import { describe, test, expect, beforeEach } from '@jest/globals';
 import { JSDOM } from 'jsdom';
-import { OpenGraphAnalyzer } from '../../../../src/analyzers/social-media/platforms/open-graph-analyzer.js';
+import { OpenGraphAnalyzer } from '../../../src/analyzers/social-media/platforms/open-graph-analyzer.js';
 
 describe('OpenGraphAnalyzer Unit Tests', () => {
   let analyzer;

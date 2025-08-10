@@ -19,7 +19,7 @@ import https from 'https';
 import tls from 'tls';
 import { URL } from 'url';
 import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
-import { AnalyzerCategories } from '../core/AnalyzerCategories.js';
+import { AnalyzerInterface } from '../core/AnalyzerInterface.js';
 
 export class SSLCertificateAnalyzer extends BaseAnalyzer {
   constructor(options = {}) {
@@ -44,7 +44,7 @@ export class SSLCertificateAnalyzer extends BaseAnalyzer {
   getMetadata() {
     return {
       name: 'SSL Certificate Analyzer',
-      category: AnalyzerCategories.SECURITY,
+      category: 'SECURITY',
       description: 'Comprehensive SSL certificate validation including chain analysis, expiration monitoring, CA validation, and security strength assessment',
       version: '1.0.0',
       author: 'Nimrod Galor',
@@ -111,7 +111,7 @@ export class SSLCertificateAnalyzer extends BaseAnalyzer {
       return {
         success: true,
         analyzer: 'SSLCertificateAnalyzer',
-        category: AnalyzerCategories.SECURITY,
+        category: 'SECURITY',
         score: score,
         data: {
           ...analysisResult,

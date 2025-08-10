@@ -10,7 +10,7 @@
  */
 
 import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
-import { AnalyzerCategories } from '../core/AnalyzerCategories.js';
+import { AnalyzerInterface } from '../core/AnalyzerInterface.js';
 
 /**
  * Anchor text analysis configuration and patterns

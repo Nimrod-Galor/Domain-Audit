@@ -17,6 +17,7 @@ import { extractMainDomain } from '../../src/utils/core-utils.js';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { auditLogger, errorHandler } from './logger.js';
+import { Audit } from '../models/Audit.js';
 
 export class AuditExecutor extends EventEmitter {
   constructor() {
@@ -47,12 +48,31 @@ export class AuditExecutor extends EventEmitter {
 
     this.isRunning = true;
     const auditSessionId = sessionId || (Date.now() + '-' + Math.random().toString(36).substr(2, 9));
+    
+    // Create audit record in database first
+    let auditId = null;
+    try {
+      const auditRecord = await Audit.create({
+        url: domain,
+        type: 'simple',
+        config: {
+          maxPages,
+          userLimits: limits
+        }
+      });
+      auditId = auditRecord.id;
+      console.log(`📝 Created audit record in database: ID ${auditId}`);
+    } catch (dbError) {
+      console.warn(`⚠️ Could not create audit record in database: ${dbError.message}`);
+    }
+    
     this.currentAudit = {
       sessionId: auditSessionId,
       domain,
       startTime: Date.now(),
       status: 'starting',
-      userLimits: limits
+      userLimits: limits,
+      auditId: auditId  // Add the database audit ID
     };
 
     // Log audit start with user limits
@@ -448,8 +468,8 @@ export class AuditExecutor extends EventEmitter {
   async loadAuditState(domain) {
     // Domain should already be normalized at this point (hostname only)
     const mainDomain = extractMainDomain(domain);
-    // Fix path resolution - go to parent directory to find audits folder
-    const auditDir = path.resolve('..', 'audits', mainDomain);
+    // Use correct path to audits directory
+    const auditDir = path.resolve('audits', mainDomain);
     let stateFile;
     
     try {
@@ -636,7 +656,7 @@ export class AuditExecutor extends EventEmitter {
    */
   async cleanupAuditFiles(domain) {
     const mainDomain = extractMainDomain(domain);
-    const auditDir = path.resolve('..', 'audits', mainDomain);
+    const auditDir = path.resolve('audits', mainDomain);
     
     try {
       const fs = await import('fs');

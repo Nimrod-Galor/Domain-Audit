@@ -18,7 +18,7 @@
  */
 
 import { BaseAnalyzer } from '../core/BaseAnalyzer.js';
-import { AnalyzerCategories } from '../core/AnalyzerCategories.js';
+import { AnalyzerInterface } from '../core/AnalyzerInterface.js';
 
 /**
  * Business Analytics Configuration
