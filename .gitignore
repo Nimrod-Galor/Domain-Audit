@@ -78,10 +78,10 @@ web_modules/
 
 # dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.e2e
+.env.production
+.env.test
+
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -151,8 +151,7 @@ test-results/
 *.webm
 *.mp4
 
-# E2E environment (keep .env.e2e.example)
-.env.e2e
+
 
 
 audits/

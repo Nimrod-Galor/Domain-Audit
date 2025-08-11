@@ -5,6 +5,28 @@
 
 export class AuditFactory {
   /**
+   * Create a database audit record for tests
+   */
+  static create(overrides = {}) {
+    return {
+      id: Math.floor(Math.random() * 10000),
+      user_id: 1,
+      url: 'https://example.com',
+      type: 'comprehensive',
+      status: 'pending',
+      max_pages: 25,
+      created_at: new Date(),
+      updated_at: new Date(),
+      started_at: null,
+      completed_at: null,
+      progress: 0,
+      report_data: null,
+      error_message: null,
+      ...overrides
+    };
+  }
+
+  /**
    * Create a basic audit result object
    */
   static createAuditResult(overrides = {}) {

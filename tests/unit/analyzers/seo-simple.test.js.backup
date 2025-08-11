@@ -1,0 +1,127 @@
+import { describe, test, expect, jest } from '@jest/globals';
+import { SEOAnalyzer } from '../../../src/analyzers/seo-analyzer.js';
+
+// Create analyzer instance
+const seoAnalyzer = new SEOAnalyzer();
+
+describe('SEO Analyzer', () => {
+  test('should analyze basic SEO elements', () => {
+    const mockDOM = {
+      title: 'Test Page Title',
+      head: {
+        getElementsByTagName: jest.fn().mockImplementation((tag) => {
+          if (tag === 'meta') {
+            return [
+              { 
+                getAttribute: jest.fn().mockImplementation((attr) => {
+                  if (attr === 'name') return 'description';
+                  if (attr === 'content') return 'Test meta description';
+                  return null;
+                })
+              }
+            ];
+          }
+          return [];
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      },
+      documentElement: {
+        getAttribute: jest.fn().mockReturnValue('en')
+      }
+    };
+
+    const result = seoAnalyzer.analyze(mockDOM);
+
+    expect(result).toHaveProperty('title');
+    expect(result).toHaveProperty('metaDescription');
+    expect(result.title.text).toBe('Test Page Title');
+    expect(result.metaDescription.text).toBe('Test meta description');
+  });
+
+  test('should detect empty title', () => {
+    const mockDOM = {
+      title: '',
+      head: {
+        getElementsByTagName: jest.fn().mockReturnValue([]),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      },
+      documentElement: {
+        getAttribute: jest.fn().mockReturnValue('en')
+      }
+    };
+
+    const result = seoAnalyzer.analyze(mockDOM);
+
+    expect(result.title.text).toBe('');
+    expect(result.title.isEmpty).toBe(true);
+  });
+
+  test('should validate title length constraints', () => {
+    const longTitle = 'A'.repeat(70);
+    
+    const mockDOM = {
+      title: longTitle,
+      head: {
+        getElementsByTagName: jest.fn().mockReturnValue([]),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      },
+      documentElement: {
+        getAttribute: jest.fn().mockReturnValue('en')
+      }
+    };
+
+    const result = seoAnalyzer.analyze(mockDOM);
+
+    expect(result.title.text).toBe(longTitle);
+    expect(result.title.length).toBe(70);
+    expect(result.title.isTooLong).toBe(true);
+  });
+
+  test('should extract Open Graph data', () => {
+    const mockDOM = {
+      title: 'Test Title',
+      head: {
+        getElementsByTagName: jest.fn().mockImplementation((tag) => {
+          if (tag === 'meta') {
+            return [
+              { 
+                getAttribute: jest.fn().mockImplementation((attr) => {
+                  if (attr === 'property') return 'og:title';
+                  if (attr === 'content') return 'OG Title';
+                  return null;
+                })
+              }
+            ];
+          }
+          return [];
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      },
+      documentElement: {
+        getAttribute: jest.fn().mockReturnValue('en')
+      }
+    };
+
+    const result = seoAnalyzer.analyze(mockDOM);
+
+    expect(result.openGraph.title).toBe('OG Title');
+  });
+
+  test('should handle missing meta gracefully', () => {
+    const mockDOM = {
+      title: 'Test Title',
+      head: {
+        getElementsByTagName: jest.fn().mockReturnValue([]),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      },
+      documentElement: {
+        getAttribute: jest.fn().mockReturnValue('en')
+      }
+    };
+
+    const result = seoAnalyzer.analyze(mockDOM);
+
+    expect(result.title.isEmpty).toBe(false);
+    expect(result.metaDescription.isEmpty).toBe(true);
+  });
+});

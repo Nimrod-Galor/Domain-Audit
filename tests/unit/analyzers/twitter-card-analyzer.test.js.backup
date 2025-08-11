@@ -1,0 +1,657 @@
+/**
+ * ============================================================================
+ * TWITTER CARD ANALYZER - UNIT TESTS
+ * ============================================================================
+ * 
+ * Unit tests for Twitter Card platform analyzer
+ * Testing all real functions for Twitter Cards optimization
+ * 
+ * @author Nimrod Galor
+ * @version 1.0.0
+ */
+
+import { describe, test, expect, beforeEach } from '@jest/globals';
+import { JSDOM } from 'jsdom';
+import { TwitterCardAnalyzer } from '../../../src/analyzers/social-media/platforms/twitter-card-analyzer.js';
+
+describe('TwitterCardAnalyzer Unit Tests', () => {
+  let analyzer;
+  let mockDOM;
+
+  beforeEach(() => {
+    analyzer = new TwitterCardAnalyzer();
+  });
+
+  describe('Constructor and Initialization', () => {
+    test('should initialize with default options', () => {
+      expect(analyzer).toBeDefined();
+      expect(analyzer.options).toBeDefined();
+      expect(analyzer.requiredFields).toBeDefined();
+      expect(analyzer.cardTypes).toBeDefined();
+    });
+
+    test('should have comprehensive card type support', () => {
+      expect(analyzer.cardTypes).toContain('summary');
+      expect(analyzer.cardTypes).toContain('summary_large_image');
+      expect(analyzer.cardTypes).toContain('app');
+      expect(analyzer.cardTypes).toContain('player');
+    });
+
+    test('should define required fields correctly', () => {
+      expect(analyzer.requiredFields.summary).toContain('card');
+      expect(analyzer.requiredFields.summary).toContain('title');
+      expect(analyzer.requiredFields.summary).toContain('description');
+    });
+  });
+
+  describe('Basic Twitter Card Analysis', () => {
+    beforeEach(() => {
+      const twitterHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:site" content="@amazingcompany">
+          <meta name="twitter:creator" content="@johndoe">
+          <meta name="twitter:title" content="Amazing Product - Transform Your Business">
+          <meta name="twitter:description" content="Discover our incredible solution that has helped 10,000+ businesses achieve outstanding results.">
+          <meta name="twitter:image" content="https://example.com/twitter-image.jpg">
+          <meta name="twitter:image:alt" content="Product showcase image">
+        </head>
+        <body></body>
+        </html>
+      `;
+      mockDOM = new JSDOM(twitterHTML);
+    });
+
+    test('analyze should return complete Twitter Card analysis', async () => {
+      const document = mockDOM.window.document;
+      const url = 'https://example.com';
+
+      const result = await analyzer.analyze({
+        document,
+        url,
+        pageData: {}
+      });
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('success');
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('executionTime');
+      expect(result).toHaveProperty('timestamp');
+      expect(result.data).toHaveProperty('cardType');
+      expect(result.data).toHaveProperty('basic');
+      expect(result.data).toHaveProperty('validation');
+      expect(result.data).toHaveProperty('optimization');
+      expect(result.data).toHaveProperty('score');
+      expect(result.data).toHaveProperty('grade');
+      expect(result.data.basic).toHaveProperty('tags');
+      expect(result.data.basic.tags).toHaveProperty('twitter:title');
+      expect(result.data.basic.tags).toHaveProperty('twitter:description');
+    });
+
+    test('_analyzeBasicTwitter should extract core Twitter Card properties', () => {
+      const document = mockDOM.window.document;
+
+      const result = analyzer._analyzeBasicTwitter(document);
+
+      expect(result).toBeDefined();
+      expect(result.tags).toBeDefined();
+      expect(result.tags['twitter:card']).toBe('summary_large_image');
+      expect(result.tags['twitter:site']).toBe('@amazingcompany');
+      expect(result.tags['twitter:creator']).toBe('@johndoe');
+      expect(result.tags['twitter:title']).toBe('Amazing Product - Transform Your Business');
+      expect(result.tags['twitter:description']).toContain('Discover our incredible solution');
+      expect(result.tags['twitter:image']).toBe('https://example.com/twitter-image.jpg');
+      expect(result.tags['twitter:image:alt']).toBe('Product showcase image');
+    });
+
+    test('_validateTwitterTags should validate card structure', () => {
+      const document = mockDOM.window.document;
+
+      const result = analyzer._validateTwitterTags(document);
+
+      expect(result).toBeDefined();
+      expect(result.isValid).toBe(true);
+      expect(result.tagCount).toBeGreaterThan(0);
+      expect(result.issues).toBeDefined();
+      expect(result.warnings).toBeDefined();
+    });
+
+    test('_checkTwitterOptimization should provide optimization recommendations', () => {
+      const document = mockDOM.window.document;
+      const url = 'https://example.com';
+
+      const result = analyzer._checkTwitterOptimization(document, url);
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('imageOptimization');
+      expect(result).toHaveProperty('contentOptimization');
+      expect(result).toHaveProperty('accountOptimization');
+      expect(result).toHaveProperty('dimensionOptimization');
+      expect(result.imageOptimization).toHaveProperty('recommendations');
+      expect(result.contentOptimization).toHaveProperty('recommendations');
+      expect(Array.isArray(result.imageOptimization.recommendations)).toBe(true);
+      expect(Array.isArray(result.contentOptimization.recommendations)).toBe(true);
+    });
+  });
+
+  describe('Card Type Analysis', () => {
+    test('should detect summary card correctly', () => {
+      const summaryHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="summary">
+          <meta name="twitter:title" content="Article Title">
+          <meta name="twitter:description" content="Article description">
+          <meta name="twitter:image" content="https://example.com/image.jpg">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const summaryDOM = new JSDOM(summaryHTML);
+      const document = summaryDOM.window.document;
+
+      const result = analyzer._analyzeBasicTwitter(document);
+
+      expect(result.tags['twitter:card']).toBe('summary');
+    });
+
+    test('should detect summary_large_image card correctly', () => {
+      const largeImageHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:title" content="Product Title">
+          <meta name="twitter:description" content="Product description">
+          <meta name="twitter:image" content="https://example.com/large-image.jpg">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const largeImageDOM = new JSDOM(largeImageHTML);
+      const document = largeImageDOM.window.document;
+
+      const result = analyzer._analyzeBasicTwitter(document);
+
+      expect(result.tags['twitter:card']).toBe('summary_large_image');
+    });
+
+    test('should detect app card correctly', () => {
+      const appHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="app">
+          <meta name="twitter:title" content="Amazing App">
+          <meta name="twitter:description" content="Download our amazing app">
+          <meta name="twitter:app:name:iphone" content="Amazing App">
+          <meta name="twitter:app:id:iphone" content="123456789">
+          <meta name="twitter:app:url:iphone" content="amazingapp://open">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const appDOM = new JSDOM(appHTML);
+      const document = appDOM.window.document;
+
+      const result = analyzer._analyzeBasicTwitter(document);
+
+      expect(result.tags['twitter:card']).toBe('app');
+    });
+
+    test('should detect player card correctly', () => {
+      const playerHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="player">
+          <meta name="twitter:title" content="Video Title">
+          <meta name="twitter:description" content="Watch this amazing video">
+          <meta name="twitter:player" content="https://example.com/player.html">
+          <meta name="twitter:player:width" content="1280">
+          <meta name="twitter:player:height" content="720">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const playerDOM = new JSDOM(playerHTML);
+      const document = playerDOM.window.document;
+
+      const result = analyzer._analyzeBasicTwitter(document);
+
+      expect(result.tags['twitter:card']).toBe('player');
+    });
+  });
+
+  describe('Advanced Features Analysis', () => {
+    test('_analyzeAppCard should extract app-specific metadata', () => {
+      const appHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="app">
+          <meta name="twitter:app:name:iphone" content="Amazing App">
+          <meta name="twitter:app:id:iphone" content="123456789">
+          <meta name="twitter:app:url:iphone" content="amazingapp://open">
+          <meta name="twitter:app:name:ipad" content="Amazing App HD">
+          <meta name="twitter:app:id:ipad" content="987654321">
+          <meta name="twitter:app:name:googleplay" content="Amazing App Android">
+          <meta name="twitter:app:id:googleplay" content="com.amazing.app">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const appDOM = new JSDOM(appHTML);
+      const document = appDOM.window.document;
+
+      const result = analyzer._analyzeAppCard(document);
+
+      expect(result).toBeDefined();
+      expect(result.iphone).toBeDefined();
+      expect(result.iphone.name).toBe('Amazing App');
+      expect(result.iphone.id).toBe('123456789');
+      expect(result.iphone.url).toBe('amazingapp://open');
+
+      expect(result.ipad).toBeDefined();
+      expect(result.ipad.name).toBe('Amazing App HD');
+      expect(result.ipad.id).toBe('987654321');
+
+      expect(result.googleplay).toBeDefined();
+      expect(result.googleplay.name).toBe('Amazing App Android');
+      expect(result.googleplay.id).toBe('com.amazing.app');
+    });
+
+    test('_analyzePlayerCard should extract video player metadata', () => {
+      const playerHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="player">
+          <meta name="twitter:player" content="https://example.com/player.html">
+          <meta name="twitter:player:width" content="1280">
+          <meta name="twitter:player:height" content="720">
+          <meta name="twitter:player:stream" content="https://example.com/video.mp4">
+          <meta name="twitter:player:stream:content_type" content="video/mp4">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const playerDOM = new JSDOM(playerHTML);
+      const document = playerDOM.window.document;
+
+      const result = analyzer._analyzePlayerCard(document);
+
+      expect(result).toBeDefined();
+      expect(result.player).toBe('https://example.com/player.html');
+      expect(result.width).toBe('1280');
+      expect(result.height).toBe('720');
+      expect(result.stream).toBe('https://example.com/video.mp4');
+      expect(result.streamContentType).toBe('video/mp4');
+    });
+
+    test('_analyzeImageProperties should validate image dimensions and format', () => {
+      const imageHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:image" content="https://example.com/image.jpg">
+          <meta name="twitter:image:alt" content="Product image showcasing features">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const imageDOM = new JSDOM(imageHTML);
+      const document = imageDOM.window.document;
+
+      const result = analyzer._analyzeImageProperties(document);
+
+      expect(result).toBeDefined();
+      expect(result.image).toBe('https://example.com/image.jpg');
+      expect(result.alt).toBe('Product image showcasing features');
+      expect(result.hasAlt).toBe(true);
+      expect(result.isSecure).toBe(true); // HTTPS URL
+    });
+  });
+
+  describe('Validation Tests', () => {
+    test('_validateRequiredFields should check for missing required fields', () => {
+      const incompleteHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="summary">
+          <meta name="twitter:title" content="Title Only">
+          <!-- Missing description and image -->
+        </head>
+        <body></body>
+        </html>
+      `;
+      const incompleteDOM = new JSDOM(incompleteHTML);
+      const document = incompleteDOM.window.document;
+
+      const result = analyzer._validateRequiredFields(document, 'summary');
+
+      expect(result).toBeDefined();
+      expect(result.hasAllRequired).toBe(false);
+      expect(result.missingFields).toContain('description');
+      expect(result.missingFields.length).toBeGreaterThan(0);
+    });
+
+    test('_validateSiteAndCreator should validate Twitter handles', () => {
+      const testCases = [
+        { site: '@validhandle', creator: '@validcreator', expected: { siteValid: true, creatorValid: true } },
+        { site: 'invalidhandle', creator: '@validcreator', expected: { siteValid: false, creatorValid: true } },
+        { site: '@valid', creator: 'invalid', expected: { siteValid: true, creatorValid: false } },
+        { site: '', creator: '', expected: { siteValid: false, creatorValid: false } }
+      ];
+
+      testCases.forEach(({ site, creator, expected }) => {
+        const result = analyzer._validateSiteAndCreator(site, creator);
+        expect(result.siteValid).toBe(expected.siteValid);
+        expect(result.creatorValid).toBe(expected.creatorValid);
+      });
+    });
+
+    test('_validateImageUrl should check image URL validity', () => {
+      const testCases = [
+        { url: 'https://example.com/image.jpg', expected: { isValid: true, isSecure: true } },
+        { url: 'http://example.com/image.jpg', expected: { isValid: true, isSecure: false } },
+        { url: 'invalid-url', expected: { isValid: false } },
+        { url: '', expected: { isValid: false } }
+      ];
+
+      testCases.forEach(({ url, expected }) => {
+        const result = analyzer._validateImageUrl(url);
+        expect(result.isValid).toBe(expected.isValid);
+        if (expected.isSecure !== undefined) {
+          expect(result.isSecure).toBe(expected.isSecure);
+        }
+      });
+    });
+  });
+
+  describe('Content Optimization Tests', () => {
+    test('_optimizeTitle should check title length and quality', () => {
+      const testCases = [
+        { title: 'Perfect Length Title for Twitter', expected: { isOptimal: true } },
+        { title: 'Short', expected: { isOptimal: false, issue: 'tooShort' } },
+        { title: 'This is an extremely long title that exceeds the recommended character limit for Twitter Cards and will likely be truncated when displayed on the platform', expected: { isOptimal: false, issue: 'tooLong' } },
+        { title: '', expected: { isOptimal: false, issue: 'missing' } }
+      ];
+
+      testCases.forEach(({ title, expected }) => {
+        const result = analyzer._optimizeTitle(title);
+        expect(result).toBeDefined();
+        expect(result.isOptimal).toBe(expected.isOptimal);
+        if (!expected.isOptimal) {
+          expect(result.issues).toContain(expected.issue);
+        }
+      });
+    });
+
+    test('_optimizeDescription should check description quality', () => {
+      const testCases = [
+        { 
+          description: 'This is a perfect description with good length and engaging content for Twitter.', 
+          expected: { isOptimal: true } 
+        },
+        { 
+          description: 'Too short', 
+          expected: { isOptimal: false, issue: 'tooShort' } 
+        },
+        { 
+          description: 'This is an extremely long description that exceeds the recommended character limits for Twitter Cards and will be truncated when displayed on the Twitter platform, potentially reducing user engagement and click-through rates significantly.', 
+          expected: { isOptimal: false, issue: 'tooLong' } 
+        },
+        { 
+          description: '', 
+          expected: { isOptimal: false, issue: 'missing' } 
+        }
+      ];
+
+      testCases.forEach(({ description, expected }) => {
+        const result = analyzer._optimizeDescription(description);
+        expect(result).toBeDefined();
+        expect(result.isOptimal).toBe(expected.isOptimal);
+        if (!expected.isOptimal) {
+          expect(result.issues).toContain(expected.issue);
+        }
+      });
+    });
+
+    test('_checkImageOptimization should validate image for Twitter', () => {
+      const testCases = [
+        { 
+          cardType: 'summary_large_image',
+          image: 'https://example.com/image.jpg',
+          alt: 'Great alt text',
+          expected: { score: '>70' }
+        },
+        { 
+          cardType: 'summary',
+          image: 'http://example.com/image.jpg',
+          alt: '',
+          expected: { score: '<50' } // Insecure and no alt text
+        }
+      ];
+
+      testCases.forEach(({ cardType, image, alt, expected }) => {
+        const result = analyzer._checkImageOptimization(cardType, image, alt);
+        expect(result).toBeDefined();
+        expect(result.score).toBeGreaterThanOrEqual(0);
+        expect(result.score).toBeLessThanOrEqual(100);
+        
+        if (expected.score.startsWith('>')) {
+          const threshold = parseInt(expected.score.substring(1));
+          expect(result.score).toBeGreaterThan(threshold);
+        } else if (expected.score.startsWith('<')) {
+          const threshold = parseInt(expected.score.substring(1));
+          expect(result.score).toBeLessThan(threshold);
+        }
+      });
+    });
+  });
+
+  describe('Scoring System Tests', () => {
+    test('analyze should return valid score in results', async () => {
+      const context = {
+        document: mockDOM.window.document,
+        url: 'https://example.com',
+        pageData: {}
+      };
+
+      const result = await analyzer.analyze(context);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('score');
+      expect(typeof result.data.score).toBe('number');
+      expect(result.data.score).toBeGreaterThanOrEqual(0);
+      expect(result.data.score).toBeLessThanOrEqual(100);
+    });
+
+    test('analyze should penalize missing required fields', async () => {
+      const emptyHTML = `<html><head><title>No Twitter Cards</title></head><body></body></html>`;
+      const emptyDOM = new JSDOM(emptyHTML);
+      const context = {
+        document: emptyDOM.window.document,
+        url: 'https://example.com',
+        pageData: {}
+      };
+
+      const result = await analyzer.analyze(context);
+
+      expect(result.success).toBe(true);
+      expect(result.data.score).toBeLessThan(50); // Should be low for missing cards
+    });
+
+    test('analyze should reward complete implementations', async () => {
+      const completeHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:title" content="Complete Implementation">
+          <meta name="twitter:description" content="A comprehensive Twitter Card implementation">
+          <meta name="twitter:image" content="https://example.com/image.jpg">
+          <meta name="twitter:image:alt" content="Descriptive alt text">
+          <meta name="twitter:site" content="@example">
+          <meta name="twitter:creator" content="@creator">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const completeDOM = new JSDOM(completeHTML);
+      const context = {
+        document: completeDOM.window.document,
+        url: 'https://example.com',
+        pageData: {}
+      };
+
+      const result = await analyzer.analyze(context);
+
+      expect(result.success).toBe(true);
+      expect(result.data.score).toBeGreaterThan(80); // Should be high for complete implementation
+    });
+
+    test('full analysis should include comprehensive scoring', async () => {
+      const document = mockDOM.window.document;
+      const url = 'https://example.com';
+
+      const result = await analyzer.analyze({
+        document,
+        url,
+        pageData: {}
+      });
+
+      expect(result.data.score).toBeDefined();
+      expect(typeof result.data.score).toBe('number');
+      expect(result.data.score).toBeGreaterThanOrEqual(0);
+      expect(result.data.score).toBeLessThanOrEqual(100);
+      expect(result.data.grade).toBeDefined();
+      expect(result.data.recommendations).toBeDefined();
+      expect(Array.isArray(result.data.recommendations)).toBe(true);
+    });
+  });
+
+  describe('Error Handling Tests', () => {
+    test('should handle empty document gracefully', async () => {
+      const emptyDOM = new JSDOM('<html><head></head><body></body></html>');
+      const document = emptyDOM.window.document;
+
+      const result = await analyzer.analyze({
+        document,
+        url: 'https://example.com',
+        pageData: {}
+      });
+
+      expect(result).toBeDefined();
+      expect(result.data.cardType).toBeNull();
+      expect(result.data.validation.isValid).toBe(false);
+      expect(result.data.score).toBeDefined();
+    });
+
+    test('should handle malformed Twitter meta tags gracefully', async () => {
+      const malformedHTML = `
+        <html>
+        <head>
+          <meta name="twitter:card">
+          <meta name="twitter:title" content="">
+          <meta name="twitter:image" content="invalid-url">
+        </head>
+        <body></body>
+        </html>
+      `;
+      const malformedDOM = new JSDOM(malformedHTML);
+      const document = malformedDOM.window.document;
+
+      const result = await analyzer.analyze({
+        document,
+        url: 'https://example.com',
+        pageData: {}
+      });
+
+      expect(result).toBeDefined();
+      expect(result.data.validation.errors.length).toBeGreaterThan(0);
+    });
+
+    test('should handle null/undefined inputs gracefully', async () => {
+      expect(async () => await analyzer.analyze({
+        document: null,
+        url: 'https://example.com',
+        pageData: {}
+      })).not.toThrow();
+      expect(async () => await analyzer.analyze({
+        document: undefined,
+        url: 'https://example.com',
+        pageData: {}
+      })).not.toThrow();
+    });
+  });
+
+  describe('Performance Tests', () => {
+    test('should analyze large documents efficiently', async () => {
+      let largeHTML = '<html><head>';
+      for (let i = 0; i < 200; i++) {
+        largeHTML += `<meta name="twitter:extra${i}" content="Extra content ${i}">`;
+      }
+      largeHTML += '</head><body></body></html>';
+
+      const largeDOM = new JSDOM(largeHTML);
+      const document = largeDOM.window.document;
+
+      const startTime = Date.now();
+      const result = await analyzer.analyze({
+        document,
+        url: 'https://example.com',
+        pageData: {}
+      });
+      const endTime = Date.now();
+
+      expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('Integration with Twitter Platform Tests', () => {
+    test('should generate platform-specific recommendations', async () => {
+      const document = mockDOM.window.document;
+      const result = await analyzer.analyze({
+        document,
+        url: 'https://example.com',
+        pageData: {}
+      });
+
+      expect(result.data.optimization.recommendations).toBeDefined();
+      expect(Array.isArray(result.data.optimization.recommendations)).toBe(true);
+      
+      if (result.data.optimization.recommendations.length > 0) {
+        const rec = result.data.optimization.recommendations[0];
+        expect(rec).toHaveProperty('type');
+        expect(rec).toHaveProperty('priority');
+        expect(rec).toHaveProperty('description');
+      }
+    });
+
+    test('should validate card type compatibility', async () => {
+      const validCardTypes = ['summary', 'summary_large_image', 'app', 'player'];
+      
+      for (const cardType of validCardTypes) {
+        const html = `
+          <html>
+          <head>
+            <meta name="twitter:card" content="${cardType}">
+            <meta name="twitter:title" content="Test Title">
+            <meta name="twitter:description" content="Test Description">
+          </head>
+          <body></body>
+          </html>
+        `;
+        const dom = new JSDOM(html);
+        const result = await analyzer.analyze({
+          document: dom.window.document,
+          url: 'https://example.com',
+          pageData: {}
+        });
+        
+        expect(result.data.cardType).toBe(cardType);
+        expect(analyzer.cardTypes).toContain(cardType);
+      }
+    });
+  });
+});
+
+console.log('✅ Twitter Card Analyzer unit tests completed');

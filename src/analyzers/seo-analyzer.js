@@ -74,7 +74,7 @@ export class SEOAnalyzer extends BaseAnalyzer {
 
     try {
       this.log('Starting comprehensive SEO analysis');
-      const startTime = this.measureTime();
+      const startTime = Date.now();
 
       // Validate input
       if (!this.validate(document)) {
@@ -113,7 +113,7 @@ export class SEOAnalyzer extends BaseAnalyzer {
         this.log('Warning: Analysis result validation failed', 'warn');
       }
 
-      const duration = this.measureTime(startTime);
+      const duration = Date.now() - startTime;
       this.log(`SEO analysis completed in ${duration}ms`);
       
       return analysis;

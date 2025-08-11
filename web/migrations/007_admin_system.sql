@@ -1,22 +1,5 @@
 -- Migration 007: Administrator Dashboard System
--- This adds admin fun-- Create a default admin user (password should be changed immediately)
--- Note: This uses a placeholder password hash that should be updated
-INSERT INTO users (email, first_name, last_name, role, is_admin, admin_permissions, password_hash, tier_id, created_at)
-VALUES (
-  'admin@sitescope.com', 
-  'System', 
-  'Administrator',
-  'super_admin', 
-  TRUE, 
-  '["users", "billing", "audits", "analytics", "system"]'::json, 
-  '$2b$12$placeholder.hash.that.needs.to.be.changed.immediately', 
-  3, -- Enterprise tier
-  CURRENT_TIMESTAMP
-)
-ON CONFLICT (email) DO UPDATE SET
-  is_admin = TRUE,
-  admin_permissions = '["users", "billing", "audits", "analytics", "system"]'::json,
-  role = 'super_admin'; existing tier system
+-- This adds admin functionality to the existing tier system
 
 -- 1. Add admin-related columns to users table
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';
@@ -89,10 +72,11 @@ ON CONFLICT (setting_key) DO NOTHING;
 
 -- 5. Create a default admin user (password should be changed immediately)
 -- Note: This uses a placeholder password hash that should be updated
-INSERT INTO users (email, full_name, role, is_admin, admin_permissions, password_hash, tier, created_at)
+INSERT INTO users (email, first_name, last_name, role, is_admin, admin_permissions, password_hash, tier, created_at)
 VALUES (
   'admin@sitescope.com', 
-  'System Administrator', 
+  'System',
+  'Administrator', 
   'super_admin', 
   TRUE, 
   '["users", "billing", "audits", "analytics", "system"]'::json, 
@@ -111,20 +95,20 @@ SELECT
   u.id,
   u.email,
   CONCAT(u.first_name, ' ', u.last_name) as full_name,
-  u.tier_id,
-  u.verified,
+  u.tier,
+  u.email_verified,
   u.created_at,
   u.last_login_at,
   u.login_count,
-  t.name as tier_name,
-  t.audits_per_month,
-  t.max_pages_per_audit,
+  td.display_name as tier_display_name,
+  td.audits_per_month,
+  td.max_internal_pages,
   COUNT(a.id) as total_audits
 FROM users u
-LEFT JOIN tiers t ON u.tier_id = t.id
+LEFT JOIN tier_definitions td ON u.tier = td.tier_name
 LEFT JOIN audits a ON u.id = a.user_id
 WHERE u.is_admin = FALSE
-GROUP BY u.id, u.email, u.first_name, u.last_name, u.tier_id, u.verified, u.created_at, u.last_login_at, u.login_count, t.name, t.audits_per_month, t.max_pages_per_audit;
+GROUP BY u.id, u.email, u.first_name, u.last_name, u.tier, u.email_verified, u.created_at, u.last_login_at, u.login_count, td.display_name, td.audits_per_month, td.max_internal_pages;
 
 CREATE OR REPLACE VIEW admin_audit_stats AS
 SELECT 
@@ -133,7 +117,7 @@ SELECT
   COUNT(*) FILTER (WHERE status = 'completed') as completed_audits,
   COUNT(*) FILTER (WHERE status = 'failed') as failed_audits,
   COUNT(*) FILTER (WHERE status = 'running') as running_audits,
-  AVG(EXTRACT(EPOCH FROM (updated_at - created_at))) FILTER (WHERE status = 'completed') as avg_duration_seconds,
+  AVG(duration_ms / 1000.0) FILTER (WHERE status = 'completed' AND duration_ms IS NOT NULL) as avg_duration_seconds,
   COUNT(DISTINCT user_id) as unique_users
 FROM audits 
 WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
@@ -142,7 +126,7 @@ ORDER BY audit_date DESC;
 
 -- 7. Create indexes for better admin dashboard performance
 CREATE INDEX IF NOT EXISTS idx_users_admin_search ON users(email, first_name, last_name) WHERE is_admin = FALSE;
-CREATE INDEX IF NOT EXISTS idx_users_tier_status ON users(tier_id, verified);
+CREATE INDEX IF NOT EXISTS idx_users_tier_status ON users(tier, email_verified);
 CREATE INDEX IF NOT EXISTS idx_audits_date_status ON audits(created_at, status);
 CREATE INDEX IF NOT EXISTS idx_users_role_admin ON users(role, is_admin);
 

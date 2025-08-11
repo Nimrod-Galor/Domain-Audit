@@ -37,7 +37,7 @@ dotenv.config();
 process.env.SKIP_HTML_REPORT = 'true';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || (process.env.NODE_ENV === 'test' ? 0 : 3000);
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -114,8 +114,13 @@ async function startServer() {
     await initializeDatabase();
     logger.info('✅ Database initialized successfully');
     
+    // In test environment, don't start the server automatically
+    if (process.env.NODE_ENV === 'test') {
+      return app;
+    }
+    
     // Start server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       logger.info('SiteScope Audit Server started', {
         port: PORT,
         nodeEnv: process.env.NODE_ENV || 'development',
@@ -127,6 +132,7 @@ async function startServer() {
       console.log(`✅ All systems initialized successfully - Server ready to accept requests!`);
     });
     
+    app.server = server; // Store server reference
     return app; // Return app instance for testing
   } catch (error) {
     logger.error('❌ Failed to start server:', error);

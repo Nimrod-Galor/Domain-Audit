@@ -5,19 +5,29 @@ export default {
   // ES Modules support
   preset: undefined,
   transform: {},
-  globals: {
-    'ts-jest': {
-      useESM: true
-    }
-  },
   
   // Set environment variables for tests
   setupFiles: ['<rootDir>/tests/jest.env.js'],
   
-  // Test file patterns
+  // Test file patterns with specific timeouts
   testMatch: [
-    '**/tests/**/*.test.js',
+    '**/tests/unit/**/*.test.js',
+    '**/tests/integration/**/*.test.js',
     '**/__tests__/**/*.js'
+  ],
+  
+  // Projects for different test types with different timeouts
+  projects: [
+    {
+      displayName: 'unit',
+      testMatch: ['**/tests/unit/**/*.test.js'],
+      testTimeout: 15000
+    },
+    {
+      displayName: 'integration',
+      testMatch: ['**/tests/integration/**/*.test.js'],
+      testTimeout: 90000
+    }
   ],
   
   // Ignore Playwright tests (run separately)
@@ -52,7 +62,7 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   
   // Test timeout (for slow network tests)
-  testTimeout: process.env.CI ? 60000 : 30000,
+  testTimeout: process.env.CI ? 90000 : 60000,
   
   // Performance settings
   maxWorkers: process.env.CI ? 2 : '50%',

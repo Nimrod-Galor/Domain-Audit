@@ -18,6 +18,9 @@ const auditExecutor = new AuditExecutor();
 // Store active audit sessions for Server-Sent Events
 const activeSessions = new Map();
 
+// Inject dependencies for jobQueue at module initialization
+jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit, tierService });
+
 // Export for testing/debugging
 export { activeSessions };
 
@@ -147,11 +150,22 @@ export const processAudit = async (req, res) => {
     const userId = req.session?.user?.id || null;
     const userEmail = req.session?.user?.email || null;
     
-    // Get user tier limits and check permissions
-    const userLimits = await tierService.getUserTierLimits(userId);
+    // Get user tier limits and check permissions with error handling
+    let userLimits, canPerformAudit;
     
-    // Check if user can perform audit
-    const canPerformAudit = await tierService.canPerformAudit(userId);
+    try {
+      userLimits = await tierService.getUserTierLimits(userId);
+      canPerformAudit = await tierService.canPerformAudit(userId);
+    } catch (tierError) {
+      console.error('❌ Tier service error:', tierError.message);
+      return res.render('audit/form', {
+        title: 'Website Audit',
+        user: req.session.user || null,
+        error: 'Service temporarily unavailable. Please try again later.',
+        url,
+        showSignUpPrompt: !userId
+      });
+    }
     
     if (!canPerformAudit.allowed) {
       const upgradeMessage = userId ? 
@@ -324,8 +338,6 @@ export const processAudit = async (req, res) => {
         tierName: userLimits.tierName
       }
     });
-// Inject dependencies for jobQueue
-jobQueue.injectDependencies({ auditExecutor, activeSessions, Audit, tierService });
 
   } catch (error) {
     if (error instanceof z.ZodError) {

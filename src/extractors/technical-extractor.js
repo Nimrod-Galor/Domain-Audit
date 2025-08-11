@@ -156,7 +156,7 @@ export class TechnicalExtractor {
       };
     }
     
-    const head = document.head;
+    const head = document?.head;
     
     // Fast viewport and charset detection
     const viewport = head?.querySelector('meta[name="viewport"]')?.getAttribute('content') || '';
@@ -165,8 +165,8 @@ export class TechnicalExtractor {
     
     // Count resources efficiently
     const cssLinks = head ? head.getElementsByTagName('link').length : 0;
-    const scripts = document.getElementsByTagName('script');
-    const inlineStyles = document.getElementsByTagName('style').length;
+    const scripts = document?.getElementsByTagName('script') || [];
+    const inlineStyles = document?.getElementsByTagName('style')?.length || 0;
     
     // Count external vs inline scripts
     let externalJS = 0;
@@ -201,9 +201,9 @@ export class TechnicalExtractor {
         totalResources: cssLinks + externalJS + inlineStyles
       },
       navigation: {
-        hasNav: !!document.querySelector('nav'),
-        hasBreadcrumbs: !!document.querySelector('[aria-label*="breadcrumb"], .breadcrumb'),
-        hasSkipLinks: !!document.querySelector('a[href*="#main"], a[href*="#content"]')
+        hasNav: !!document?.querySelector('nav'),
+        hasBreadcrumbs: !!document?.querySelector('[aria-label*="breadcrumb"], .breadcrumb'),
+        hasSkipLinks: !!document?.querySelector('a[href*="#main"], a[href*="#content"]')
       },
       serverInfo: {
         httpVersion: headers['http-version'] || '1.1',
@@ -270,8 +270,7 @@ export class TechnicalExtractor {
    * @returns {Object} Accessibility analysis
    */
   extractAccessibilityData(document) {
-    const body = document.body;
-    if (!body) {
+    if (!document || !document.body) {
       return {
         images: { total: 0, withAlt: 0, missingAlt: 0 },
         forms: { total: 0, withLabels: 0, missingLabels: 0 },
@@ -279,6 +278,8 @@ export class TechnicalExtractor {
         accessibilityScore: 0
       };
     }
+    
+    const body = document.body;
     
     // Image accessibility analysis
     const imageAnalysis = this._analyzeImageAccessibility(body);
@@ -326,7 +327,7 @@ export class TechnicalExtractor {
    * @returns {Object} Mobile friendliness analysis
    */
   extractMobileFriendlinessData(document, headers = {}) {
-    const viewport = document.head?.querySelector('meta[name="viewport"]')?.getAttribute('content') || '';
+    const viewport = document?.head?.querySelector('meta[name="viewport"]')?.getAttribute('content') || '';
     
     // Viewport analysis
     const viewportAnalysis = this._analyzeViewport(viewport);
@@ -471,7 +472,7 @@ export class TechnicalExtractor {
    * @private
    */
   _countInlineScripts(document) {
-    const scripts = document.getElementsByTagName('script');
+    const scripts = document?.getElementsByTagName('script') || [];
     let inlineCount = 0;
     
     for (let i = 0; i < scripts.length; i++) {
@@ -567,7 +568,7 @@ export class TechnicalExtractor {
    * @private
    */
   _analyzeLinkStructure(document) {
-    const links = document.getElementsByTagName('a');
+    const links = document?.getElementsByTagName('a') || [];
     const analysis = {
       total: links.length,
       internal: 0,
@@ -800,7 +801,7 @@ export class TechnicalExtractor {
    * @private
    */
   _analyzeMobileFeatures(document) {
-    const head = document.head;
+    const head = document?.head;
     
     return {
       hasTouchIcons: !!head?.querySelector('link[rel*="apple-touch-icon"], link[rel*="icon"]'),
@@ -817,8 +818,8 @@ export class TechnicalExtractor {
    * @private
    */
   _analyzeResponsiveDesign(document) {
-    const styles = document.getElementsByTagName('style');
-    const links = document.querySelectorAll('link[rel="stylesheet"]');
+    const styles = document?.getElementsByTagName('style') || [];
+    const links = document?.querySelectorAll('link[rel="stylesheet"]') || [];
     
     let hasMediaQueries = false;
     let hasFlexbox = false;
@@ -836,8 +837,8 @@ export class TechnicalExtractor {
       hasMediaQueries,
       hasFlexbox,
       hasGrid,
-      hasResponsiveImages: !!document.querySelector('img[srcset], picture'),
-      hasBootstrap: !!document.querySelector('[class*="col-"], [class*="container"]'),
+      hasResponsiveImages: !!document?.querySelector('img[srcset], picture'),
+      hasBootstrap: !!document?.querySelector('[class*="col-"], [class*="container"]'),
       externalStylesheets: links.length
     };
   }
@@ -932,7 +933,7 @@ export class TechnicalExtractor {
     };
     
     // Check for mixed content (HTTP resources on HTTPS page)
-    const resources = document.querySelectorAll('[src], [href]');
+    const resources = document?.querySelectorAll('[src], [href]') || [];
     for (let i = 0; i < resources.length; i++) {
       const resource = resources[i];
       const src = resource.getAttribute('src') || resource.getAttribute('href') || '';
@@ -944,9 +945,9 @@ export class TechnicalExtractor {
     }
     
     // Count script and style resources
-    analysis.externalScripts = document.querySelectorAll('script[src]').length;
-    analysis.inlineScripts = document.querySelectorAll('script:not([src])').length;
-    analysis.externalStyles = document.querySelectorAll('link[rel="stylesheet"]').length;
+    analysis.externalScripts = document?.querySelectorAll('script[src]')?.length || 0;
+    analysis.inlineScripts = document?.querySelectorAll('script:not([src])')?.length || 0;
+    analysis.externalStyles = document?.querySelectorAll('link[rel="stylesheet"]')?.length || 0;
     
     return analysis;
   }

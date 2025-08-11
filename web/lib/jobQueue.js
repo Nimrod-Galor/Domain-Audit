@@ -91,6 +91,10 @@ class JobQueue {
 
   // Atomic session update to prevent race conditions
   _updateSession(activeSessions, sessionId, updates) {
+    if (!activeSessions) {
+      console.warn('⚠️ ActiveSessions not available for session update');
+      return;
+    }
     const current = activeSessions.get(sessionId) || {};
     activeSessions.set(sessionId, {
       ...current,
@@ -194,6 +198,15 @@ class JobQueue {
   async _runAuditJob(data) {
     // Real audit logic integration
     const { auditExecutor, activeSessions, Audit, tierService } = this;
+    
+    // Defensive check for dependencies
+    if (!auditExecutor) {
+      throw new Error('AuditExecutor dependency not injected into jobQueue');
+    }
+    if (!activeSessions) {
+      throw new Error('ActiveSessions dependency not injected into jobQueue');
+    }
+    
     const { url, reportType, maxPages, priority, sessionId, req, userLimits, userId } = data;
     let auditRecord = null;
     let reportData = null;
@@ -439,11 +452,22 @@ let activeSessionsInstance = null;
 let AuditModel = null;
 
 const jobQueue = new JobQueue();
+
+// Enhanced dependency injection with validation
 jobQueue.injectDependencies = ({ auditExecutor, activeSessions, Audit, tierService }) => {
+  if (!auditExecutor) {
+    throw new Error('auditExecutor is required for jobQueue dependency injection');
+  }
+  if (!activeSessions) {
+    throw new Error('activeSessions is required for jobQueue dependency injection');
+  }
+  
   jobQueue.auditExecutor = auditExecutor;
   jobQueue.activeSessions = activeSessions;
   jobQueue.Audit = Audit;
   jobQueue.tierService = tierService;
+  
+  console.log('✅ JobQueue dependencies injected successfully');
 };
 
 export default jobQueue;
