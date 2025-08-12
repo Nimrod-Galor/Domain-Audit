@@ -236,12 +236,14 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       const result = await auditExecutor.executeAudit(domain);
 
       expect(result).toBeDefined();
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        50, // maxPages
-        false, // forceNew  
-        expect.any(Object) // limits
-      );
+  // Updated: runCrawl now receives an additional execution context argument
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(50);
+  expect(callArgs[2]).toBe(false);
+  expect(callArgs[3]).toEqual(expect.any(Object)); // limits
+  expect(callArgs[4]).toEqual(expect.any(Object)); // execution context
       expect(auditExecutor.isRunning).toBe(false); // Should reset after completion
     });
 
@@ -258,12 +260,13 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       
       await auditExecutor.executeAudit(domain, maxPages);
 
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        25, // maxPages
-        false, // forceNew
-        expect.any(Object) // limits
-      );
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(25);
+  expect(callArgs[2]).toBe(false);
+  expect(callArgs[3]).toEqual(expect.any(Object));
+  expect(callArgs[4]).toEqual(expect.any(Object));
     });
 
     test('should prevent concurrent audit execution', async () => {
@@ -299,12 +302,13 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       
       await auditExecutor.executeAudit(domain, 50, true);
 
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        50, // maxPages
-        true, // forceNew
-        expect.any(Object) // limits
-      );
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(50);
+  expect(callArgs[2]).toBe(true);
+  expect(callArgs[3]).toEqual(expect.any(Object));
+  expect(callArgs[4]).toEqual(expect.any(Object));
     });
 
     test('should apply user limits for external links', async () => {
@@ -323,15 +327,13 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       
       await auditExecutor.executeAudit(domain, 50, false, null, userLimits);
 
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        50, // maxPages
-        false, // forceNew
-        expect.objectContaining({
-          maxExternalLinks: 100,
-          isRegistered: true
-        })
-      );
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(50);
+  expect(callArgs[2]).toBe(false);
+  expect(callArgs[3]).toEqual(expect.objectContaining({ maxExternalLinks: 100, isRegistered: true }));
+  expect(callArgs[4]).toEqual(expect.any(Object));
     });
 
     test('should handle audit execution errors gracefully', async () => {
@@ -354,12 +356,13 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       const result = await auditExecutor.runCrawlWithProgress(domain, maxPages, false);
 
       expect(result).toBeDefined();
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        25, // maxPages
-        false, // forceNew
-        expect.any(Object) // limits
-      );
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(25);
+  expect(callArgs[2]).toBe(false);
+  expect(callArgs[3]).toEqual(expect.any(Object));
+  expect(callArgs[4]).toEqual(expect.any(Object));
     });
 
     test('should emit progress events during crawling', async () => {
@@ -406,12 +409,13 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       
       await auditExecutor.runCrawlWithProgress(domain, 50, true);
 
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        50, // maxPages
-        true, // forceNew
-        expect.any(Object) // limits
-      );
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(50);
+  expect(callArgs[2]).toBe(true);
+  expect(callArgs[3]).toEqual(expect.any(Object));
+  expect(callArgs[4]).toEqual(expect.any(Object));
     });
   });
 
@@ -493,7 +497,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
   });
 
   describe('5. generateSimpleReport() - Simple Report Generation', () => {
-    test('should generate simple report from state data', () => {
+  test('should generate simple report from state data', async () => {
       const stateData = {
         summary: {
           score: 85,
@@ -512,7 +516,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
         ]
       };
 
-      const report = auditExecutor.generateSimpleReport(stateData);
+  const report = await auditExecutor.generateSimpleReport(stateData);
 
       expect(report).toBeDefined();
       expect(report.summary).toBeDefined();
@@ -522,7 +526,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       expect(report.topIssues).toBeDefined();
     });
 
-    test('should handle missing data gracefully', () => {
+  test('should handle missing data gracefully', async () => {
       const incompleteData = {
         summary: { score: 75 },
         visited: [], // Add empty visited array
@@ -534,14 +538,14 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
         // Missing pages data
       };
 
-      const report = auditExecutor.generateSimpleReport(incompleteData);
+  const report = await auditExecutor.generateSimpleReport(incompleteData);
 
       expect(report).toBeDefined();
       expect(report.summary.totalPages).toBe(0); // Empty visited array
       expect(report.detailed).toBeDefined();
     });
 
-    test('should calculate metrics from available data', () => {
+  test('should calculate metrics from available data', async () => {
       const stateData = {
         summary: { score: 78, totalPages: 5 },
         visited: ['https://example.com', 'https://example.com/about'],
@@ -556,7 +560,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
         ]
       };
 
-      const report = auditExecutor.generateSimpleReport(stateData);
+  const report = await auditExecutor.generateSimpleReport(stateData);
 
       expect(report.summary.totalPages).toBe(2); // Based on visited.length
       expect(report.summary.totalInternalLinks).toBe(1); // Based on stats
@@ -564,7 +568,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
   });
 
   describe('6. generateFullReport() - Full Report Generation', () => {
-    test('should generate comprehensive full report', () => {
+  test('should generate comprehensive full report', async () => {
       const stateData = {
         summary: { score: 82, totalPages: 25, totalIssues: 12 },
         visited: Array.from({ length: 25 }, (_, i) => `https://example.com/page${i}`),
@@ -580,7 +584,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
         }))
       };
 
-      const report = auditExecutor.generateFullReport(stateData);
+  const report = await auditExecutor.generateFullReport(stateData);
 
       expect(report).toBeDefined();
       expect(report.simple).toBeDefined(); // Contains the simple report
@@ -588,7 +592,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       expect(report.simple.summary).toBeDefined();
     });
 
-    test('should handle large datasets efficiently', () => {
+  test('should handle large datasets efficiently', async () => {
       const largeStateData = {
         summary: { score: 88, totalPages: 1000 },
         visited: Array.from({ length: 1000 }, (_, i) => `https://example.com/page${i}`),
@@ -603,7 +607,7 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
         }))
       };
 
-      const report = auditExecutor.generateFullReport(largeStateData);
+  const report = await auditExecutor.generateFullReport(largeStateData);
 
       expect(report).toBeDefined();
       expect(report.simple).toBeDefined();
@@ -987,12 +991,13 @@ describe('AuditExecutor - Critical Infrastructure Tests', () => {
       const result = await auditExecutor.executeAudit(domain, largePageCount);
 
       expect(result).toBeDefined();
-      expect(mockRunCrawl).toHaveBeenCalledWith(
-        domain,
-        largePageCount, // maxPages is passed directly, not as an object
-        false, // forceNew
-        expect.any(Object) // limits
-      );
+  expect(mockRunCrawl).toHaveBeenCalled();
+  const callArgs = mockRunCrawl.mock.calls[0];
+  expect(callArgs[0]).toBe(domain);
+  expect(callArgs[1]).toBe(largePageCount);
+  expect(callArgs[2]).toBe(false);
+  expect(callArgs[3]).toEqual(expect.any(Object));
+  expect(callArgs[4]).toEqual(expect.any(Object));
     });
 
     test('should handle concurrent requests appropriately', async () => {

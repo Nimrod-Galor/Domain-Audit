@@ -2,6 +2,11 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { DOMProcessor } from '../../src/dom/dom-processor.js';
 
+// Simple HTML factory used in tests (was previously missing, causing ReferenceError)
+function createMockHTML(title, bodyContent = '') {
+  return `<!DOCTYPE html><html><head><title>${title}</title></head><body>${bodyContent}</body></html>`;
+}
+
 describe('DOMProcessor', () => {
   let processor;
   

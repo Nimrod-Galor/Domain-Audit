@@ -349,7 +349,8 @@ describe('JobQueue - Critical Functionality Tests', () => {
         10,
         false,
         'test-session',
-        { maxPages: 50 }
+        { maxPages: 50 },
+        123
       );
 
       // Verify database operations

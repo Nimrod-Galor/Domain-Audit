@@ -140,6 +140,28 @@ footer a:hover {
     font-size: 1.5rem;
 }
 
+/* Fix for navbar collapse display issues */
+@media (max-width: 991.98px) {
+    .navbar-expand-lg .navbar-collapse {
+        display: none !important;
+    }
+    
+    .navbar-expand-lg .navbar-collapse.show {
+        display: block !important;
+    }
+    
+    .navbar-expand-lg .navbar-collapse.collapsing {
+        display: block !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .navbar-expand-lg .navbar-collapse {
+        display: flex !important;
+        flex-basis: auto;
+    }
+}
+
 /* Table styling for results */
 .table-audit {
     border-radius: 8px;

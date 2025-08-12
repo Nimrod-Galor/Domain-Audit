@@ -115,7 +115,9 @@ const domainParamSchema = z.object({
     .refine(domain => {
       try {
         // Allow domain with or without protocol
-        const urlToTest = domain.startsWith('http') ? domain : `https://${domain}`;
+        const urlToTest = (domain.startsWith('http://') || domain.startsWith('https://')) 
+          ? domain 
+          : `https://${domain}`;
         new URL(urlToTest);
         return true;
       } catch {
@@ -706,7 +708,7 @@ export const getSimpleReport = async (req, res) => {
         maxPagesPerAudit: userLimits.maxPagesPerAudit,
         tierName: userLimits.tierName
       });
-      reportData = auditExecutor.generateSimpleReport(result.stateData);
+      reportData = await auditExecutor.generateSimpleReport(result.stateData);
       
       // Record usage for registered users
       if (userId) {
@@ -714,7 +716,7 @@ export const getSimpleReport = async (req, res) => {
           await tierService.recordAuditUsage(userId, {
             pagesScanned: result.stateData?.visited?.length || 0,
             externalLinksChecked: Object.keys(result.stateData?.externalLinks || {}).length,
-            score: reportData.summary?.score || reportData.overview?.score || 0,
+            score: reportData.overallScore || reportData.analytics?.overallScore || reportData.score || 0,
             url,
             reportType: 'simple',
             duration: result.executionTime || 0
@@ -830,7 +832,7 @@ export const getFullReport = async (req, res) => {
           await tierService.recordAuditUsage(userId, {
             pagesScanned: result.stateData?.visited?.length || 0,
             externalLinksChecked: Object.keys(result.stateData?.externalLinks || {}).length,
-            score: reportData.summary?.score || reportData.overview?.score || 0,
+            score: reportData.analytics?.scores?.overall?.score || reportData.overallScore || reportData.score || 0,
             url,
             reportType: 'full',
             duration: result.executionTime || 0
@@ -1246,23 +1248,29 @@ export const downloadPDFReport = async (req, res) => {
       reportData = auditExecutor.generateFullReport(result.stateData);
     }
     
-    // Generate PDF
-    const pdfBuffer = await pdfService.generatePDFFromData(reportData, {
+  // Generate PDF
+  const pdfBuffer = await pdfService.generatePDFFromData(reportData, {
       includeDetailed: true,
-      brandColor: '#007bff'
+      brandColor: '#007bff',
+      domain: url
     });
     
     // Clean domain name for filename
     const cleanDomain = url.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `domain-audit-${cleanDomain}-${new Date().toISOString().split('T')[0]}.pdf`;
     
-    // Set response headers for PDF download
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    
-    // Send PDF buffer
-    res.send(pdfBuffer);
+    // Set response headers for PDF download (robust, no caching, exact length)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    // Stream the exact bytes without transformation
+    res.end(pdfBuffer);
     
     console.log(`✅ PDF downloaded successfully for ${url}`);
     
@@ -1322,7 +1330,8 @@ export const downloadHistoricalPDFReport = async (req, res) => {
     // Generate PDF from historical data
     const pdfBuffer = await pdfService.generatePDFFromData(audit.report_data, {
       includeDetailed: true,
-      brandColor: '#007bff'
+      brandColor: '#007bff',
+      domain: url
     });
     
     // Clean domain name for filename
@@ -1330,13 +1339,18 @@ export const downloadHistoricalPDFReport = async (req, res) => {
     const auditDate = new Date(audit.created_at).toISOString().split('T')[0];
     const filename = `domain-audit-${cleanDomain}-${auditDate}-${auditId}.pdf`;
     
-    // Set response headers for PDF download
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    
-    // Send PDF buffer
-    res.send(pdfBuffer);
+    // Set response headers for PDF download (robust, no caching, exact length)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    // Stream the exact bytes without transformation
+    res.end(pdfBuffer);
     
     console.log(`✅ Historical PDF downloaded successfully for ${url} (ID: ${auditId})`);
     

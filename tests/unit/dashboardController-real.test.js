@@ -27,21 +27,34 @@ jest.unstable_mockModule('../../web/models/database.js', () => ({
   query: jest.fn()
 }));
 
-// Import after mocking
-const {
-  getUpgradeRequired,
+let getUpgradeRequired,
   getDashboard,
   getDashboardData,
   getSettings,
   getApiPage,
   generateApiKey,
   regenerateApiKey,
-  revokeApiKey
-} = await import('../../web/controllers/dashboardController.js');
+  revokeApiKey,
+  tierService,
+  Audit,
+  query;
 
-const tierService = await import('../../web/services/tierService.js');
-const { Audit } = await import('../../web/models/index.js');
-const { query } = await import('../../web/models/database.js');
+beforeAll(async () => {
+  const controller = await import('../../web/controllers/dashboardController.js');
+  ({
+    getUpgradeRequired,
+    getDashboard,
+    getDashboardData,
+    getSettings,
+    getApiPage,
+    generateApiKey,
+    regenerateApiKey,
+    revokeApiKey
+  } = controller);
+  tierService = (await import('../../web/services/tierService.js')).default;
+  ({ Audit } = await import('../../web/models/index.js'));
+  ({ query } = await import('../../web/models/database.js'));
+});
 
 describe('DashboardController - Critical Production Functions', () => {
   let mockReq, mockRes;
@@ -74,12 +87,12 @@ describe('DashboardController - Critical Production Functions', () => {
 
   describe('1. getUpgradeRequired - SaaS Upgrade Page Function', () => {
     it('should display upgrade page with tier information', async () => {
-      tierService.default.getUserTier.mockResolvedValue('starter');
+  tierService.getUserTier.mockResolvedValue('starter');
       mockReq.query.feature = 'api-access';
 
       await getUpgradeRequired(mockReq, mockRes);
 
-      expect(tierService.default.getUserTier).toHaveBeenCalledWith(123);
+  expect(tierService.getUserTier).toHaveBeenCalledWith(123);
       expect(mockRes.render).toHaveBeenCalledWith('upgrade-required', {
         title: 'Upgrade Required',
         user: mockReq.session.user,
@@ -102,7 +115,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle tier service errors gracefully', async () => {
-      tierService.default.getUserTier.mockRejectedValue(new Error('Service error'));
+  tierService.getUserTier.mockRejectedValue(new Error('Service error'));
 
       await getUpgradeRequired(mockReq, mockRes);
 
@@ -128,12 +141,12 @@ describe('DashboardController - Critical Production Functions', () => {
       const mockLimits = { maxAudits: 10, plan: 'professional' };
       const mockAudits = { audits: [{ id: 1, domain: 'test.com' }] };
 
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
-      Audit.getUserAudits.mockResolvedValue(mockAudits);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
+  Audit.getUserAudits.mockResolvedValue(mockAudits);
 
       await getDashboard(mockReq, mockRes);
 
-      expect(tierService.default.getUserTierLimits).toHaveBeenCalledWith(123);
+  expect(tierService.getUserTierLimits).toHaveBeenCalledWith(123);
       expect(mockRes.render).toHaveBeenCalledWith('dashboard/index', expect.objectContaining({
         title: 'Dashboard',
         user: mockReq.session.user,
@@ -142,7 +155,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle dashboard errors gracefully', async () => {
-      tierService.default.getUserTierLimits.mockRejectedValue(new Error('Database error'));
+  tierService.getUserTierLimits.mockRejectedValue(new Error('Database error'));
 
       await getDashboard(mockReq, mockRes);
 
@@ -160,8 +173,8 @@ describe('DashboardController - Critical Production Functions', () => {
       const mockStats = { auditsThisMonth: 5, averageScore: 85 };
       const mockAudits = { audits: [{ id: 1, domain: 'api.test.com' }] };
 
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
-      tierService.default.getUserUsageStats.mockResolvedValue(mockStats);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
+  tierService.getUserUsageStats.mockResolvedValue(mockStats);
       Audit.getUserAudits.mockResolvedValue(mockAudits);
 
       await getDashboardData(mockReq, mockRes);
@@ -183,7 +196,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle API errors', async () => {
-      tierService.default.getUserTierLimits.mockRejectedValue(new Error('API error'));
+  tierService.getUserTierLimits.mockRejectedValue(new Error('API error'));
 
       await getDashboardData(mockReq, mockRes);
 
@@ -195,11 +208,11 @@ describe('DashboardController - Critical Production Functions', () => {
   describe('4. getSettings - User Settings Function', () => {
     it('should display settings page with user limits', async () => {
       const mockLimits = { plan: 'professional', maxTeamMembers: 10 };
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
 
       await getSettings(mockReq, mockRes);
 
-      expect(tierService.default.getUserTierLimits).toHaveBeenCalledWith(123);
+  expect(tierService.getUserTierLimits).toHaveBeenCalledWith(123);
       expect(mockRes.render).toHaveBeenCalledWith('dashboard/settings', {
         title: 'Settings',
         user: mockReq.session.user,
@@ -216,7 +229,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle settings errors', async () => {
-      tierService.default.getUserTierLimits.mockRejectedValue(new Error('Settings error'));
+  tierService.getUserTierLimits.mockRejectedValue(new Error('Settings error'));
 
       await getSettings(mockReq, mockRes);
 
@@ -234,14 +247,14 @@ describe('DashboardController - Critical Production Functions', () => {
       const mockUsage = { apiCallsThisMonth: 150 };
       const mockUserData = { rows: [{ api_key: 'test-api-key-123' }] };
 
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
-      tierService.default.getCurrentMonthUsage.mockResolvedValue(mockUsage);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
+  tierService.getCurrentMonthUsage.mockResolvedValue(mockUsage);
       query.mockResolvedValue(mockUserData);
 
       await getApiPage(mockReq, mockRes);
 
-      expect(tierService.default.getUserTierLimits).toHaveBeenCalledWith(123);
-      expect(tierService.default.getCurrentMonthUsage).toHaveBeenCalledWith(123);
+  expect(tierService.getUserTierLimits).toHaveBeenCalledWith(123);
+  expect(tierService.getCurrentMonthUsage).toHaveBeenCalledWith(123);
       expect(query).toHaveBeenCalledWith(
         expect.stringContaining('SELECT api_key FROM users'),
         [123]
@@ -254,7 +267,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle API page errors', async () => {
-      tierService.default.getUserTierLimits.mockRejectedValue(new Error('API error'));
+  tierService.getUserTierLimits.mockRejectedValue(new Error('API error'));
 
       await getApiPage(mockReq, mockRes);
 
@@ -269,11 +282,11 @@ describe('DashboardController - Critical Production Functions', () => {
   describe('6. generateApiKey - API Key Generation Function', () => {
     it('should generate new API key successfully', async () => {
       const mockApiKey = 'new-api-key-xyz789';
-      tierService.default.generateApiKey.mockResolvedValue(mockApiKey);
+  tierService.generateApiKey.mockResolvedValue(mockApiKey);
 
       await generateApiKey(mockReq, mockRes);
 
-      expect(tierService.default.generateApiKey).toHaveBeenCalledWith(123);
+  expect(tierService.generateApiKey).toHaveBeenCalledWith(123);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
         message: 'API key generated successfully',
@@ -282,7 +295,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle API key generation errors', async () => {
-      tierService.default.generateApiKey.mockRejectedValue(new Error('Generation limit exceeded'));
+  tierService.generateApiKey.mockRejectedValue(new Error('Generation limit exceeded'));
 
       await generateApiKey(mockReq, mockRes);
 
@@ -297,11 +310,11 @@ describe('DashboardController - Critical Production Functions', () => {
   describe('7. regenerateApiKey - API Key Regeneration Function', () => {
     it('should regenerate existing API key', async () => {
       const mockNewKey = 'regenerated-api-key-abc123';
-      tierService.default.generateApiKey.mockResolvedValue(mockNewKey);
+  tierService.generateApiKey.mockResolvedValue(mockNewKey);
 
       await regenerateApiKey(mockReq, mockRes);
 
-      expect(tierService.default.generateApiKey).toHaveBeenCalledWith(123);
+  expect(tierService.generateApiKey).toHaveBeenCalledWith(123);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
         message: 'API key regenerated successfully',
@@ -310,7 +323,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle regeneration errors', async () => {
-      tierService.default.generateApiKey.mockRejectedValue(new Error('Regeneration failed'));
+  tierService.generateApiKey.mockRejectedValue(new Error('Regeneration failed'));
 
       await regenerateApiKey(mockReq, mockRes);
 
@@ -324,11 +337,11 @@ describe('DashboardController - Critical Production Functions', () => {
 
   describe('8. revokeApiKey - API Key Revocation Function', () => {
     it('should revoke API key successfully', async () => {
-      tierService.default.revokeApiKey.mockResolvedValue();
+  tierService.revokeApiKey.mockResolvedValue();
 
       await revokeApiKey(mockReq, mockRes);
 
-      expect(tierService.default.revokeApiKey).toHaveBeenCalledWith(123);
+  expect(tierService.revokeApiKey).toHaveBeenCalledWith(123);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
         message: 'API key revoked successfully'
@@ -336,7 +349,7 @@ describe('DashboardController - Critical Production Functions', () => {
     });
 
     it('should handle revocation errors', async () => {
-      tierService.default.revokeApiKey.mockRejectedValue(new Error('Revocation failed'));
+  tierService.revokeApiKey.mockRejectedValue(new Error('Revocation failed'));
 
       await revokeApiKey(mockReq, mockRes);
 
@@ -358,8 +371,8 @@ describe('DashboardController - Critical Production Functions', () => {
       };
       const mockAudits = { audits: [{ id: 1, domain: 'client.com', score: 95 }] };
 
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
-      Audit.getUserAudits.mockResolvedValue(mockAudits);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
+  Audit.getUserAudits.mockResolvedValue(mockAudits);
 
       await getDashboard(mockReq, mockRes);
 
@@ -373,8 +386,8 @@ describe('DashboardController - Critical Production Functions', () => {
       // Step 1: Load API page
       const mockLimits = { hasAPIAccess: true };
       const mockUsage = { apiCallsThisMonth: 50 };
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
-      tierService.default.getCurrentMonthUsage.mockResolvedValue(mockUsage);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
+  tierService.getCurrentMonthUsage.mockResolvedValue(mockUsage);
       query.mockResolvedValue({ rows: [{ api_key: null }] });
 
       await getApiPage(mockReq, mockRes);
@@ -382,7 +395,7 @@ describe('DashboardController - Critical Production Functions', () => {
 
       // Step 2: Generate API key
       const mockApiKey = 'generated-key-123';
-      tierService.default.generateApiKey.mockResolvedValue(mockApiKey);
+  tierService.generateApiKey.mockResolvedValue(mockApiKey);
 
       await generateApiKey(mockReq, mockRes);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -396,6 +409,8 @@ describe('DashboardController - Critical Production Functions', () => {
       // Test freemium user trying to access API features
       mockReq.session.user.plan = 'freemium';
       mockReq.query.feature = 'api-access';
+    // Ensure tier service returns a value to avoid error path
+    tierService.getUserTier.mockResolvedValue('freemium');
 
       await getUpgradeRequired(mockReq, mockRes);
 
@@ -409,8 +424,8 @@ describe('DashboardController - Critical Production Functions', () => {
       const mockLimits = { plan: 'enterprise' };
       const mockAudits = { audits: [] };
 
-      tierService.default.getUserTierLimits.mockResolvedValue(mockLimits);
-      Audit.getUserAudits.mockResolvedValue(mockAudits);
+  tierService.getUserTierLimits.mockResolvedValue(mockLimits);
+  Audit.getUserAudits.mockResolvedValue(mockAudits);
 
       // Simulate concurrent requests
       const promises = [
@@ -421,7 +436,7 @@ describe('DashboardController - Critical Production Functions', () => {
 
       await Promise.all(promises);
 
-      expect(tierService.default.getUserTierLimits).toHaveBeenCalledTimes(3);
+  expect(tierService.getUserTierLimits).toHaveBeenCalledTimes(3);
     });
   });
 });

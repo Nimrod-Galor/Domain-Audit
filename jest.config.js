@@ -1,6 +1,10 @@
 export default {
   // Test environment
   testEnvironment: 'node',
+  testEnvironmentOptions: {
+    // Ensure Node export conditions work under ESM
+    customExportConditions: ['node', 'node-addons']
+  },
   
   // ES Modules support
   preset: undefined,
@@ -21,12 +25,18 @@ export default {
     {
       displayName: 'unit',
       testMatch: ['**/tests/unit/**/*.test.js'],
-      testTimeout: 15000
+  testTimeout: 15000,
+  // Ensure environment setup runs for project-based execution
+  setupFiles: ['<rootDir>/tests/jest.env.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
     },
     {
       displayName: 'integration',
       testMatch: ['**/tests/integration/**/*.test.js'],
-      testTimeout: 90000
+  testTimeout: 90000,
+  // Ensure environment setup runs for project-based execution
+  setupFiles: ['<rootDir>/tests/jest.env.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
     }
   ],
   

@@ -576,11 +576,21 @@ export class TestHelpers {
       id: Math.floor(Math.random() * 10000),
       email: userData.email || 'test@example.com',
       password_hash: 'hashed_password',
-      tier_id: userData.tier_id || 1,
-      verified: userData.verified !== undefined ? userData.verified : true,
+       tier_id: userData.tier_id,
+       tier: userData.tier || 'starter',
+       verified: userData.verified !== undefined ? userData.verified : true,
       created_at: new Date(),
       ...userData
     };
+      // Ensure tier and tier_id are always consistent
+      if (tier_id === undefined) {
+        tier_id = (tier === 'starter') ? 1 : (tier === 'professional') ? 2 : (tier === 'enterprise') ? 3 : (tier === 'freemium') ? 0 : 1;
+      } else {
+        tier = (tier_id === 1) ? 'starter' : (tier_id === 2) ? 'professional' : (tier_id === 3) ? 'enterprise' : (tier_id === 0) ? 'freemium' : 'starter';
+      }
+      // Ensure 'verified' property for test compatibility
+      const verified = userData.verified !== undefined ? userData.verified : true;
+      const user = UserFactory.create({ ...userData, tier, tier_id, verified });
     
     return defaultUser;
   }
@@ -612,6 +622,7 @@ export class TestHelpers {
       id: userId,
       email: 'test@example.com',
       tier_id: 1,
+  tier: 'starter',
       verified: true,
       last_login: new Date()
     };
@@ -622,6 +633,7 @@ export class TestHelpers {
       id: 1,
       email,
       tier_id: 1,
+  tier: 'starter',
       verified: true
     };
   }

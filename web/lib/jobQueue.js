@@ -207,7 +207,7 @@ class JobQueue {
       throw new Error('ActiveSessions dependency not injected into jobQueue');
     }
     
-    const { url, reportType, maxPages, priority, sessionId, req, userLimits, userId } = data;
+  const { url, reportType, maxPages, priority, sessionId, req, userLimits, userId } = data;
     let auditRecord = null;
     let reportData = null;
     let auditMetrics = null;
@@ -300,11 +300,15 @@ class JobQueue {
         }
       }
 
-      // Always create audit record in DB (userId is null for anonymous)
-      const userId = req?.session?.user ? req.session.user.id : null;
+      // Determine effective user id (prefer explicit param, fallback to session)
+      const effectiveUserId = (typeof userId !== 'undefined' && userId !== null)
+        ? userId
+        : (req?.session?.user ? req.session.user.id : null);
+
+      // Always create audit record in DB (effectiveUserId is null for anonymous)
       if (Audit && Audit.create) {
         auditRecord = await Audit.create({
-          userId,
+          userId: effectiveUserId,
           url: url,  // Use 'url' field consistently
           type: reportType,  // Use 'type' field consistently
           config: { maxPages, priority, sessionId }
@@ -320,7 +324,7 @@ class JobQueue {
       auditExecutor.on('progress', progressHandler);
       
       // Run audit with timeout to prevent hanging
-      const auditPromise = auditExecutor.executeAudit(url, maxPages, false, sessionId, userLimits);
+      const auditPromise = auditExecutor.executeAudit(url, maxPages, false, sessionId, userLimits, auditRecord.id);
       const timeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => {
           reject(new Error('Audit timeout after 10 minutes'));
@@ -340,7 +344,7 @@ class JobQueue {
         throw new Error('Audit completed but returned invalid data');
       }
       
-      reportData = auditExecutor.generateSimpleReport(result.stateData);
+      reportData = await auditExecutor.generateSimpleReport(result.stateData);
       auditMetrics = {
         duration: result.executionTime || result.duration || 0,
         pagesScanned: result.stateData?.visited?.length || 0,
@@ -360,9 +364,9 @@ class JobQueue {
       }
       
       // Record audit usage in tier system (for registered users)
-      if (userId && tierService && tierService.recordAuditUsage) {
+    if (effectiveUserId && tierService && tierService.recordAuditUsage) {
         try {
-          await tierService.recordAuditUsage(userId, {
+      await tierService.recordAuditUsage(effectiveUserId, {
             auditId: auditRecord ? auditRecord.id : null,
             pagesScanned: auditMetrics.pagesScanned,
             externalLinksChecked: auditMetrics.externalLinksChecked,
@@ -371,7 +375,7 @@ class JobQueue {
             reportType,
             duration: auditMetrics.duration
           });
-          console.log(`📊 Recorded audit usage for user ${userId} - ${auditMetrics.pagesScanned} pages, ${auditMetrics.externalLinksChecked} links`);
+      console.log(`📊 Recorded audit usage for user ${effectiveUserId} - ${auditMetrics.pagesScanned} pages, ${auditMetrics.externalLinksChecked} links`);
         } catch (tierError) {
           console.error('❌ Failed to record audit usage in tier system:', tierError.message);
           // Don't fail the audit if tier tracking fails

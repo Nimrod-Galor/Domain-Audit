@@ -495,7 +495,7 @@ describe('Database Integration Tests', () => {
           INSERT INTO users (email, password_hash, tier_id)
           VALUES ($1, $2, $3)
         `, ['invalid-email', 'hash', 1])
-      ).rejects.toThrow(/invalid email format/);
+      ).rejects.toThrow(/email_format_check|violates check constraint/i);
     });
 
     test('should handle concurrent user creation with same email', async () => {

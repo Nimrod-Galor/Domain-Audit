@@ -1,9 +1,13 @@
-// Jest test setup file
-
-import dotenv from 'dotenv';
-
-// Load test environment variables
-dotenv.config({ path: '.env.test' });
+// Jest test setup file (CommonJS for compatibility with Jest's setupFilesAfterEnv)
+// Use dynamic require to avoid ESM parsing issues in this context
+let dotenv;
+try {
+  // eslint-disable-next-line global-require
+  dotenv = require('dotenv');
+  dotenv.config({ path: '.env.test' });
+} catch (e) {
+  // If dotenv not available, continue silently
+}
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
@@ -12,7 +16,7 @@ process.env.AUDIT_TIMEOUT = '10000'; // Shorter timeout for tests
 process.env.MAX_CONCURRENT_AUDITS = '2'; // Limit concurrency in tests
 
 // Global test constants
-global.TEST_CONSTANTS = {
+global.TEST_CONSTANTS = global.TEST_CONSTANTS || {
   SAMPLE_URLS: {
     VALID: 'https://example.com',
     INVALID: 'not-a-url',

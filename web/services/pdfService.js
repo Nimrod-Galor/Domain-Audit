@@ -104,7 +104,7 @@ class PDFService {
                 ...options
             });
 
-            console.log(`✅ PDF generated successfully for ${auditData.domain || 'unknown domain'}`);
+            console.log(`✅ PDF generated successfully for ${options.domain || auditData.domain || 'unknown domain'}`);
             return pdfBuffer;
 
         } catch (error) {
@@ -194,34 +194,43 @@ class PDFService {
      * @returns {string} HTML content
      */
     generatePDFHTML(auditData, options = {}) {
-        // Handle different audit data structures (flat vs nested)
-        const summary = auditData.summary || auditData.simple?.summary || auditData;
-        const detailed = auditData.detailed || auditData.simple?.detailed || {};
-        
-        const {
-            domain = options.domain || 'Unknown Domain',
-            grade = summary.grade || 'N/A',
-            score = summary.score || 0,
-            totalPages = summary.totalPages || 0,
-            totalLinks = summary.totalInternalLinks || summary.totalLinks || 0,
-            internalLinks = summary.totalInternalLinks || summary.internalLinks || 0,
-            externalLinks = summary.totalExternalLinks || summary.externalLinks || 0,
-            brokenLinks = summary.brokenLinks || summary.brokenExternal || 0,
-            okLinks = summary.okLinks || 0,
-            timeoutLinks = summary.timeoutLinks || 0,
-            emails = detailed.mailtoLinks || auditData.emails || [],
-            phoneNumbers = detailed.telLinks || auditData.phoneNumbers || [],
-            pages = auditData.recentPages || auditData.pages || [],
-            analysis = auditData.analysis || {},
-            timestamp = auditData.timestamp || new Date().toISOString()
-        } = {};
+    // Normalize report shape to mirror EJS results-full.ejs usage
+    const simple = auditData.simple || auditData; // full report has .simple
+    const summary = simple.summary || auditData.summary || {};
+    const detailed = auditData.detailed || simple.detailed || {};
+
+    // Domain shown in the page header comes from the route param; pass it via options
+    const domain = options.domain || auditData.url || auditData.domain || 'Unknown Domain';
+
+    // Score/grade mapping: page doesn't show them, but keep for PDF header
+    const score = auditData.overallScore || auditData.analytics?.overallScore || auditData.analytics?.scores?.overall?.score || 0;
+    const grade = auditData.analytics?.scores?.overall?.grade || 'N/A';
+
+    // Stats exactly as in results-full.ejs (data.simple.summary.*)
+    const totalPages = Number(summary.totalPages || 0);
+    const internalLinks = Number(summary.totalInternalLinks || summary.internalLinks || 0);
+    const externalLinks = Number(summary.totalExternalLinks || summary.externalLinks || 0);
+    const totalLinks = internalLinks + externalLinks;
+    const brokenLinks = Number(summary.brokenLinks || 0); // internal broken
+    const okLinks = Number(summary.okLinks || 0);
+    const brokenExternal = Number(summary.brokenExternal || 0);
+    const timeoutLinks = Number(summary.timeoutLinks || 0);
+
+    // Contact info structures are objects keyed by mailto:/tel:
+    const emails = detailed.mailtoLinks || auditData.emails || {};
+    const phoneNumbers = detailed.telLinks || auditData.phoneNumbers || {};
+
+    // Pages list: prefer simple.recentPages if present; handle strings or objects safely
+    const pages = simple.recentPages || auditData.recentPages || auditData.pages || [];
+
+    const timestamp = auditData.timestamp || new Date().toISOString();
 
         const includeDetailed = options.includeDetailed !== false;
         const brandColor = options.brandColor || '#007bff';
 
         // Convert emails and phone numbers to arrays if they're objects
-        const emailArray = Array.isArray(emails) ? emails : Object.keys(emails || {});
-        const phoneArray = Array.isArray(phoneNumbers) ? phoneNumbers : Object.keys(phoneNumbers || {});
+    const emailArray = Array.isArray(emails) ? emails : Object.keys(emails || {});
+    const phoneArray = Array.isArray(phoneNumbers) ? phoneNumbers : Object.keys(phoneNumbers || {});
 
         return `
 <!DOCTYPE html>
@@ -399,16 +408,16 @@ class PDFService {
                 <div class="stat-label">Total Pages</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">${totalLinks}</div>
-                <div class="stat-label">Total Links</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-number">${internalLinks}</div>
                 <div class="stat-label">Internal Links</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">${externalLinks}</div>
                 <div class="stat-label">External Links</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">${totalLinks}</div>
+                <div class="stat-label">Total Links</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">${brokenLinks}</div>
@@ -420,23 +429,30 @@ class PDFService {
             </div>
         </div>
 
-        <!-- Link Analysis -->
+        <!-- Link Analysis (matches page overview external status) -->
         <div class="section">
-            <h2>Link Analysis Summary</h2>
+            <h2>External Link Status Distribution</h2>
             <div class="stats-grid">
                 <div>
-                    <h3>Internal Links</h3>
-                    <p>${internalLinks} links pointing to pages within ${domain}</p>
+                    <h3>Working</h3>
+                    <p><span class="status-ok">${okLinks}</span> of ${externalLinks} external links</p>
+                    <div style="height: 10px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: ${externalLinks > 0 ? ((okLinks / externalLinks) * 100).toFixed(1) : 0}%; background: #28a745;"></div>
+                    </div>
                 </div>
                 <div>
-                    <h3>External Links</h3>
-                    <p>${externalLinks} links pointing to external websites</p>
+                    <h3>Broken</h3>
+                    <p><span class="status-error">${brokenExternal}</span> of ${externalLinks} external links</p>
+                    <div style="height: 10px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: ${externalLinks > 0 ? ((brokenExternal / externalLinks) * 100).toFixed(1) : 0}%; background: #dc3545;"></div>
+                    </div>
                 </div>
                 <div>
-                    <h3>Broken Links</h3>
-                    <p class="${brokenLinks > 0 ? 'status-error' : 'status-ok'}">
-                        ${brokenLinks} broken or unreachable links found
-                    </p>
+                    <h3>Timeout</h3>
+                    <p><span class="status-warning">${timeoutLinks}</span> of ${externalLinks} external links</p>
+                    <div style="height: 10px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: ${externalLinks > 0 ? ((timeoutLinks / externalLinks) * 100).toFixed(1) : 0}%; background: #ffc107;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -467,13 +483,19 @@ class PDFService {
         <!-- Detailed Page Analysis -->
         <div class="section page-break">
             <h2>Detailed Page Analysis</h2>
-            ${pages.slice(0, 50).map(page => `
+            ${pages.slice(0, 50).map(raw => {
+                const page = typeof raw === 'string' ? { url: raw } : (raw || {});
+                const title = page.title || page.url || 'Unknown Page';
+                const status = page.status;
+                const linksCount = Array.isArray(page.links) ? page.links.length : (page.links?.length || page.linksCount || null);
+                return `
                 <div class="list-item">
-                    <strong>${page.url || page.title || 'Unknown Page'}</strong>
-                    ${page.status ? `<span class="status-${page.status === 200 ? 'ok' : 'error'}">(${page.status})</span>` : ''}
-                    ${page.links ? `<br><small>${page.links.length} links found</small>` : ''}
+                    <strong>${title}</strong>
+                    ${typeof status !== 'undefined' ? `<span class="status-${status === 200 ? 'ok' : 'error'}">(${status})</span>` : ''}
+                    ${linksCount != null ? `<br><small>${linksCount} links found</small>` : ''}
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
             ${pages.length > 50 ? `<div class="list-item"><em>... and ${pages.length - 50} more pages</em></div>` : ''}
         </div>
         ` : ''}

@@ -66,7 +66,7 @@ if (command === 'audit') {
   const parsedMaxLinks = maxInternalLinks ? parseInt(maxInternalLinks, 10) : undefined;
   
   // Start the crawl process using the orchestrator
-  runCrawl(domain, parsedMaxLinks, forceNew);
+  runCrawl(domain, parsedMaxLinks, forceNew, {}, { mode: 'cli' });
 } else {
   // Import audit manager for other commands
   import('../src/core/audit-manager.js').then(async ({ getAuditManager }) => {

@@ -118,6 +118,15 @@ export class DOMProcessor {
             return [];
           }
         },
+        getElementById: (id) => {
+          try {
+            const el = $(`#${id}`);
+            return el.length > 0 ? this.cheerioToElement(el.first(), $) : null;
+          } catch (error) {
+            console.warn(`getElementById error with id "${id}":`, error.message);
+            return null;
+          }
+        },
         createElement: (tagName) => ({ tagName, textContent: '', innerHTML: '' }),
         documentElement: this.cheerioToElement($('html'), $) || { innerHTML: html },
         body: this.cheerioToElement($('body'), $) || { innerHTML: '' },

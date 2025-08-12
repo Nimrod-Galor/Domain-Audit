@@ -7,12 +7,10 @@
 import { Pool, Client } from 'pg';
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { mockDatabase } from './MockDatabase.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Note: Avoid import.meta patterns to keep compatibility with Jest runners
 
 // Load test environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env.test') });
