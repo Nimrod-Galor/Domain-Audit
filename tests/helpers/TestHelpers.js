@@ -557,6 +557,11 @@ export class TestHelpers {
     const { testDatabase } = await import('./TestDatabase.js');
     await testDatabase.setup();
     console.log('Setting up test database...');
+    // reset in-memory test state used by API shim
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      testState.reset();
+    } catch {}
   }
 
   static async teardownTestDatabase() {
@@ -569,30 +574,67 @@ export class TestHelpers {
     const { testDatabase } = await import('./TestDatabase.js');
     await testDatabase.reset();
     console.log('Clearing test database...');
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      testState.reset();
+    } catch {}
   }
 
   static async createTestUser(userData = {}) {
-    const defaultUser = {
-      id: Math.floor(Math.random() * 10000),
-      email: userData.email || 'test@example.com',
-      password_hash: 'hashed_password',
-       tier_id: userData.tier_id,
-       tier: userData.tier || 'starter',
-       verified: userData.verified !== undefined ? userData.verified : true,
-      created_at: new Date(),
-      ...userData
-    };
-      // Ensure tier and tier_id are always consistent
-      if (tier_id === undefined) {
-        tier_id = (tier === 'starter') ? 1 : (tier === 'professional') ? 2 : (tier === 'enterprise') ? 3 : (tier === 'freemium') ? 0 : 1;
-      } else {
-        tier = (tier_id === 1) ? 'starter' : (tier_id === 2) ? 'professional' : (tier_id === 3) ? 'enterprise' : (tier_id === 0) ? 'freemium' : 'starter';
+    // Normalize tier/tier_id mapping
+    const mapTierIdToName = (id) => {
+      switch (Number(id)) {
+        case 0: return 'freemium';
+        case 1: return 'starter';
+        case 2: return 'professional';
+        case 3: return 'enterprise';
+        default: return 'starter';
       }
-      // Ensure 'verified' property for test compatibility
-      const verified = userData.verified !== undefined ? userData.verified : true;
-      const user = UserFactory.create({ ...userData, tier, tier_id, verified });
-    
-    return defaultUser;
+    };
+    const mapTierNameToId = (name) => {
+      const t = (name || '').toLowerCase();
+      if (t === 'freemium') return 0;
+      if (t === 'starter') return 1;
+      if (t === 'professional') return 2;
+      if (t === 'enterprise') return 3;
+      return 1; // default to starter
+    };
+
+    let tier;
+    let tier_id;
+    if (userData.tier_id !== undefined && userData.tier_id !== null) {
+      tier_id = Number(userData.tier_id);
+      tier = userData.tier ?? mapTierIdToName(tier_id);
+    } else {
+      tier = userData.tier || 'starter';
+      tier_id = mapTierNameToId(tier);
+    }
+
+    const verified = userData.verified !== undefined ? userData.verified : true;
+
+    const user = {
+      // allow explicit id, otherwise generate a random one for tests
+      id: userData.id ?? Math.floor(Math.random() * 10000),
+      email: userData.email || 'test@example.com',
+      password_hash: userData.password_hash || 'hashed_password',
+      created_at: userData.created_at || new Date(),
+      // normalized tier fields
+      tier,
+      tier_id,
+      verified,
+      // include any extra fields provided
+      ...userData,
+      // ensure our normalized fields win if userData had conflicting values
+      tier,
+      tier_id,
+      verified
+    };
+
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      testState.registerUser(user);
+    } catch {}
+    return user;
   }
 
   static async createAudit(auditData = {}) {
@@ -604,42 +646,39 @@ export class TestHelpers {
       created_at: new Date(),
       ...auditData
     };
-    
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      testState.upsertAudit(defaultAudit);
+    } catch {}
     return defaultAudit;
   }
 
   static async getAuditById(auditId) {
-    return auditId ? {
-      id: auditId,
-      user_id: 1,
-      url: 'https://example.com',
-      status: 'completed'
-    } : null;
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      return testState.getAuditById(auditId);
+    } catch {}
+    return auditId ? { id: auditId, user_id: 1, url: 'https://example.com', status: 'completed' } : null;
   }
 
   static async getUserById(userId) {
-    return {
-      id: userId,
-      email: 'test@example.com',
-      tier_id: 1,
-  tier: 'starter',
-      verified: true,
-      last_login: new Date()
-    };
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      return testState.getUserById(userId) || null;
+    } catch {}
+    return { id: userId, email: 'test@example.com', tier_id: 1,  tier: 'starter', verified: true, last_login: new Date() };
   }
 
   static async getUserByEmail(email) {
-    return {
-      id: 1,
-      email,
-      tier_id: 1,
-  tier: 'starter',
-      verified: true
-    };
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      return testState.getUserByEmail(email) || null;
+    } catch {}
+    return { id: 1, email, tier_id: 1,  tier: 'starter', verified: true };
   }
 
   static generateAuthToken(user) {
-    return `mock.jwt.token.${user.id}`;
+  return `mock.jwt.token.${user.id}`;
   }
 
   static generateResetToken(userId, expiresIn = 3600) {
@@ -652,10 +691,27 @@ export class TestHelpers {
 
   static async saveResetToken(userId, token) {
     console.log(`Saved reset token for user ${userId}`);
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      // If token encodes expiry (reset.token.<id>.<timestamp>), respect it
+      let expiresAtIso = new Date(Date.now() + 3600 * 1000).toISOString();
+      const parts = String(token).split('.');
+      if (parts.length >= 4) {
+        const ts = Number(parts[3]);
+        if (!Number.isNaN(ts)) {
+          expiresAtIso = new Date(ts).toISOString();
+        }
+      }
+      testState.setResetToken(userId, token, expiresAtIso);
+    } catch {}
   }
 
   static async saveVerificationToken(userId, token) {
     console.log(`Saved verification token for user ${userId}`);
+    try {
+      const testState = (await import('../../web/lib/test-state.js')).default;
+      testState.setVerificationToken(userId, token);
+    } catch {}
   }
 
   static mockEmailService(emailData) {

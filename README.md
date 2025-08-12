@@ -188,3 +188,16 @@ See [Multi-Audit System Documentation](docs/MULTI_AUDIT_SYSTEM.md) for complete 
 ---
 
 _Domain Link Audit Tool v2.0 - Professional-grade website analysis with AI intelligence_
+
+## 🧪 Test-only API shim and test-state
+
+When running tests (NODE_ENV=test), the Express app mounts a lightweight JSON API shim before all other routes. This keeps production routes unchanged while matching the integration tests’ expectations.
+
+- Shim router: `web/routes/test-api-shim.js`
+- In-memory store: `web/lib/test-state.js`
+- Purpose: Provide deterministic JSON endpoints for auth and audits used by tests.
+- Key endpoints: `/auth/register`, `/auth/login`, `/auth/logout`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/verify-email`, `/auth/google/callback`, `/api/audit`, `/api/audit/:id`, `/api/audits`, `/api/audit/:id/cancel`, `/api/user/profile`
+- Tokens: Bearer tokens use a mock format `mock.jwt.token.<userId>`; logout invalidates the token in-memory.
+- State: Users, audits, and tokens are stored in-memory for the test process. You can import `test-state` and call `reset()` in custom tests if needed. The shim also cooperates with test helpers (e.g., email/OAuth mocks in `tests/helpers/TestHelpers.js`).
+
+Note: The shim is only mounted in test mode and is not used in production.

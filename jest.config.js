@@ -9,6 +9,10 @@ export default {
   // ES Modules support
   preset: undefined,
   transform: {},
+  moduleNameMapper: {
+    // Shim fetch if needed in tests that import node-fetch directly
+    '^(node-fetch)$': '<rootDir>/tests/shims/node-fetch.cjs'
+  },
   
   // Set environment variables for tests
   setupFiles: ['<rootDir>/tests/jest.env.js'],
@@ -20,25 +24,6 @@ export default {
     '**/__tests__/**/*.js'
   ],
   
-  // Projects for different test types with different timeouts
-  projects: [
-    {
-      displayName: 'unit',
-      testMatch: ['**/tests/unit/**/*.test.js'],
-  testTimeout: 15000,
-  // Ensure environment setup runs for project-based execution
-  setupFiles: ['<rootDir>/tests/jest.env.js'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
-    },
-    {
-      displayName: 'integration',
-      testMatch: ['**/tests/integration/**/*.test.js'],
-  testTimeout: 90000,
-  // Ensure environment setup runs for project-based execution
-  setupFiles: ['<rootDir>/tests/jest.env.js'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
-    }
-  ],
   
   // Ignore Playwright tests (run separately)
   testPathIgnorePatterns: [

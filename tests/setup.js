@@ -72,3 +72,22 @@ global.createMockHTML = (title = 'Test Page', content = '<p>Test content</p>') =
 </body>
 </html>`;
 };
+
+// Add minimal custom date matcher used in some tests
+expect.extend({
+  toBeAfter(received, expected) {
+    const pass = new Date(received).getTime() > new Date(expected).getTime();
+    return {
+      pass,
+      message: () =>
+        `expected ${received} to be after ${expected}`
+    };
+  },
+  toBeAfterOrEqualTo(received, expected) {
+    const pass = new Date(received).getTime() >= new Date(expected).getTime();
+    return {
+      pass,
+      message: () => `expected ${received} to be after or equal to ${expected}`
+    };
+  }
+});

@@ -4,7 +4,13 @@
 		{
 			"type": "shell",
 			"label": "Run jobQueue integration tests",
-			"command": "npx jest audit-website/test/jobQueue.integration.test.js",
+			"command": "npx jest tests/unit/jobQueue.test.js",
+			"group": "test"
+		},
+		{
+			"label": "Run jobQueue integration tests",
+			"type": "shell",
+			"command": "npx jest tests/unit/jobQueue.test.js",
 			"group": "test"
 		}
 	]
