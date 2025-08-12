@@ -3,7 +3,12 @@
  * 
  * Abstract base class that all analyzers must extend.
  * Provides common functionality and enforces consistent interface.
+ * Enhanced with Combined Approach support (GPT-5 + Claude AI + existing patterns)
  */
+
+import { AnalyzerPerformanceMonitor } from './AnalyzerPerformanceMonitor.js';
+import { AnalyzerFeatureFlags } from './AnalyzerFeatureFlags.js';
+
 export class BaseAnalyzer {
   constructor(name, options = {}) {
     if (this.constructor === BaseAnalyzer) {
@@ -18,11 +23,22 @@ export class BaseAnalyzer {
       ...options
     };
     
+    // Combined approach features
+    this.enableAI = options.enableAI !== false;
+    this.heuristicsConfig = options.heuristicsConfig || {};
+    this.performanceMonitor = new AnalyzerPerformanceMonitor(name);
+    this.featureFlags = new AnalyzerFeatureFlags(options.features || {});
+    this.aiManager = options.aiManager || null;
+    
     this.metadata = {
       name: this.name,
       version: '1.0.0',
       description: 'Base analyzer implementation',
       category: 'general',
+      supportsCombinedApproach: true,
+      heuristicsCapable: true,
+      aiEnhanceable: this.enableAI,
+      performanceTracked: true,
       ...this.getMetadata()
     };
   }
@@ -30,31 +46,152 @@ export class BaseAnalyzer {
   /**
    * Main analysis method - must be implemented by subclasses
    * Supports both modern context format and legacy parameter format for backward compatibility
+   * Now includes combined approach pattern with heuristics-first and optional AI enhancement
    * @param {Object|Document} contextOrDocument - Analysis context object or legacy document
    * @param {Object} [pageData] - Legacy page data parameter
    * @param {string} [url] - Legacy URL parameter
    * @returns {Promise<Object>} Analysis results
    */
   async analyze(contextOrDocument, pageData, url) {
-    // Handle both modern and legacy calling formats
-    let context;
+    const startTime = Date.now();
     
-    if (contextOrDocument && typeof contextOrDocument === 'object' && contextOrDocument.document) {
-      // Modern format: analyze({document, url, pageData, options})
-      context = contextOrDocument;
-    } else if (contextOrDocument && contextOrDocument.nodeType === 9) {
-      // Legacy format: analyze(document, pageData, url)
-      context = {
-        document: contextOrDocument,
-        url: url || '',
-        pageData: pageData || {},
-        options: {}
-      };
-    } else {
-      throw new Error('Invalid context provided - expected {document, url, pageData} or legacy (document, pageData, url)');
-    }
+    try {
+      // Handle both modern and legacy calling formats
+      let context;
+      
+      if (contextOrDocument && typeof contextOrDocument === 'object' && contextOrDocument.document) {
+        // Modern format: analyze({document, url, pageData, options})
+        context = contextOrDocument;
+      } else if (contextOrDocument && contextOrDocument.nodeType === 9) {
+        // Legacy format: analyze(document, pageData, url)
+        context = {
+          document: contextOrDocument,
+          url: url || '',
+          pageData: pageData || {},
+          options: {}
+        };
+      } else {
+        throw new Error('Invalid context provided - expected {document, url, pageData} or legacy (document, pageData, url)');
+      }
 
-    throw new Error('analyze() method must be implemented by subclass');
+      // Performance monitoring
+      this.performanceMonitor.startOperation('analysis');
+
+      // Phase 1: Heuristics-based analysis (always works)
+      const heuristicResults = await this.performHeuristicAnalysis(context);
+
+      // Phase 2: AI enhancement (optional)
+      const aiInsights = this.enableAI && this.aiManager 
+        ? await this.enhanceWithAI(heuristicResults, this.aiManager)
+        : null;
+
+      const analysisTime = Date.now() - startTime;
+      this.performanceMonitor.endOperation('analysis', analysisTime);
+
+      return this.createSuccessResponse({
+        ...heuristicResults,
+        aiInsights,
+        metadata: this.getAnalysisMetadata(),
+        performanceMetrics: this.performanceMonitor.getMetrics()
+      }, analysisTime);
+
+    } catch (error) {
+      const analysisTime = Date.now() - startTime;
+      this.performanceMonitor.endOperation('analysis', analysisTime, error);
+      
+      this.log('error', 'Analysis failed', error);
+      return this.handleError(error, 'analysis');
+    }
+  }
+
+  /**
+   * Heuristics-first analysis method - must be implemented by subclasses
+   * This method should contain all the core business logic that works without AI
+   * @param {Object} context - Analysis context
+   * @returns {Promise<Object>} Heuristic analysis results
+   */
+  async performHeuristicAnalysis(context) {
+    throw new Error("performHeuristicAnalysis() must be implemented by subclass");
+  }
+
+  /**
+   * AI enhancement method - optionally enhances heuristic results with AI insights
+   * @param {Object} heuristicResults - Results from heuristic analysis
+   * @param {Object} aiManager - AI manager instance
+   * @returns {Promise<Object|null>} AI insights or null if AI fails
+   */
+  async enhanceWithAI(heuristicResults, aiManager) {
+    if (!this.enableAI || !aiManager) return null;
+
+    try {
+      this.performanceMonitor.startOperation('ai_enhancement');
+      
+      const result = await this._performAIEnhancement(heuristicResults, aiManager);
+      
+      this.performanceMonitor.endOperation('ai_enhancement', Date.now() - this.performanceMonitor.getStartTime('ai_enhancement'));
+      
+      return result;
+    } catch (error) {
+      this.performanceMonitor.endOperation('ai_enhancement', Date.now() - this.performanceMonitor.getStartTime('ai_enhancement'), error);
+      
+      console.warn(`AI enhancement failed for ${this.name}:`, error.message);
+      return null; // Graceful degradation
+    }
+  }
+
+  /**
+   * Perform AI enhancement - can be overridden by subclasses for specific AI logic
+   * @param {Object} heuristicResults - Results from heuristic analysis
+   * @param {Object} aiManager - AI manager instance
+   * @returns {Promise<Object>} AI enhancement results
+   * @protected
+   */
+  async _performAIEnhancement(heuristicResults, aiManager) {
+    // Default implementation - can be overridden by specific analyzers
+    return await aiManager.performComprehensiveAIAnalysis(
+      this._extractAIFeatures(heuristicResults),
+      [],
+      { analysisType: `${this.name.toLowerCase()}_enhancement` }
+    );
+  }
+
+  /**
+   * Extract features for AI analysis - can be overridden by subclasses
+   * @param {Object} heuristicResults - Results from heuristic analysis
+   * @returns {Object} Features for AI analysis
+   * @protected
+   */
+  _extractAIFeatures(heuristicResults) {
+    // Default feature extraction - can be overridden
+    return {
+      analyzerName: this.name,
+      overallScore: heuristicResults.overallScore || 0,
+      categories: heuristicResults.categories || {},
+      findings: heuristicResults.findings || [],
+      recommendations: heuristicResults.recommendations || []
+    };
+  }
+
+  /**
+   * Get analysis metadata including combined approach information
+   * @returns {Object} Analysis metadata
+   */
+  getAnalysisMetadata() {
+    return {
+      ...this.metadata,
+      analysisTimestamp: new Date().toISOString(),
+      enabledFeatures: {
+        heuristicsAnalysis: true,
+        aiEnhancement: this.enableAI,
+        performanceMonitoring: true,
+        featureFlags: Object.keys(this.featureFlags.getFlags())
+      },
+      configuration: {
+        timeout: this.options.timeout,
+        retries: this.options.retries,
+        enableLogging: this.options.enableLogging
+      }
+    };
   }
 
   /**

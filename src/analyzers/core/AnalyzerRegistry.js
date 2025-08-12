@@ -15,7 +15,7 @@ export class AnalyzerRegistry {
   }
 
   /**
-   * Register an analyzer class
+   * Register an analyzer class with combined approach metadata
    * @param {string} name - Analyzer name
    * @param {Class} AnalyzerClass - Analyzer class
    * @param {Object} metadata - Analyzer metadata
@@ -36,6 +36,10 @@ export class AnalyzerRegistry {
         category: AnalyzerCategories.GENERAL,
         priority: 'medium',
         version: '1.0.0',
+        supportsCombinedApproach: false,
+        heuristicsCapable: false,
+        aiEnhanceable: false,
+        performanceTracked: false,
         ...metadata
       },
       registered: new Date().toISOString()
@@ -51,6 +55,25 @@ export class AnalyzerRegistry {
     this.categories.get(category).add(name);
 
     console.log(`✅ Registered analyzer: ${name} (${category})`);
+  }
+
+  /**
+   * Register analyzer with combined approach metadata
+   * @param {string} name - Analyzer name
+   * @param {Class} AnalyzerClass - Analyzer class
+   * @param {Object} metadata - Enhanced metadata
+   */
+  registerCombined(name, AnalyzerClass, metadata = {}) {
+    const enhancedMetadata = {
+      ...metadata,
+      supportsCombinedApproach: true,
+      heuristicsCapable: true,
+      aiEnhanceable: metadata.aiEnhanceable !== false,
+      performanceTracked: true,
+      featureFlags: metadata.features || {},
+    };
+
+    return this.register(name, AnalyzerClass, enhancedMetadata);
   }
 
   /**
@@ -107,7 +130,43 @@ export class AnalyzerRegistry {
   }
 
   /**
-   * Get all analyzers by category
+   * Get analyzers by AI capability
+   * @returns {Array} Array of AI-capable analyzer names
+   */
+  getAICapableAnalyzers() {
+    return Array.from(this.analyzers.entries())
+      .filter(([_, info]) => info.metadata.aiEnhanceable)
+      .map(([name, _]) => name);
+  }
+
+  /**
+   * Get analyzers supporting combined approach
+   * @returns {Array} Array of combined approach analyzer names
+   */
+  getCombinedApproachAnalyzers() {
+    return Array.from(this.analyzers.entries())
+      .filter(([_, info]) => info.metadata.supportsCombinedApproach)
+      .map(([name, _]) => name);
+  }
+
+  /**
+   * Bulk enable AI for all capable analyzers
+   * @param {Object} aiManager - AI manager instance
+   */
+  enableAIForAll(aiManager) {
+    const aiCapable = this.getAICapableAnalyzers();
+    aiCapable.forEach((name) => {
+      try {
+        const instance = this.getInstance(name, { enableAI: true, aiManager });
+        console.log(`✅ AI enabled for ${name}`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to enable AI for ${name}:`, error.message);
+      }
+    });
+  }
+
+  /**
+   * Get analyzers by category
    * @param {string} category - Category name
    * @returns {Array} Array of analyzer names
    */
