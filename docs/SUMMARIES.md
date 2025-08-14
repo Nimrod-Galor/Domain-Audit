@@ -266,6 +266,10 @@ This application has been migrated from SQLite to PostgreSQL using Neon.tech as 
 
 No summary content extracted.
 
+### Duplicate Documentation Prune Report
+
+Generated: 2025-08-14T08:09:21.403Z No duplicates detected.
+
 ### E2E Testing with Playwright
 
 This document describes the end-to-end (E2E) testing setup using Playwright, which is completely separated from the Jest unit and integration tests. The E2E tests are designed to test the complete user workflows in a real browser environment. They are separated from other tests to: - ✅ **Independent Execution**: Run...
