@@ -9,8 +9,8 @@ Advanced domain link audit tool with AI intelligence and comprehensive analysis 
 - **📊 Advanced Analytics**: Performance metrics, SEO analysis, and business intelligence
 - **🛡️ Security Analysis**: SSL certificates, security headers, and vulnerability detection
 - **⚡ Performance Monitoring**: Web vitals, load times, and optimization insights
-- **� Multi-Audit System**: Version history with resume capability and historical tracking
-- **�📱 Modern Architecture**: Modular design with 99.92% feature coverage
+- **🗂️ Multi-Audit System**: Version history with resume capability and historical tracking
+- **🏗️ Modern Architecture**: Modular design with 99.92% feature coverage
 
 ## 📁 Project Structure
 
@@ -90,7 +90,7 @@ npm start example.com
 npm run analyze ./audits/example/crawl-state.json
 ```
 
-## � Multi-Audit System
+## 🗂️ Multi-Audit System
 
 The tool now supports multiple audits per domain with comprehensive version history:
 
@@ -132,7 +132,7 @@ audits/
 
 See [Multi-Audit System Documentation](docs/MULTI_AUDIT_SYSTEM.md) for complete details.
 
-## �📊 Coverage & Capabilities
+## 📊 Coverage & Capabilities
 
 - **Current Coverage**: 99.92% ✨
 - **Total Modules**: 17 comprehensive analysis modules

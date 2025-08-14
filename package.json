@@ -56,7 +56,8 @@
     "db:prod:setup:win": "powershell -Command \"$env:NODE_ENV='production'; node scripts/setup-databases.js production\"",
     "db:check:dev": "cross-env NODE_ENV=development node scripts/check-db-status.js",
     "db:check:test": "cross-env NODE_ENV=test node scripts/check-db-status.js",
-    "db:check:prod": "cross-env NODE_ENV=production node scripts/check-db-status.js"
+  "db:check:prod": "cross-env NODE_ENV=production node scripts/check-db-status.js",
+  "docs:index": "node scripts/generate-docs-index.js"
   },
   "keywords": [
     "seo",
