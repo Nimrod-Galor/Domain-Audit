@@ -14,12 +14,17 @@
 
 import { SEARCH_SELECTORS, UX_STANDARDS } from '../config/ux-standards.js';
 import { UXAnalysisValidator } from '../core/contracts.js';
+import { OptimizedBaseDetector } from '../core/detector-factory.js';
 
 /**
- * Site Search Detection and Analysis
+ * Site Search Detection and Analysis - Optimized Version
  */
-export class SearchDetector {
+export class SearchDetector extends OptimizedBaseDetector {
   constructor(config = {}) {
+    super();
+    this.name = 'Search Detector';
+    this.version = '2.0.0';
+    
     this.config = {
       timeout: config.timeout || 5000,
       includeHidden: config.includeHidden || false,
@@ -28,8 +33,74 @@ export class SearchDetector {
       ...config
     };
     
-    this.standards = UX_STANDARDS.siteSearch;
+    this.searchStandards = UX_STANDARDS.siteSearch;
     this.results = this._initializeResults();
+  }
+
+  /**
+   * Get selectors for search element detection
+   * @returns {Array} CSS selectors
+   */
+  getSelectors() {
+    return [
+      // Search forms
+      'form[role="search"]',
+      'form[class*="search"]',
+      'form[id*="search"]',
+      
+      // Search inputs
+      'input[type="search"]',
+      'input[name*="search"]',
+      'input[placeholder*="search"]',
+      'input[id*="search"]',
+      'input[class*="search"]',
+      
+      // Search buttons
+      'button[type="submit"][form*="search"]',
+      'button[class*="search"]',
+      'button[aria-label*="search"]',
+      'input[type="submit"][form*="search"]',
+      
+      // Search containers
+      '.search-container',
+      '#search-container',
+      '.site-search',
+      '#site-search'
+    ];
+  }
+
+  /**
+   * Validate search element for analysis
+   * @param {Object} element - Element to validate
+   * @returns {boolean} Whether element is valid
+   */
+  validateElement(element) {
+    return this.utils.errors.isValidElement(element) && 
+           (element.tagName === 'form' || 
+            element.tagName === 'input' || 
+            element.tagName === 'button');
+  }
+
+  /**
+   * Analyze individual search element - optimized version
+   * @param {Object} page - Playwright page object
+   * @param {Object} element - Element to analyze
+   * @returns {Promise<Object>} Element analysis
+   */
+  async analyzeElement(page, element) {
+    const analysis = {
+      type: this._detectSearchElementType(element),
+      placement: this._analyzePlacementOptimized(element),
+      functionality: await this._analyzeFunctionalityOptimized(page, element),
+      accessibility: this._analyzeAccessibilityOptimized(element),
+      design: this._analyzeDesignOptimized(element),
+      confidence: 0
+    };
+
+    // Calculate confidence score
+    analysis.confidence = this._calculateConfidenceOptimized(analysis);
+    
+    return analysis;
   }
 
   /**

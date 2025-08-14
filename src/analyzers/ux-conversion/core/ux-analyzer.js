@@ -14,10 +14,12 @@
 
 import { UXAnalysisValidator, UXConversionInterface } from './contracts.js';
 import { UXConfigurationFactory } from '../config/ux-standards.js';
+import { detectorFactory } from './detector-factory.js';
+import { UXPerformanceUtils } from '../utils/analysis-utils.js';
 
 /**
  * Main UX Conversion Analyzer
- * Orchestrates all UX analysis components
+ * Orchestrates all UX analysis components with optimized performance
  */
 export class UXConversionAnalyzer {
   constructor(options = {}) {
@@ -27,7 +29,14 @@ export class UXConversionAnalyzer {
     );
     
     this.results = this._initializeResults();
-    this.detectors = new Map();
+    
+    // Initialize optimized detector suite
+    const { detectors, context } = detectorFactory.createDetectorSuite(
+      options.industry || 'generic'
+    );
+    this.detectors = detectors;
+    this.detectorContext = context;
+    
     this.heuristics = new Map();
     this.rules = new Map();
     
@@ -40,12 +49,12 @@ export class UXConversionAnalyzer {
       warnings: []
     };
 
-    // Initialize components (will be populated as we build them)
+    // Initialize components (optimized)
     this._initializeComponents();
   }
 
   /**
-   * Main analysis entry point
+   * Main analysis entry point - Optimized version
    * @param {Object} page - Playwright page object
    * @param {Object} domainData - Domain analysis data
    * @returns {Promise<Object>} Complete UX analysis results
@@ -60,8 +69,8 @@ export class UXConversionAnalyzer {
       // Initialize results with domain context
       this._setupAnalysisContext(domainData);
       
-      // Run core analysis phases
-      await this._runAnalysisPhases(page, domainData);
+      // Run optimized analysis phases with parallel processing
+      await this._runOptimizedAnalysisPhases(page, domainData);
       
       // Apply industry-specific scoring
       this._applyIndustryScoring();
@@ -79,6 +88,73 @@ export class UXConversionAnalyzer {
       throw error;
     } finally {
       this.metrics.endTime = Date.now();
+    }
+  }
+
+  /**
+   * Run optimized analysis phases with parallel detector execution
+   * @param {Object} page - Playwright page object
+   * @param {Object} domainData - Domain analysis data
+   * @private
+   */
+  async _runOptimizedAnalysisPhases(page, domainData) {
+    // Phase 1: Parallel detector execution
+    const detectorPromises = Object.entries(this.detectors).map(async ([name, detector]) => {
+      try {
+        const startTime = Date.now();
+        const result = await detector.analyze(page, domainData);
+        const analysisTime = Date.now() - startTime;
+        
+        this.results.detectors[name] = {
+          ...result,
+          analysisTime,
+          success: true
+        };
+        
+        this.metrics.analysisSteps.push({
+          step: `${name} detector`,
+          duration: analysisTime,
+          timestamp: Date.now()
+        });
+        
+        return { name, result, success: true };
+      } catch (error) {
+        this.metrics.errors.push({
+          detector: name,
+          error: error.message,
+          timestamp: Date.now()
+        });
+        
+        this.results.detectors[name] = {
+          detector: name,
+          error: error.message,
+          success: false,
+          timestamp: Date.now()
+        };
+        
+        return { name, error: error.message, success: false };
+      }
+    });
+
+    // Wait for all detectors to complete
+    const detectorResults = await Promise.allSettled(detectorPromises);
+    
+    // Process results and update analysis context
+    detectorResults.forEach((result, index) => {
+      const detectorName = Object.keys(this.detectors)[index];
+      
+      if (result.status === 'fulfilled' && result.value.success) {
+        // Store successful analysis for cross-detector insights
+        this.detectorContext.cache.set(
+          `${detectorName}_result`, 
+          result.value.result
+        );
+      }
+    });
+
+    // Phase 2: Cross-detector analysis (if enabled)
+    if (this.config.enableCrossAnalysis) {
+      await this._runCrossDetectorAnalysis();
     }
   }
 
