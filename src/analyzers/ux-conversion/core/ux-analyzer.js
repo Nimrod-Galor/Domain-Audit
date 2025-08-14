@@ -18,6 +18,8 @@ import { detectorFactory } from './detector-factory.js';
 import { UXPerformanceUtils } from '../utils/analysis-utils.js';
 import { UXHeuristicsEngine } from '../heuristics/ux-heuristics.js';
 import { UXRulesEngine } from '../rules/ux-rules-engine.js';
+import { AIEnhancedUXEngine } from '../ai/ai-enhanced-engine.js';
+import { PredictiveAnalyticsEngine } from '../ai/predictive-analytics.js';
 
 /**
  * Main UX Conversion Analyzer
@@ -52,6 +54,22 @@ export class UXConversionAnalyzer {
       industryType: options.industry || 'generic',
       enableIndustryRules: options.enableIndustryRules !== false,
       maxRecommendations: options.maxRecommendations || 20
+    });
+    
+    // Initialize AI enhancement engine
+    this.aiEngine = new AIEnhancedUXEngine({
+      aiProvider: options.aiProvider || 'hybrid',
+      enablePredictiveAnalysis: options.enablePredictiveAnalysis !== false,
+      enablePatternLearning: options.enablePatternLearning !== false,
+      industryType: options.industry || 'generic'
+    });
+    
+    // Initialize predictive analytics engine
+    this.predictiveEngine = new PredictiveAnalyticsEngine({
+      industryType: options.industry || 'generic',
+      enableMLPredictions: options.enableMLPredictions !== false,
+      enableBehaviorAnalysis: options.enableBehaviorAnalysis !== false,
+      enableConversionForecasting: options.enableConversionForecasting !== false
     });
     
     this.heuristics = new Map();
@@ -214,7 +232,60 @@ export class UXConversionAnalyzer {
       timestamp: Date.now()
     });
 
-    // Phase 4: Cross-detector analysis (if enabled)
+    // Phase 4: AI Enhancement (if enabled)
+    if (this.config.enableAIEnhancement !== false) {
+      this.metrics.analysisSteps.push({
+        step: 'ai_enhancement_start',
+        timestamp: Date.now()
+      });
+      
+      const aiStartTime = Date.now();
+      const aiResults = await this.aiEngine.analyzeWithAI(
+        page,
+        { detectors: successfulDetectors, heuristics: heuristicsResults, rules: rulesResults },
+        {
+          industryType: this.config.industry,
+          pageComplexity: domainData.complexity || 'medium',
+          deviceType: domainData.deviceType || 'desktop'
+        }
+      );
+      
+      this.results.ai = aiResults;
+      this.metrics.analysisSteps.push({
+        step: 'ai_enhancement',
+        duration: Date.now() - aiStartTime,
+        timestamp: Date.now()
+      });
+
+      // Phase 5: Predictive Analytics (if enabled)
+      if (this.config.enablePredictiveAnalysis !== false) {
+        this.metrics.analysisSteps.push({
+          step: 'predictive_analytics_start',
+          timestamp: Date.now()
+        });
+        
+        const predictiveStartTime = Date.now();
+        const predictiveResults = await this.predictiveEngine.generatePredictions(
+          { detectors: successfulDetectors, heuristics: heuristicsResults, rules: rulesResults },
+          aiResults,
+          {
+            industryType: this.config.industry,
+            pageComplexity: domainData.complexity || 'medium',
+            deviceType: domainData.deviceType || 'desktop',
+            trafficSource: domainData.trafficSource || 'organic'
+          }
+        );
+        
+        this.results.predictive = predictiveResults;
+        this.metrics.analysisSteps.push({
+          step: 'predictive_analytics',
+          duration: Date.now() - predictiveStartTime,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    // Phase 6: Cross-analysis integration (if enabled)
     if (this.config.enableCrossAnalysis) {
       await this._runCrossDetectorAnalysis(successfulDetectors, heuristicsResults, rulesResults);
     }
