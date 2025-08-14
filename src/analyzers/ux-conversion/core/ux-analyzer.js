@@ -16,6 +16,8 @@ import { UXAnalysisValidator, UXConversionInterface } from './contracts.js';
 import { UXConfigurationFactory } from '../config/ux-standards.js';
 import { detectorFactory } from './detector-factory.js';
 import { UXPerformanceUtils } from '../utils/analysis-utils.js';
+import { UXHeuristicsEngine } from '../heuristics/ux-heuristics.js';
+import { UXRulesEngine } from '../rules/ux-rules-engine.js';
 
 /**
  * Main UX Conversion Analyzer
@@ -36,6 +38,21 @@ export class UXConversionAnalyzer {
     );
     this.detectors = detectors;
     this.detectorContext = context;
+    
+    // Initialize heuristics engine
+    this.heuristicsEngine = new UXHeuristicsEngine({
+      industryType: options.industry || 'generic',
+      enableNielsenHeuristics: options.enableNielsenHeuristics !== false,
+      enableModernPatterns: options.enableModernPatterns !== false,
+      enableConversionHeuristics: options.enableConversionHeuristics !== false
+    });
+    
+    // Initialize rules engine
+    this.rulesEngine = new UXRulesEngine({
+      industryType: options.industry || 'generic',
+      enableIndustryRules: options.enableIndustryRules !== false,
+      maxRecommendations: options.maxRecommendations || 20
+    });
     
     this.heuristics = new Map();
     this.rules = new Map();
@@ -140,11 +157,13 @@ export class UXConversionAnalyzer {
     const detectorResults = await Promise.allSettled(detectorPromises);
     
     // Process results and update analysis context
+    const successfulDetectors = {};
     detectorResults.forEach((result, index) => {
       const detectorName = Object.keys(this.detectors)[index];
       
       if (result.status === 'fulfilled' && result.value.success) {
         // Store successful analysis for cross-detector insights
+        successfulDetectors[detectorName] = result.value.result;
         this.detectorContext.cache.set(
           `${detectorName}_result`, 
           result.value.result
@@ -152,9 +171,52 @@ export class UXConversionAnalyzer {
       }
     });
 
-    // Phase 2: Cross-detector analysis (if enabled)
+    // Phase 2: Heuristics Analysis (parallel with remaining detector work)
+    this.metrics.analysisSteps.push({
+      step: 'heuristics_analysis_start',
+      timestamp: Date.now()
+    });
+    
+    const heuristicsStartTime = Date.now();
+    const heuristicsResults = await this.heuristicsEngine.analyzeHeuristics(
+      page, 
+      successfulDetectors
+    );
+    
+    this.results.heuristics = heuristicsResults;
+    this.metrics.analysisSteps.push({
+      step: 'heuristics_analysis',
+      duration: Date.now() - heuristicsStartTime,
+      timestamp: Date.now()
+    });
+
+    // Phase 3: Rules Engine (uses both detector and heuristics results)
+    this.metrics.analysisSteps.push({
+      step: 'rules_engine_start',
+      timestamp: Date.now()
+    });
+    
+    const rulesStartTime = Date.now();
+    const rulesResults = await this.rulesEngine.executeRules(
+      successfulDetectors,
+      heuristicsResults,
+      {
+        industryType: this.config.industry,
+        pageComplexity: domainData.complexity || 'medium',
+        deviceType: domainData.deviceType || 'desktop'
+      }
+    );
+    
+    this.results.rules = rulesResults;
+    this.metrics.analysisSteps.push({
+      step: 'rules_engine',
+      duration: Date.now() - rulesStartTime,
+      timestamp: Date.now()
+    });
+
+    // Phase 4: Cross-detector analysis (if enabled)
     if (this.config.enableCrossAnalysis) {
-      await this._runCrossDetectorAnalysis();
+      await this._runCrossDetectorAnalysis(successfulDetectors, heuristicsResults, rulesResults);
     }
   }
 
